@@ -48,4 +48,4 @@ def timestamp_to_datetime(timestamp):
     return datetime.fromtimestamp(timestamp, timezone.utc).strftime('%Y-%m-%d %H:%M')
 
 def seconds_from_timestamp(timestamp):
-    return (datetime.now() - datetime.fromtimestamp(timestamp)).seconds
+    return (datetime.now() - datetime.fromtimestamp(timestamp)).total_seconds()

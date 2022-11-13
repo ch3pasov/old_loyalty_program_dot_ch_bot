@@ -10,7 +10,9 @@ stderr.log
 stdout.log
 
 # серверные переменные
-server
+server/
+server/secret.py
+server/servet_vars.py
 
 # это чисто для меня
 sandbox.py
