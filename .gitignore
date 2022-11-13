@@ -2,15 +2,18 @@
 __pycache__/
 
 # мусор с авторизационными данными
-account_human.session
-account_robot.session
+account_human.session*
+account_robot.session*
 
 # выхлоп для дебага
 stderr.log
 stdout.log
 
 # серверные переменные
-server/
+server
+
+# это чисто для меня
+sandbox.py
 
 
 

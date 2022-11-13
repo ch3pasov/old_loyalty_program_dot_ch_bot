@@ -10,8 +10,8 @@ import server.server_vars
 import schedule
 
 import sys
-path_out = 'stdout.log'
-sys.stdout = open(path_out, 'w')
+# path_out = 'stdout.log'
+# sys.stdout = open(path_out, 'w')
 path_err = 'stderr.log'
 sys.stderr = open(path_err, 'w')
 
@@ -149,7 +149,9 @@ def my_handler(client, message):
     screen.create(client, message.chat.id, screen.no_video_notes())
 
 
+print("login in robot!")
 app.start()
+print("login in human!")
 app_human.start()
 schedule.start_scheduler(app, app_human, verbose=False)
 idle()
