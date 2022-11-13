@@ -1,5 +1,6 @@
 # технический мусор
 __pycache__/
+.DS_Store
 
 # мусор с авторизационными данными
 account_human.session*
@@ -11,8 +12,6 @@ stdout.log
 
 # серверные переменные
 server/
-server/secret.py
-server/servet_vars.py
 
 # это чисто для меня
 sandbox.py
