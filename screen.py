@@ -214,7 +214,7 @@ def level_up():
 
 def money(send_message):
     return {
-        "animation": "CgACAgIAAxkBAANvY201rpPZ5TmeaD8UyQ3-59mDH6oAAkAkAAKTUllLMQGomMAnWEEeBA",
+        "animation": server.server_vars.money_animation,
         "caption": send_message.message,
         "unsave": False,
         "reply_markup": InlineKeyboardMarkup(
