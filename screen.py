@@ -267,7 +267,7 @@ def no_video_notes():
 
 def unsubscribed_from_channel_gif():
     return {
-        "animation": 'CgACAgQAAxkBAAIBuWNuyZSg4tMvTVtG5bwQDGQzeRYhAAIQAwACkBINUwTHXfu0FeBxHgQ',
+        "animation": server.server_vars.unsubscribed_animation,
         "unsave": False
     }
 
