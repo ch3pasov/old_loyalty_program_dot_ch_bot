@@ -30,7 +30,10 @@ def send_money(app, app_human, amount, user_id):
     global users
 
     assert amount < 1, "МНОГО ДЕНЕГ"
-    r = app_human.get_inline_bot_results('@wallet', str(amount))
+
+    non_collision_amount = amount + user_id%100000/10**9 
+
+    r = app_human.get_inline_bot_results('@wallet', str(non_collision_amount))
 
     result = r.results[0]
     if "TON" in result.title and "BTC" not in result.title:
