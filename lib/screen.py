@@ -1,10 +1,7 @@
-from pyrogram import Client, filters
 from pyrogram.types import (InlineKeyboardButton, InlineKeyboardMarkup)
-
+import server.server_vars
 import global_vars
 users = global_vars.users
-
-import server.server_vars
 
 home_new_text = '''Привет! 🖖🏻
 Я провожу ПРОГРАММУ ЛОЯЛЬНОСТИ 😳 телеграм-канала @dot_ch.
@@ -57,12 +54,11 @@ def home_new():
     }
 
 
-
 def home_exist(user_id):
     return {
         "text": home_exist_text.format(user_id=user_id),
         "reply_markup": InlineKeyboardMarkup(
-            [   
+            [
                 [
                     InlineKeyboardButton(
                         button_to_leveling,
@@ -212,21 +208,26 @@ def level_up():
     }
 
 
-def money(send_message):
+def money_hidden_block_check():
     return {
         "animation": server.server_vars.money_animation,
-        "caption": send_message.message,
-        "unsave": False,
+        "unsave": False
+    }
+
+
+def money(send_message):
+    return {
+        "text": send_message.message,
         "reply_markup": InlineKeyboardMarkup(
+            [
                 [
-                    [
-                        InlineKeyboardButton(
-                            "Получить на @wallet",
-                            url=send_message.reply_markup.rows[0].buttons[0].url
-                        )
-                    ]
+                    InlineKeyboardButton(
+                        "Получить на @wallet",
+                        url=send_message.reply_markup.rows[0].buttons[0].url
+                    )
                 ]
-            )
+            ]
+        )
     }
 
 
@@ -295,7 +296,7 @@ def create(client, chat_id, screen):
             **screen
         )
         return 0
-    
+
     client.send_message(
         chat_id,
         **screen
@@ -308,3 +309,22 @@ def update(client, chat_id, message_id, screen):
         message_id=message_id,
         **screen
     )
+
+
+def send_money(app, app_human, amount, user_id):
+    global users
+
+    assert amount < 1, "МНОГО ДЕНЕГ"
+
+    non_collision_amount = amount + int(user_id) % 100000/10**10
+
+    r = app_human.get_inline_bot_results('@wallet', str(non_collision_amount))
+
+    result = r.results[0]
+    if "TON" in result.title and "BTC" not in result.title:
+        app_human.send_inline_bot_result(server.server_vars.money_chat_id, r.query_id, result.id)
+        app_human.send_message(server.server_vars.money_chat_id, f"отправил {amount} TON юзеру {user_id}")
+
+        create(app, user_id, money(result.send_message))
+    else:
+        raise ValueError("BTC! СЛЕВА НАПРАВО")

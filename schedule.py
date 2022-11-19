@@ -3,19 +3,21 @@ import os
 from datetime import datetime, timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 import warnings
+import server.server_vars
+from pyrogram import errors
+from lib.useful_lib import is_registered, seconds_from_timestamp
+import lib.screen as screen
 warnings.filterwarnings("ignore")
 
-import global_vars
-users = global_vars.users
-import server.server_vars
+# import global_vars
+# users = global_vars.users
+# print(f"Я запустил schedule и импортировал users. Его id {id(users)}")
 
-from useful_lib import is_registered, seconds_from_timestamp, send_money
-import screen
 
-def backup_log_job(verbose=False):
+def backup_log_job(users, verbose=False):
     if verbose:
         print('backup!')
-    global users
+    # global users
 
     now = datetime.now(timezone.utc)
     filename = f"server/logs/{now.strftime('%Y-%m-%d')}/{now.strftime('%H_%M')}/users.json"
@@ -24,12 +26,12 @@ def backup_log_job(verbose=False):
         json.dump(users, f, ensure_ascii=False, indent=4)
 
 
-def save_log_job(verbose=False):
+def save_log_job(users, verbose=False):
     if verbose:
         print('save!')
-    global users
+    # global users
 
-    filename = f"server/users.json"
+    filename = "server/users.json"
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(users, f, ensure_ascii=False, indent=4)
 
@@ -38,10 +40,10 @@ def save_log_job(verbose=False):
 #     print('test app!')
 #     app.send_message("drakedoin", "пук")
 
-def update_user_progress(app, app_human, verbose=True):
+def update_user_progress(users, app, app_human, verbose=True):
     if verbose:
         print('update_user_progress!')
-    global users
+    # global users
 
     member_ids = [member.user.id for member in app.get_chat_members(server.server_vars.dot_ch_id)]
     # print(member_ids)
@@ -63,20 +65,32 @@ def update_user_progress(app, app_human, verbose=True):
         user_exp_days = seconds_from_timestamp(user_line["subscribed_since"])/86400
         level_need_days = schema_level["days"]
         if user_exp_days >= level_need_days:
+            # если он меня забанил — то я его тоже 🔫🔫🔫
+            try:
+                screen.create(app, user_id, screen.money_hidden_block_check())
+            except errors.exceptions.bad_request_400.UserIsBlocked:
+                print(f"{user_id} IS BLOCKED ME")
+                users[user_id]["loyality_programm"]["subscribed_since"] = None
+                continue
+
             reward = schema_level["reward"]
-            send_money(app, app_human, reward, user_id)
+            screen.send_money(app, app_human, reward, user_id)
             users[user_id]["loyality_programm"]["level"] += 1
             users[user_id]["loyality_programm"]["money_won"] += reward
 
             screen.create(app, user_id, screen.level_up())
 
 
-def start_scheduler(app, app_human, verbose=True):
-    global users
+def start_scheduler(users, app, app_human, verbose=True):
+    # global users
 
     scheduler = BackgroundScheduler()
-    scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"verbose":verbose}, max_instances=1, next_run_time=datetime.now())
-    scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"verbose":verbose}, max_instances=1)
+    scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"users": users, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"users": users, "verbose": verbose}, max_instances=1)
     # scheduler.add_job(test_app, "interval", seconds=30, kwargs={"app":app, "verbose":verbose}, max_instances=1)
-    scheduler.add_job(update_user_progress, "interval", minutes=10, kwargs={"app": app, "app_human": app_human, "verbose":verbose}, max_instances=1, next_run_time=datetime.now())
+    scheduler.add_job(update_user_progress, "interval", minutes=10, kwargs={"users": users, "app": app, "app_human": app_human, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     scheduler.start()
+    print(f"Я запустил start_scheduler из модуля scheduler из скрипта main и смотрю на users. Его id {id(users)}")
+
+# if __name__ == "__main__":
+#     start_scheduler(app, app_human)

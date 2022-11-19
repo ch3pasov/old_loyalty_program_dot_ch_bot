@@ -1,6 +1,7 @@
 # технический мусор
 __pycache__/
 .DS_Store
+.vscode
 
 # мусор с авторизационными данными
 account_human.session*
@@ -15,6 +16,7 @@ server/
 
 # это чисто для меня
 sandbox.py
+sandbox/
 
 
 
