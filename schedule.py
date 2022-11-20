@@ -64,11 +64,7 @@ def update_user_progress(users, app, app_human, verbose=True):
         # живых — проверяем на левелап
         user_line = users[user_id]["loyality_programm"]
         current_level = user_line["level"]
-        max_level = len(server.server_vars.loyality_programm) - 1
-        next_level = min(max_level, current_level + 1)
-
         schema_level: LoyalityLevel = server.server_vars.loyality_programm[current_level]
-        schema_next_level: LoyalityLevel = server.server_vars.loyality_programm[next_level]
 
         user_exp_days = seconds_from_timestamp(user_line["subscribed_since"])/86400
         level_need_days = schema_level.days
@@ -87,8 +83,8 @@ def update_user_progress(users, app, app_human, verbose=True):
             users[user_id]["loyality_programm"]["money_won"] += reward
 
             screen.create(app, user_id, screen.level_up(
-                congrats_link=next_level.congrats_link,
-                congrats_text=next_level.congrats_text,
+                congrats_link=schema_level.congrats_link,
+                congrats_text=schema_level.congrats_text,
             ))
 
 
