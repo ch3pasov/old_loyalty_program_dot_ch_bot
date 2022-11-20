@@ -1,6 +1,7 @@
-from pyrogram.types import (InlineKeyboardButton, InlineKeyboardMarkup)
-import server.server_vars
 import global_vars
+import server.server_vars
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
 users = global_vars.users
 
 home_new_text = '''Привет! 🖖🏻
@@ -185,16 +186,16 @@ def leveling(user_level, user_exp_days):
     }
 
 
-def level_up():
+def level_up(congrats_text, congrats_link):
     global users
     return {
-        "text": '🥳LEVEL UP🥳',
+        "text": congrats_text,
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
                         button_to_party,
-                        url="https://youtu.be/LDU_Txk06tM?t=74"
+                        url=congrats_link
                     )
                 ],
                 [
