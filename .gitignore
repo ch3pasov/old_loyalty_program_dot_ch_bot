@@ -4,7 +4,7 @@ __pycache__/
 .vscode
 
 # мусор с авторизационными данными
-account_*.session
+account_*.session*
 
 # выхлоп для дебага
 stderr.log
