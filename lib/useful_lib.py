@@ -35,3 +35,8 @@ def timestamp_to_datetime(timestamp):
 
 def seconds_from_timestamp(timestamp):
     return (datetime.now() - datetime.fromtimestamp(timestamp)).total_seconds()
+
+
+def random_datetime(up_timedelta):
+    from random import random
+    return datetime.now(timezone.utc)+up_timedelta*random()
