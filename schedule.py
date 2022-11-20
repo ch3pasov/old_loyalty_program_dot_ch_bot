@@ -65,7 +65,7 @@ def update_user_progress(users, app, app_human, verbose=True):
         user_line = users[user_id]["loyality_programm"]
         current_level = user_line["level"]
         max_level = len(server.server_vars.loyality_programm) - 1
-        next_level = max_level if current_level >= max_level else current_level + 1
+        next_level = min(max_level, current_level + 1)
 
         schema_level: server.server_vars.LoyalityLevel = server.server_vars.loyality_programm[current_level]
         schema_next_level: server.server_vars.LoyalityLevel = server.server_vars.loyality_programm[next_level]
