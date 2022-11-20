@@ -103,13 +103,16 @@ def handler_channel_update(client, chat_member_updated):
     global users
 
     if not chat_member_updated.chat.id == server.server_vars.dot_ch_id:
-        return "действие происходит не в канале"
+        # действие происходит не в канале
+        return
     if not chat_member_updated.old_chat_member:
-        return "это не отписка в канале"
+        # это не отписка в канале
+        return
 
     user_id = str(chat_member_updated.old_chat_member.user.id)
     if not is_registered(user_id, users):
-        return "отписавшийся от канала не в программе лояльности"
+        # отписавшийся от канала не в программе лояльности
+        return
 
     users[user_id]["loyality_programm"]["subscribed_since"] = None
     screen.create(app, user_id, screen.unsubscribed_from_channel_gif())
