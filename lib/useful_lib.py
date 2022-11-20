@@ -1,9 +1,19 @@
-from pyrogram import errors
-
 # import server.server_vars
+from dataclasses import dataclass
 from datetime import datetime, timezone
 
+from pyrogram import errors
+
 # import lib.screen as screen
+
+
+@dataclass
+class LoyalityLevel:
+    level: int
+    days: int
+    reward: float
+    congrats_text: str = "🥳LEVEL UP🥳"
+    congrats_link: str = "https://youtu.be/LDU_Txk06tM?t=74"
 
 
 def is_member(app, chat_id, user_id):

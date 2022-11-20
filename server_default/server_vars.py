@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from lib.useful_lib import LoyalityLevel
 
 money_chat_id = -0  # id чата, куда Человек будет кидать деньги
 dot_ch_id = -0  # id канала, на который нужно быть подписанным
@@ -7,14 +7,6 @@ dot_ch_id = -0  # id канала, на который нужно быть по�
 # Ой вот тут вы умрёте доставать этот id, для каждого робота он разный. Удачи!
 money_animation = "a"
 unsubscribed_animation = "a"
-
-@dataclass
-class LoyalityLevel:
-    level: int
-    days: int
-    reward: float
-    congrats_text: str = "🥳LEVEL UP🥳"
-    congrats_link: str = "https://youtu.be/LDU_Txk06tM?t=74"
 
 # программа лояльности
 loyality_programm = [

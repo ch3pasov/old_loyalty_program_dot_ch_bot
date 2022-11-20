@@ -1,8 +1,8 @@
 import global_vars
 import lib.screen as screen
 import server.server_vars
-from lib.useful_lib import (is_member, is_registered, seconds_from_timestamp,
-                            timestamp)
+from lib.useful_lib import (LoyalityLevel, is_member, is_registered,
+                            seconds_from_timestamp, timestamp)
 from pyrogram import filters
 
 users = global_vars.users
@@ -73,8 +73,8 @@ def answer_register(client, callback_query):
     max_level = len(server.server_vars.loyality_programm) - 1
     next_level = min(max_level, current_level + 1)
 
-    schema_level: server.server_vars.LoyalityLevel = server.server_vars.loyality_programm[current_level]
-    schema_next_level: server.server_vars.LoyalityLevel = server.server_vars.loyality_programm[next_level]
+    schema_level: LoyalityLevel = server.server_vars.loyality_programm[current_level]
+    schema_next_level: LoyalityLevel = server.server_vars.loyality_programm[next_level]
     user_exp_days = seconds_from_timestamp(user_line["subscribed_since"])/86400
     level_need_days = schema_level.days
     if user_exp_days >= level_need_days:
