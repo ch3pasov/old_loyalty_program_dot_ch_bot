@@ -1,8 +1,8 @@
 import global_vars
 import lib.screen as screen
 import server.server_vars
-from lib.useful_lib import (LoyalityLevel, is_member, is_registered,
-                            seconds_from_timestamp, timestamp)
+from lib.useful_lib import is_member, is_registered, seconds_from_timestamp, timestamp
+from lib.dataclasses import LoyalityLevel
 from pyrogram import filters
 
 users = global_vars.users

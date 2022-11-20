@@ -30,7 +30,6 @@ button_to_home = '''🏘на главную🏘'''
 button_to_register = '''❇️регистрация❇️'''
 button_to_statistic = '''📊статистика📊'''
 button_to_leveling = '''🔄проверить свой уровень🔄'''
-button_to_party = '''🥳Отпраздновать!🥳'''
 
 
 def home_new():
@@ -189,12 +188,12 @@ def leveling(user_level, user_exp_days):
 def level_up(congrats_text, congrats_link):
     global users
     return {
-        "text": congrats_text,
+        "text": "🥳LEVEL UP🥳",
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
-                        button_to_party,
+                        congrats_text,
                         url=congrats_link
                     )
                 ],

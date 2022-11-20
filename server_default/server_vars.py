@@ -1,4 +1,4 @@
-from lib.useful_lib import LoyalityLevel
+from lib.dataclasses import LoyalityLevel
 
 money_chat_id = -0  # id чата, куда Человек будет кидать деньги
 dot_ch_id = -0  # id канала, на который нужно быть подписанным
@@ -10,10 +10,10 @@ unsubscribed_animation = "a"
 
 # программа лояльности
 loyality_programm = [
-    LoyalityLevel(level=0, days=0, reward=0.0001),
+    LoyalityLevel(level=0, days=0, reward=0.0001, congrats_text='🦀🦀🦀', congrats_link='https://youtu.be/LDU_Txk06tM?t=73'),
     LoyalityLevel(level=1, days=1, reward=0.0002),
     LoyalityLevel(level=2, days=2, reward=0.0004),
-    LoyalityLevel(level=3, days=3, reward=0.0008, congrats_text='UP LEVEL!', congrats_link='https://youtu.be/rTgj1HxmUbg'),
+    LoyalityLevel(level=3, days=3, reward=0.0008),
     LoyalityLevel(level=4, days=4, reward=0.0016),
     LoyalityLevel(level=5, days=5, reward=0.0032),
     LoyalityLevel(level=6, days=6, reward=0.0064),
