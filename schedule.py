@@ -96,7 +96,7 @@ def start_scheduler(users, app, app_human, verbose=True):
     scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"users": users, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"users": users, "verbose": verbose}, max_instances=1)
     # scheduler.add_job(test_app, "interval", seconds=30, kwargs={"app":app, "verbose":verbose}, max_instances=1)
-    scheduler.add_job(update_user_progress, "interval", seconds=30, kwargs={"users": users, "app": app, "app_human": app_human, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    scheduler.add_job(update_user_progress, "interval", minutes=30, kwargs={"users": users, "app": app, "app_human": app_human, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     scheduler.start()
     print(f"Я запустил start_scheduler из модуля scheduler из скрипта main и смотрю на users. Его id {id(users)}")
 
