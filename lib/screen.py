@@ -1,6 +1,7 @@
-from pyrogram.types import (InlineKeyboardButton, InlineKeyboardMarkup)
-import server.server_vars
 import global_vars
+import server.server_vars
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
 users = global_vars.users
 
 home_new_text = '''Привет! 🖖🏻
@@ -22,14 +23,13 @@ loyality_schema_level = """**👤 уровень: {level}**
 🗓 Дней, для левелапа: {days}
 🪙 Награда при левелапе в TON: {reward}"""
 
-loyality_schema_cooked = '\n\n'.join([loyality_schema_level.format(**line) for line in server.server_vars.loyality_programm])
+loyality_schema_cooked = '\n\n'.join([loyality_schema_level.format(**line.__dict__) for line in server.server_vars.loyality_programm])
 
 button_to_schema = '''📈сетка уровней📈'''
 button_to_home = '''🏘на главную🏘'''
 button_to_register = '''❇️регистрация❇️'''
 button_to_statistic = '''📊статистика📊'''
 button_to_leveling = '''🔄проверить свой уровень🔄'''
-button_to_party = '''🥳Отпраздновать!🥳'''
 
 
 def home_new():
@@ -185,16 +185,16 @@ def leveling(user_level, user_exp_days):
     }
 
 
-def level_up():
+def level_up(congrats_text, congrats_link):
     global users
     return {
-        "text": '🥳LEVEL UP🥳',
+        "text": "🥳LEVEL UP🥳",
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
-                        button_to_party,
-                        url="https://youtu.be/LDU_Txk06tM?t=74"
+                        congrats_text,
+                        url=congrats_link
                     )
                 ],
                 [

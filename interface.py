@@ -1,10 +1,10 @@
+import global_vars
+import lib.screen as screen
+import server.server_vars
+from lib.useful_lib import is_member, is_registered, seconds_from_timestamp, timestamp
+from lib.dataclasses import LoyalityLevel
 from pyrogram import filters
 
-import server.server_vars
-import lib.screen as screen
-from lib.useful_lib import is_member, timestamp, seconds_from_timestamp, is_registered
-
-import global_vars
 users = global_vars.users
 print(f"Я запустил interface и смотрю на users. Его id {id(users)}")
 app_human = global_vars.app_human
@@ -69,15 +69,20 @@ def answer_register(client, callback_query):
 
     # мгновенно выдать уровень, если норм
     user_line = users[user_id]["loyality_programm"]
-    schema_level = server.server_vars.loyality_programm[user_line["level"]]
+    current_level = user_line["level"]
+    schema_level: LoyalityLevel = server.server_vars.loyality_programm[current_level]
+
     user_exp_days = seconds_from_timestamp(user_line["subscribed_since"])/86400
-    level_need_days = schema_level["days"]
+    level_need_days = schema_level.days
     if user_exp_days >= level_need_days:
-        reward = schema_level["reward"]
+        reward = schema_level.reward
         screen.send_money(app, app_human, reward, user_id)
         users[user_id]["loyality_programm"]["level"] += 1
         users[user_id]["loyality_programm"]["money_won"] += reward
-        screen.create(app, user_id, screen.level_up())
+        screen.create(app, user_id, screen.level_up(
+            congrats_text=schema_level.congrats_text,
+            congrats_link=schema_level.congrats_link,
+        ))
 
     screen.create(client, callback_query.message.chat.id, screen.register_successfully())
 
