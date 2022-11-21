@@ -14,8 +14,7 @@ stdout.log
 server/
 
 # это чисто для меня
-sandbox.py
-sandbox/
+sandbox*
 
 
 
