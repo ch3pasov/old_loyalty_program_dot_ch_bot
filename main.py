@@ -8,11 +8,10 @@ app = interface.app
 users = interface.users
 print(f"Я запустил main и смотрю на users. Его id {id(users)}")
 
-
 path_out = 'stdout.log'
-sys.stdout = open(path_out, 'w')
+sys.stdout = open(path_out, "a")
 path_err = 'stderr.log'
-sys.stderr = open(path_err, 'w')
+sys.stderr = open(path_err, 'a')
 
 # create logger
 logger = logging.getLogger("logging_tryout2")

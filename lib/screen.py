@@ -208,29 +208,6 @@ def level_up(congrats_text, congrats_link):
     }
 
 
-def money_hidden_block_check():
-    return {
-        "animation": server.server_vars.money_animation,
-        "unsave": False
-    }
-
-
-def money(send_message):
-    return {
-        "text": send_message.message,
-        "reply_markup": InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "Получить на @wallet",
-                        url=send_message.reply_markup.rows[0].buttons[0].url
-                    )
-                ]
-            ]
-        )
-    }
-
-
 def statistic():
     global users
     return {
@@ -311,7 +288,31 @@ def update(client, chat_id, message_id, screen):
     )
 
 
-def send_money(app, app_human, amount, user_id):
+def money_hidden_block_check():
+    return {
+        "animation": server.server_vars.money_animation,
+        "unsave": False
+    }
+
+
+def money(send_message, text=None, button_text=None, reply_to_message_id=None):
+    return {
+        "text": send_message.message if not text else text,
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "Получить на @wallet" if not button_text else button_text,
+                        url=send_message.reply_markup.rows[0].buttons[0].url
+                    )
+                ]
+            ]
+        ),
+        "reply_to_message_id": reply_to_message_id
+    }
+
+
+def send_money(app, app_human, amount, user_id, reply_to_message_id=None, text=None, button_text=None, debug_comment=None):
     global users
 
     assert amount < 1, "МНОГО ДЕНЕГ"
@@ -323,8 +324,8 @@ def send_money(app, app_human, amount, user_id):
     result = r.results[0]
     if "TON" in result.title and "BTC" not in result.title:
         app_human.send_inline_bot_result(server.server_vars.money_chat_id, r.query_id, result.id)
-        app_human.send_message(server.server_vars.money_chat_id, f"отправил {amount} TON юзеру {user_id}")
+        app_human.send_message(server.server_vars.money_chat_id, f"отправил {amount} TON юзеру {user_id}\n{debug_comment}")
 
-        create(app, user_id, money(result.send_message))
+        create(app, user_id, money(result.send_message, text=text, button_text=button_text, reply_to_message_id=reply_to_message_id))
     else:
         raise ValueError("BTC! СЛЕВА НАПРАВО")

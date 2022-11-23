@@ -25,8 +25,12 @@ def is_registered(user_id, users):
     return True
 
 
+def now():
+    return datetime.now(timezone.utc)
+
+
 def timestamp():
-    return datetime.now().timestamp()
+    return now().timestamp()
 
 
 def timestamp_to_datetime(timestamp):
@@ -34,7 +38,7 @@ def timestamp_to_datetime(timestamp):
 
 
 def seconds_from_timestamp(timestamp):
-    return (datetime.now() - datetime.fromtimestamp(timestamp)).total_seconds()
+    return (now() - datetime.fromtimestamp(timestamp, timezone.utc)).total_seconds()
 
 
 def random_datetime(up_timedelta):

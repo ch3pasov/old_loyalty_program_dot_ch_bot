@@ -6,21 +6,17 @@ from datetime import datetime, timezone
 import lib.screen as screen
 import server.server_vars
 from apscheduler.schedulers.background import BackgroundScheduler
-from lib.useful_lib import is_registered, seconds_from_timestamp
+from lib.useful_lib import is_registered, seconds_from_timestamp, now, random_datetime
 from lib.dataclasses import LoyalityLevel
 from pyrogram import errors
 
 warnings.filterwarnings("ignore")
 
-# import global_vars
-# users = global_vars.users
-# print(f"Я запустил schedule и импортировал users. Его id {id(users)}")
 
-
+# бэкап в папку server/logs/
 def backup_log_job(users, verbose=False):
     if verbose:
         print('backup!')
-    # global users
 
     now = datetime.now(timezone.utc)
     filename = f"server/logs/{now.strftime('%Y-%m-%d')}/{now.strftime('%H_%M')}/users.json"
@@ -29,6 +25,7 @@ def backup_log_job(users, verbose=False):
         json.dump(users, f, ensure_ascii=False, indent=4)
 
 
+# сохранение нынешнего users в server/users.json
 def save_log_job(users, verbose=False):
     if verbose:
         print('save!')
@@ -39,10 +36,9 @@ def save_log_job(users, verbose=False):
         json.dump(users, f, ensure_ascii=False, indent=4)
 
 
-# def test_app(app, verbose=True):
-#     print('test app!')
-#     app.send_message("drakedoin", "пук")
-
+# 1. Удаляет всех отписавшихся от канала.
+# 2. Левелапает всех, кого надо левалапнуть.
+# 3. Баню, если внезапно чел заблочил бота.
 def update_user_progress(users, app, app_human, verbose=True):
     if verbose:
         print('update_user_progress!')
@@ -89,16 +85,73 @@ def update_user_progress(users, app, app_human, verbose=True):
             ))
 
 
+def money_drop(app, app_human, dot_ch_chat_id, money_drop_message_id, amount):
+    print(f"MONEY DROP {now()}")
+    screen.send_money(
+        app, app_human, amount, dot_ch_chat_id, reply_to_message_id=money_drop_message_id,
+        text='💸 **регулярный money drop.** 💸\nкто первый встал того и тапки!',
+        button_text=f'Получить {amount}+ε на @wallet',
+        debug_comment='money drop',
+    )
+
+
+def drop_scheduler(app, app_human, dot_ch_chat_id, money_drop_message_id, scheduler):
+    print("Start drop_scheduler!")
+    from datetime import timedelta
+    for i in range(server.server_vars.money_drop_drops):
+        run_date = random_datetime(timedelta(minutes=server.server_vars.money_drop_period_minutes))
+        print(run_date)
+        scheduler.add_job(
+            money_drop,
+            'date',
+            run_date=run_date,
+            kwargs={
+                "app": app,
+                "app_human": app_human,
+                "dot_ch_chat_id": dot_ch_chat_id,
+                "money_drop_message_id": money_drop_message_id,
+                "amount": server.server_vars.money_drop_amount
+            }
+        )
+
+
+def test_app(app, verbose=True):
+    print('test app!')
+    app.send_message("drakedoin", "пук")
+
+
 def start_scheduler(users, app, app_human, verbose=True):
     # global users
-
     scheduler = BackgroundScheduler()
+
     scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"users": users, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"users": users, "verbose": verbose}, max_instances=1)
-    # scheduler.add_job(test_app, "interval", seconds=30, kwargs={"app":app, "verbose":verbose}, max_instances=1)
     scheduler.add_job(update_user_progress, "interval", seconds=30, kwargs={"users": users, "app": app, "app_human": app_human, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
-    scheduler.start()
-    print(f"Я запустил start_scheduler из модуля scheduler из скрипта main и смотрю на users. Его id {id(users)}")
 
-# if __name__ == "__main__":
-#     start_scheduler(app, app_human)
+    scheduler.add_job(
+        drop_scheduler, "interval", minutes=server.server_vars.money_drop_period_minutes,
+        kwargs={
+            "app": app,
+            "app_human": app_human,
+            "dot_ch_chat_id": server.server_vars.dot_ch_chat_id,
+            "money_drop_message_id": server.server_vars.money_drop_message_id,
+            "scheduler": scheduler
+        }, max_instances=1, next_run_time=datetime.now()
+    )
+
+    scheduler.start()
+    print(f"Я запустил start_scheduler из модуля scheduler и смотрю на users. Его id {id(users)}")
+
+
+if __name__ == "__main__":
+    from pyrogram import idle
+    import global_vars
+    users = global_vars.users
+    app = global_vars.app
+    app_human = global_vars.app_human
+    app.start()
+    app_human.start()
+
+    print(f"[дебаг] Я запустил schedule напрямую и импортировал users. Его id {id(users)}")
+    start_scheduler(users, app, app_human, verbose=True)
+    idle()

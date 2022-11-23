@@ -2,7 +2,10 @@ from lib.dataclasses import LoyalityLevel
 
 money_chat_id = -0  # id чата, куда Человек будет кидать деньги
 dot_ch_id = -0  # id канала, на который нужно быть подписанным
-# dot_ch_chat_id = -1  # id чата канала
+dot_ch_chat_id = -0  # id чата канала
+
+money_drop_message_id = 0  # id сообщения для манидропов. Это id внутри чата канала
+# то есть # t.me/c/{dot_ch_chat_id}/{money_drop_message_id}
 
 # Ой вот тут вы умрёте доставать этот id, для каждого робота он разный. Удачи!
 money_animation = "a"
@@ -22,3 +25,7 @@ loyality_programm = [
     LoyalityLevel(level=9, days=21, reward=0.01, congrats_text='🧌🧌🧌🧌', congrats_link='https://youtu.be/xNoSi7acNgc'),
     LoyalityLevel(level=10, days=28, reward=0.05, congrats_text='🧌🧌🧌🧌🧌🧌🧌🧌', congrats_link='https://youtu.be/0PiqqbyQRoo?t=14'),
 ]
+
+money_drop_period_minutes = 1440
+money_drop_drops = 5
+money_drop_amount = 0.00777
