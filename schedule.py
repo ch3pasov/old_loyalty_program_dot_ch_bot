@@ -9,6 +9,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from lib.useful_lib import is_registered, seconds_from_timestamp, now, random_datetime
 from lib.dataclasses import LoyalityLevel
 from pyrogram import errors
+from lib.money import send_money
 
 warnings.filterwarnings("ignore")
 
@@ -75,7 +76,7 @@ def update_user_progress(users, app, app_human, verbose=True):
                 continue
 
             reward = schema_level.reward
-            screen.send_money(app, app_human, reward, user_id)
+            send_money(app, app_human, reward, user_id)
             users[user_id]["loyality_programm"]["level"] += 1
             users[user_id]["loyality_programm"]["money_won"] += reward
 
@@ -87,7 +88,7 @@ def update_user_progress(users, app, app_human, verbose=True):
 
 def money_drop(app, app_human, dot_ch_chat_id, money_drop_message_id, amount):
     print(f"MONEY DROP {now()}")
-    screen.send_money(
+    send_money(
         app, app_human, amount, dot_ch_chat_id, reply_to_message_id=money_drop_message_id,
         text='💸 **регулярный money drop.** 💸\nкто первый встал того и тапки!',
         button_text=f'Получить {amount}+ε на @wallet',
