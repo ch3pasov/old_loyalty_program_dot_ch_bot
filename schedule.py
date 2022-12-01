@@ -70,8 +70,8 @@ def update_user_progress(users, app, app_human, verbose=True):
             # если он меня забанил — то я его тоже 🔫🔫🔫
             try:
                 screen.create(app, user_id, screen.money_hidden_block_check())
-            except errors.exceptions.bad_request_400.UserIsBlocked:
-                print(f"{user_id} IS BLOCKED ME")
+            except (errors.exceptions.bad_request_400.UserIsBlocked, errors.exceptions.bad_request_400.InputUserDeactivated) as e:
+                print(f"{user_id} IS BLOCKED ME or something wtf: {e}")
                 users[user_id]["loyality_programm"]["subscribed_since"] = None
                 continue
 
