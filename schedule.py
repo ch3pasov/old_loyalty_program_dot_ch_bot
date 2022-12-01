@@ -127,7 +127,7 @@ def start_scheduler(users, app, app_human, verbose=True):
 
     scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"users": users, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"users": users, "verbose": verbose}, max_instances=1)
-    scheduler.add_job(update_user_progress, "interval", seconds=30, kwargs={"users": users, "app": app, "app_human": app_human, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    scheduler.add_job(update_user_progress, "interval", minutes=30, kwargs={"users": users, "app": app, "app_human": app_human, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
 
     scheduler.add_job(
         drop_scheduler, "interval", minutes=server.server_vars.money_drop_period_minutes,

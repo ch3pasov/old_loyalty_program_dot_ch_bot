@@ -17,8 +17,14 @@ def send_money(app, app_human, amount, user_id, reply_to_message_id=None, text=N
 
     result = r.results[0]
     if "TON" in result.title and "BTC" not in result.title:
-        app_human.send_inline_bot_result(server.server_vars.money_chat_id, r.query_id, result.id)
-        app_human.send_message(server.server_vars.money_chat_id, f"отправил {amount} TON юзеру {user_id}\n{debug_comment}")
+        updates = app_human.send_inline_bot_result(server.server_vars.money_chat_id, r.query_id, result.id).updates
+        billing_message_id = updates[0].id
+
+        app_human.send_message(
+            server.server_vars.money_chat_id,
+            f"amount={amount}\nuser_id={user_id}\n{debug_comment}",
+            reply_to_message_id=billing_message_id
+        )
 
         screen.create(app, user_id, screen.money(result.send_message, text=text, button_text=button_text, reply_to_message_id=reply_to_message_id))
     else:
