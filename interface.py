@@ -3,6 +3,7 @@ import lib.screen as screen
 import server.server_vars
 from lib.useful_lib import is_member, is_registered, seconds_from_timestamp, timestamp
 from lib.dataclasses import LoyalityLevel
+from lib.money import send_money
 from pyrogram import filters
 
 users = global_vars.users
@@ -76,7 +77,7 @@ def answer_register(client, callback_query):
     level_need_days = schema_level.days
     if user_exp_days >= level_need_days:
         reward = schema_level.reward
-        screen.send_money(app, app_human, reward, user_id)
+        send_money(app, app_human, reward, user_id)
         users[user_id]["loyality_programm"]["level"] += 1
         users[user_id]["loyality_programm"]["money_won"] += reward
         screen.create(app, user_id, screen.level_up(

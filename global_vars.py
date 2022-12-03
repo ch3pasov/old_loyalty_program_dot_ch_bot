@@ -3,6 +3,9 @@ import json
 with open('server/users.json') as f:
     users = json.load(f)
 
+with open('server/active_queues.json') as f:
+    active_queues = json.load(f)
+
 from pyrogram import Client
 
 import server.secret as secret

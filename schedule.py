@@ -9,6 +9,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from lib.useful_lib import is_registered, seconds_from_timestamp, now, random_datetime, is_member
 from lib.dataclasses import LoyalityLevel
 from pyrogram import errors
+from lib.money import send_money
 
 warnings.filterwarnings("ignore")
 
@@ -69,13 +70,13 @@ def update_user_progress(users, app, app_human, verbose=True):
             # если он меня забанил — то я его тоже 🔫🔫🔫
             try:
                 screen.create(app, user_id, screen.money_hidden_block_check())
-            except errors.exceptions.bad_request_400.UserIsBlocked:
-                print(f"{user_id} IS BLOCKED ME")
+            except (errors.exceptions.bad_request_400.UserIsBlocked, errors.exceptions.bad_request_400.InputUserDeactivated) as e:
+                print(f"{user_id} IS BLOCKED ME or something wtf: {e}")
                 users[user_id]["loyality_programm"]["subscribed_since"] = None
                 continue
 
             reward = schema_level.reward
-            screen.send_money(app, app_human, reward, user_id)
+            send_money(app, app_human, reward, user_id)
             users[user_id]["loyality_programm"]["level"] += 1
             users[user_id]["loyality_programm"]["money_won"] += reward
 
@@ -87,7 +88,7 @@ def update_user_progress(users, app, app_human, verbose=True):
 
 def money_drop(app, app_human, dot_ch_chat_id, money_drop_message_id, amount):
     print(f"MONEY DROP {now()}")
-    screen.send_money(
+    send_money(
         app, app_human, amount, dot_ch_chat_id, reply_to_message_id=money_drop_message_id,
         text='💸 **регулярный money drop.** 💸\nкто первый встал того и тапки!',
         button_text=f'Получить {amount}+ε на @wallet',
@@ -126,7 +127,7 @@ def start_scheduler(users, app, app_human, verbose=True):
 
     scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"users": users, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"users": users, "verbose": verbose}, max_instances=1)
-    scheduler.add_job(update_user_progress, "interval", seconds=30, kwargs={"users": users, "app": app, "app_human": app_human, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    scheduler.add_job(update_user_progress, "interval", minutes=30, kwargs={"users": users, "app": app, "app_human": app_human, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
 
     scheduler.add_job(
         drop_scheduler, "interval", minutes=server.server_vars.money_drop_period_minutes,
