@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import lib.screen as screen
 import server.server_vars
 from apscheduler.schedulers.background import BackgroundScheduler
-from lib.useful_lib import is_registered, seconds_from_timestamp, now, random_datetime
+from lib.useful_lib import is_registered, seconds_from_timestamp, now, random_datetime, is_member
 from lib.dataclasses import LoyalityLevel
 from pyrogram import errors
 
@@ -44,7 +44,7 @@ def update_user_progress(users, app, app_human, verbose=True):
         print('update_user_progress!')
     # global users
 
-    member_ids = [member.user.id for member in app.get_chat_members(server.server_vars.dot_ch_id)]
+    # member_ids = [member.user.id for member in app.get_chat_members(server.server_vars.dot_ch_id)]
     # print(member_ids)
 
     for user_id in users:
@@ -52,7 +52,7 @@ def update_user_progress(users, app, app_human, verbose=True):
         if not is_registered(user_id, users):
             continue
         # отписавшихся — выкидываем
-        if int(user_id) not in member_ids:
+        if not is_member(app, server.server_vars.dot_ch_id, int(user_id)):
             users[user_id]["loyality_programm"]["subscribed_since"] = None
             screen.create(app, user_id, screen.unsubscribed_from_channel_gif())
             screen.create(app, user_id, screen.unsubscribed_from_channel())

@@ -13,7 +13,7 @@ def is_member(app, chat_id, user_id):
             return True
         else:
             return is_member
-    except errors.exceptions.bad_request_400.UserNotParticipant:
+    except (errors.exceptions.bad_request_400.UserNotParticipant, errors.exceptions.bad_request_400.PeerIdInvalid):
         return False
 
 
