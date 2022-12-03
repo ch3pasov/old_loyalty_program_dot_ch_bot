@@ -27,5 +27,7 @@ def send_money(app, app_human, amount, user_id, reply_to_message_id=None, text=N
         )
 
         screen.create(app, user_id, screen.money(result.send_message, text=text, button_text=button_text, reply_to_message_id=reply_to_message_id))
+
+        # ...
     else:
         raise ValueError("BTC! СЛЕВА НАПРАВО")
