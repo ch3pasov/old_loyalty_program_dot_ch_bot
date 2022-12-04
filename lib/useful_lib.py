@@ -34,7 +34,7 @@ def timestamp():
 
 
 def timestamp_to_datetime(timestamp):
-    return datetime.fromtimestamp(timestamp, timezone.utc).strftime('%Y-%m-%d %H:%M')
+    return datetime.fromtimestamp(timestamp, timezone.utc).strftime('%F %T.%f')
 
 
 def seconds_from_timestamp(timestamp):
