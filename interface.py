@@ -95,15 +95,13 @@ def answer(client, callback_query):
     screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.statistic())
 
 
-@app.on_callback_query(filters.regex('to_leveling'))
-def answer_leveling(client, callback_query):
+@app.on_callback_query(filters.regex('to_profile'))
+def answer_profile(client, callback_query):
     global users
 
     screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.loading())
     user_id = str(callback_query.from_user.id)
-    user_level = users[user_id]["loyalty_program"]["level"]
-    user_exp_days = seconds_from_timestamp(users[user_id]["loyalty_program"]["subscribed_since"])/86400
-    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.leveling(user_level, user_exp_days))
+    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.profile(user_id))
 
 
 @app.on_chat_member_updated(group=server.server_vars.dot_ch_id)

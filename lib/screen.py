@@ -1,6 +1,7 @@
 import global_vars
 import server.server_vars
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from lib.useful_lib import seconds_from_timestamp, timestamp_to_datetime
 
 users = global_vars.users
 
@@ -25,11 +26,16 @@ loyality_schema_level = """**👤 уровень: {level}**
 
 loyality_schema_cooked = '\n\n'.join([loyality_schema_level.format(**line.__dict__) for line in server.server_vars.loyalty_program])
 
+profile_text = '''Твой id: `{user_id}`
+Твой нынешний уровень: {user_level}
+Твой стаж на канале: {user_exp_days:.4f} дней!
+Дата регистрации: {registration_time}'''
+
 button_to_schema = '''📈сетка уровней📈'''
 button_to_home = '''🏘на главную🏘'''
 button_to_register = '''❇️регистрация❇️'''
-button_to_statistic = '''📊статистика📊'''
-button_to_leveling = '''🔄проверить свой уровень🔄'''
+button_to_statistic = '''📊Глобальная статистика📊'''
+button_to_profile = '''🔄Мой профиль🔄'''
 
 
 def home_new():
@@ -61,8 +67,8 @@ def home_exist(user_id):
             [
                 [
                     InlineKeyboardButton(
-                        button_to_leveling,
-                        callback_data="to_leveling"
+                        button_to_profile,
+                        callback_data="to_profile"
                     ),
                 ],
                 [
@@ -162,16 +168,26 @@ def register_successfully():
     }
 
 
-def leveling(user_level, user_exp_days):
+def profile(user_id):
     global users
+
+    user_level = users[user_id]["loyalty_program"]["level"]
+    user_exp_days = seconds_from_timestamp(users[user_id]["loyalty_program"]["subscribed_since"])/86400
+    registration_time = timestamp_to_datetime(users[user_id]["registered_since"])
+
     return {
-        "text": f'''Твой нынешний уровень: {user_level}\nТы подписан на канал {user_exp_days:.4f} дней!''',
+        "text": profile_text.format(
+            user_id=user_id,
+            user_level=user_level,
+            user_exp_days=user_exp_days,
+            registration_time=registration_time
+        ),
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
-                        button_to_leveling,
-                        callback_data="to_leveling"
+                        button_to_profile,
+                        callback_data="to_profile"
                     ),
                 ],
                 [
@@ -211,7 +227,7 @@ def level_up(congrats_text, congrats_link):
 def statistic():
     global users
     return {
-        "text": f'Количество пользователей: {len(users)}',
+        "text": f'Всего пользователей: {len(users)}',
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
@@ -223,6 +239,23 @@ def statistic():
             ]
         )
     }
+
+
+# def referal_program():
+#     global users
+#     return {
+#         "text": f'Количество пользователей: {len(users)}',
+#         "reply_markup": InlineKeyboardMarkup(
+#             [
+#                 [
+#                     InlineKeyboardButton(
+#                         button_to_home,
+#                         callback_data="to_home"
+#                     )
+#                 ]
+#             ]
+#         )
+#     }
 
 
 def no_messages():
@@ -266,28 +299,6 @@ def unsubscribed_from_channel():
     }
 
 
-def create(client, chat_id, screen):
-    if "animation" in screen:
-        client.send_animation(
-            chat_id,
-            **screen
-        )
-        return 0
-
-    client.send_message(
-        chat_id,
-        **screen
-    )
-
-
-def update(client, chat_id, message_id, screen):
-    client.edit_message_text(
-        chat_id=chat_id,
-        message_id=message_id,
-        **screen
-    )
-
-
 def money_hidden_block_check():
     return {
         "animation": server.server_vars.money_animation,
@@ -310,3 +321,25 @@ def money(send_message, text=None, button_text=None, reply_to_message_id=None):
         ),
         "reply_to_message_id": reply_to_message_id
     }
+
+
+def create(client, chat_id, screen):
+    if "animation" in screen:
+        client.send_animation(
+            chat_id,
+            **screen
+        )
+        return 0
+
+    client.send_message(
+        chat_id,
+        **screen
+    )
+
+
+def update(client, chat_id, message_id, screen):
+    client.edit_message_text(
+        chat_id=chat_id,
+        message_id=message_id,
+        **screen
+    )
