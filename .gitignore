@@ -7,8 +7,7 @@ __pycache__/
 account_*.session*
 
 # выхлоп для дебага
-stderr.log
-stdout.log
+common.log
 
 # серверные переменные
 server/
