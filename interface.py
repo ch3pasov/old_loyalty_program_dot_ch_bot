@@ -15,6 +15,7 @@ app = global_vars.app
 
 @app.on_message(filters.command(["start"]) & filters.private)
 def my_handler(client, message):
+
     user_id = str(message.from_user.id)
 
     if is_registered(user_id, users):
@@ -30,7 +31,10 @@ def answer_schema(client, callback_query):
 
 @app.on_callback_query(filters.regex('to_home'))
 def answer_home(client, callback_query):
+    # global users
     user_id = str(callback_query.from_user.id)
+
+    # users[user_id]['context'] = None
 
     if is_registered(user_id, users):
         screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.home_exist(user_id))
@@ -62,7 +66,8 @@ def answer_register(client, callback_query):
                 "level": 0,
                 "money_won": 0,
                 "referer_id": None
-            }
+            },
+            "context": None
         }
     )
     users[user_id]["loyalty_program"]["subscribed_since"] = timestamp()
@@ -91,8 +96,46 @@ def answer_register(client, callback_query):
 
 
 @app.on_callback_query(filters.regex('to_statistic'))
-def answer(client, callback_query):
+def answer_statistic(client, callback_query):
     screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.statistic())
+
+
+@app.on_callback_query(filters.regex('to_referal_program'))
+def answer_referal_program(client, callback_query):
+    user_id = str(callback_query.from_user.id)
+    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.referal_program(user_id))
+
+
+@app.on_callback_query(filters.regex(r"to_set_referer\?referer_id=(\d+)"))
+def answer(client, callback_query, **kwargs):
+    global users
+    import re
+
+    user_id = str(callback_query.from_user.id)
+    referer_id = re.search(r"to_set_referer\?referer_id=(\d+)", callback_query.data).group(1)
+
+    if referer_id not in users:
+        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong("not user"))
+        return
+    if referer_id == user_id:
+        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong("referer = referal"))
+        return
+    if users[referer_id]['loyalty_program']['subscribed_since'] is None:
+        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong("not in loyalty program"))
+        return
+    if users[user_id]["registered_since"] <= users[referer_id]["registered_since"]:
+        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong("referer is older"))
+        return
+
+    users[user_id]['loyalty_program']['referer_id'] = referer_id
+
+    callback_query.answer(
+        "🎈Талант и Успех!🎈",
+        show_alert=False
+    )
+
+    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_successfully_emoji())
+    screen.create(client, callback_query.message.chat.id, screen.set_referer_successfully())
 
 
 @app.on_callback_query(filters.regex('to_profile'))
@@ -128,7 +171,24 @@ def handler_channel_update(client, chat_member_updated):
 # сообщения в личку
 @app.on_message(filters.private & filters.text)
 def answer_messages(client, message):
-    screen.create(client, message.chat.id, screen.no_messages())
+    import re
+
+    message_text = message.text
+
+    if re.search(r"^@[a-zA-Z0-9_]{1,20}bot", message_text):
+        # команда
+        search = re.search(r"^@[a-zA-Z0-9_]{1,20}bot добавить реферера с ID:[ ]{0,}([0-9a-zA-Z_]{1,})[ ]{0,}$", message_text)
+        if search:
+            set_referer_param = search.group(1)
+            if re.search(r"[0-9]{1,}", set_referer_param):
+                screen.create(client, message.chat.id, screen.set_referer_confirm(referer_user_id=set_referer_param))
+            else:
+                screen.create(client, message.chat.id, screen.set_referer_not_number())
+        else:
+            screen.create(client, message.chat.id, screen.unknown_command())
+    else:
+        # не команда
+        screen.create(client, message.chat.id, screen.no_messages())
 
 
 @app.on_message(filters.private & filters.voice)

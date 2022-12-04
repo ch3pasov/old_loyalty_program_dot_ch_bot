@@ -16,7 +16,7 @@ home_new_text = '''Привет! 🖖🏻
 
 Увидеть нынешнюю сетку уровней и зарегистрироваться в ПРОГРАММЕ ЛОЯЛЬНОСТИ ты можешь по кнопкам ниже:'''
 
-home_exist_text = '''Привет, юзер с номером {user_id}! 😳
+home_exist_text = '''Привет, юзер с ID `{user_id}`! 😳
 
 Увидеть сетку уровней, проверить свой статус и поглядеть статистику ты можешь по кнопкам ниже:'''
 
@@ -26,16 +26,30 @@ loyality_schema_level = """**👤 уровень: {level}**
 
 loyality_schema_cooked = '\n\n'.join([loyality_schema_level.format(**line.__dict__) for line in server.server_vars.loyalty_program])
 
-profile_text = '''Твой id: `{user_id}`
+set_referer_not_number_text = '''Привет! Для добавления реферера нужно добавить его численный ID пользователя.
+Попроси реферера прислать тебе сообщение с его 👤профилем👤 — его ID можно будет скопировать оттуда.'''
+
+referal_program_invite = '''— бот 🧞 программы 💾 лояльности ⛓ канала 🗣 @dot_ch 🤑.
+
+**TL;DR** подписываешься на канал, получаешь TON-награду за то, что не отписываешься
+Добавить меня как реферера — будучи зарегистрированным, введи команду `@dot_ch_bot добавить реферера с ID: {user_id}`.
+Спасибо!'''
+
+profile_text = '''Твой ID: `{user_id}`
 Твой нынешний уровень: {user_level}
 Твой стаж на канале: {user_exp_days:.4f} дней!
-Дата регистрации: {registration_time}'''
+
+Дата регистрации: {user_registration_time} (UTC)
+Суммарный выигрыш в программе лояльности: {user_money_won:.4f}
+ID твоего реферера: `{user_referer_id}`'''
 
 button_to_schema = '''📈сетка уровней📈'''
 button_to_home = '''🏘на главную🏘'''
 button_to_register = '''❇️регистрация❇️'''
 button_to_statistic = '''📊Глобальная статистика📊'''
-button_to_profile = '''🔄Мой профиль🔄'''
+button_to_profile = '''👤Мой профиль👤'''
+button_to_profile_refresh = '''🔄Мой профиль🔄'''
+button_to_referal_program = '''😳Реферальная программа😳'''
 
 
 def home_new():
@@ -154,7 +168,7 @@ def register_successfully_emoji():
 
 def register_successfully():
     return {
-        "text": 'Готово! Теперь ты зарегистрирован!',
+        "text": 'Готово! С регистрацией!',
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
@@ -169,25 +183,33 @@ def register_successfully():
 
 
 def profile(user_id):
-    global users
-
     user_level = users[user_id]["loyalty_program"]["level"]
     user_exp_days = seconds_from_timestamp(users[user_id]["loyalty_program"]["subscribed_since"])/86400
-    registration_time = timestamp_to_datetime(users[user_id]["registered_since"])
+    user_registration_time = timestamp_to_datetime(users[user_id]["registered_since"])
+    user_money_won = users[user_id]["loyalty_program"]["money_won"]
+    user_referer_id = users[user_id]["loyalty_program"]["referer_id"]
 
     return {
         "text": profile_text.format(
             user_id=user_id,
             user_level=user_level,
             user_exp_days=user_exp_days,
-            registration_time=registration_time
+            user_registration_time=user_registration_time,
+            user_money_won=user_money_won,
+            user_referer_id=user_referer_id
         ),
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
-                        button_to_profile,
+                        button_to_profile_refresh,
                         callback_data="to_profile"
+                    ),
+                ],
+                [
+                    InlineKeyboardButton(
+                        button_to_referal_program,
+                        callback_data="to_referal_program"
                     ),
                 ],
                 [
@@ -202,7 +224,6 @@ def profile(user_id):
 
 
 def level_up(congrats_text, congrats_link):
-    global users
     return {
         "text": "🥳LEVEL UP🥳",
         "reply_markup": InlineKeyboardMarkup(
@@ -225,9 +246,10 @@ def level_up(congrats_text, congrats_link):
 
 
 def statistic():
-    global users
+    users_cnt = len(users)
+    users_win = sum([float(users[user]['loyalty_program']['money_won']) for user in users])
     return {
-        "text": f'Всего пользователей: {len(users)}',
+        "text": f'Всего пользователей: {users_cnt}\nПолучено суммарно: {users_win} TON.',
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
@@ -241,21 +263,120 @@ def statistic():
     }
 
 
-# def referal_program():
-#     global users
-#     return {
-#         "text": f'Количество пользователей: {len(users)}',
-#         "reply_markup": InlineKeyboardMarkup(
-#             [
-#                 [
-#                     InlineKeyboardButton(
-#                         button_to_home,
-#                         callback_data="to_home"
-#                     )
-#                 ]
-#             ]
-#         )
-#     }
+def referal_program(user_id):
+    return {
+        "text": 'Реферальная программа!',
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(  # Opens the inline interface in the current chat
+                        "Добавить реферера",
+                        switch_inline_query_current_chat="добавить реферера с ID: "
+                    )
+                ],
+                [
+                    InlineKeyboardButton(  # Opens the inline interface in the current chat
+                        "Пригласить друга",
+                        switch_inline_query=referal_program_invite.format(user_id=user_id)
+                    ),
+                    InlineKeyboardButton(
+                        button_to_home,
+                        callback_data="to_home"
+                    )
+                ],
+            ]
+        )
+    }
+
+
+def set_referer_confirm(referer_user_id):
+    return {
+        "text": f'Ты хочешь назначить своим реферером юзера с ID=`{referer_user_id}`?',
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "Да!",
+                        callback_data=f"to_set_referer?referer_id={referer_user_id}"
+                    ),
+                    InlineKeyboardButton(
+                        "Нет!!!",
+                        callback_data="to_referal_program"
+                    )
+                ],
+            ]
+        )
+    }
+
+
+def set_referer_smth_wrong(text):
+    return {
+        "text": text,
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "К реферальной программе",
+                        callback_data="to_referal_program"
+                    )
+                ],
+            ]
+        )
+    }
+
+
+def set_referer_successfully_emoji():
+    return {
+        "text": "🥳"
+    }
+
+
+def set_referer_successfully():
+    return {
+        "text": 'Готово! Реферер установлен!',
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        button_to_referal_program,
+                        callback_data="to_referal_program"
+                    )
+                ]
+            ]
+        )
+    }
+
+
+def unknown_command():
+    return {
+        "text": '''Привет! Вижу, что ты пытаешься ввести какую-то команду, но такой команды нет.''',
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        button_to_home,
+                        callback_data="to_home"
+                    )
+                ]
+            ]
+        )
+    }
+
+
+def set_referer_not_number():
+    return {
+        "text": set_referer_not_number_text,
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        button_to_profile,
+                        callback_data="to_profile"
+                    )
+                ]
+            ]
+        )
+    }
 
 
 def no_messages():
