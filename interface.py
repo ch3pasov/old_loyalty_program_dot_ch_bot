@@ -1,4 +1,5 @@
 import global_vars
+from global_vars import print
 import lib.screen as screen
 import server.server_vars
 from lib.useful_lib import is_member, is_registered, seconds_from_timestamp, timestamp

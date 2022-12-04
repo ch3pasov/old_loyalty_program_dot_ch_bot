@@ -10,6 +10,7 @@ from lib.useful_lib import is_registered, seconds_from_timestamp, now, random_da
 from lib.dataclasses import LoyalityLevel
 from pyrogram import errors
 from lib.money import send_money
+from global_vars import print
 
 warnings.filterwarnings("ignore")
 
@@ -101,7 +102,7 @@ def drop_scheduler(app, app_human, dot_ch_chat_id, money_drop_message_id, schedu
     from datetime import timedelta
     for i in range(server.server_vars.money_drop_drops):
         run_date = random_datetime(timedelta(minutes=server.server_vars.money_drop_period_minutes))
-        print(run_date, flush=True)
+        print(run_date)
         scheduler.add_job(
             money_drop,
             'date',
