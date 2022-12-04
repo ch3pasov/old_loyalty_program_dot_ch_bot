@@ -13,3 +13,8 @@ for user in new_users:
         new_users[user]['loyalty_program'] = new_users[user].pop('loyality_programm')
 for user in new_users:
     new_users[user]['loyalty_program'].setdefault('referer_id', None)
+
+print('''
+with open('server/users.json', 'w', encoding='utf-8') as f:
+    json.dump(users, f, ensure_ascii=False, indent=4)
+''')
