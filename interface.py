@@ -60,7 +60,8 @@ def answer_register(client, callback_query):
             "loyality_programm": {
                 "subscribed_since": None,
                 "level": 0,
-                "money_won": 0
+                "money_won": 0,
+                "referer_id": None
             }
         }
     )
