@@ -3,7 +3,7 @@ from global_vars import print
 import lib.screen as screen
 import server.server_vars
 from lib.useful_lib import is_member, is_registered, seconds_from_timestamp, timestamp
-from lib.dataclasses import LoyalityLevel
+from lib.dataclasses import LoyaltyLevel
 from lib.money import send_money
 from pyrogram import filters
 
@@ -57,7 +57,7 @@ def answer_register(client, callback_query):
         user_id,
         {
             "registered_since": timestamp(),
-            "loyality_programm": {
+            "loyalty_program": {
                 "subscribed_since": None,
                 "level": 0,
                 "money_won": 0,
@@ -65,23 +65,23 @@ def answer_register(client, callback_query):
             }
         }
     )
-    users[user_id]["loyality_programm"]["subscribed_since"] = timestamp()
+    users[user_id]["loyalty_program"]["subscribed_since"] = timestamp()
     # print(users[user_id])
 
     screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.register_successfully_emoji())
 
     # мгновенно выдать уровень, если норм
-    user_line = users[user_id]["loyality_programm"]
+    user_line = users[user_id]["loyalty_program"]
     current_level = user_line["level"]
-    schema_level: LoyalityLevel = server.server_vars.loyality_programm[current_level]
+    schema_level: LoyaltyLevel = server.server_vars.loyalty_program[current_level]
 
     user_exp_days = seconds_from_timestamp(user_line["subscribed_since"])/86400
     level_need_days = schema_level.days
     if user_exp_days >= level_need_days:
         reward = schema_level.reward
         send_money(app, app_human, reward, user_id)
-        users[user_id]["loyality_programm"]["level"] += 1
-        users[user_id]["loyality_programm"]["money_won"] += reward
+        users[user_id]["loyalty_program"]["level"] += 1
+        users[user_id]["loyalty_program"]["money_won"] += reward
         screen.create(app, user_id, screen.level_up(
             congrats_text=schema_level.congrats_text,
             congrats_link=schema_level.congrats_link,
@@ -101,8 +101,8 @@ def answer_leveling(client, callback_query):
 
     screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.loading())
     user_id = str(callback_query.from_user.id)
-    user_level = users[user_id]["loyality_programm"]["level"]
-    user_exp_days = seconds_from_timestamp(users[user_id]["loyality_programm"]["subscribed_since"])/86400
+    user_level = users[user_id]["loyalty_program"]["level"]
+    user_exp_days = seconds_from_timestamp(users[user_id]["loyalty_program"]["subscribed_since"])/86400
     screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.leveling(user_level, user_exp_days))
 
 
@@ -122,7 +122,7 @@ def handler_channel_update(client, chat_member_updated):
         # отписавшийся от канала не в программе лояльности
         return
 
-    users[user_id]["loyality_programm"]["subscribed_since"] = None
+    users[user_id]["loyalty_program"]["subscribed_since"] = None
     screen.create(app, user_id, screen.unsubscribed_from_channel_gif())
     screen.create(app, user_id, screen.unsubscribed_from_channel())
 

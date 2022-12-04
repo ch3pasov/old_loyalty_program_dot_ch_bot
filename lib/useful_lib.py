@@ -20,7 +20,7 @@ def is_member(app, chat_id, user_id):
 def is_registered(user_id, users):
     if user_id not in users:
         return False
-    if users[user_id]["loyality_programm"]["subscribed_since"] is None:
+    if users[user_id]["loyalty_program"]["subscribed_since"] is None:
         return False
     return True
 

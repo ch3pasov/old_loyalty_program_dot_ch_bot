@@ -7,7 +7,7 @@ import lib.screen as screen
 import server.server_vars
 from apscheduler.schedulers.background import BackgroundScheduler
 from lib.useful_lib import is_registered, seconds_from_timestamp, now, random_datetime, is_member
-from lib.dataclasses import LoyalityLevel
+from lib.dataclasses import LoyaltyLevel
 from pyrogram import errors
 from lib.money import send_money
 from global_vars import print
@@ -55,15 +55,15 @@ def update_user_progress(users, app, app_human, verbose=True):
             continue
         # отписавшихся — выкидываем
         if not is_member(app, server.server_vars.dot_ch_id, int(user_id)):
-            users[user_id]["loyality_programm"]["subscribed_since"] = None
+            users[user_id]["loyalty_program"]["subscribed_since"] = None
             screen.create(app, user_id, screen.unsubscribed_from_channel_gif())
             screen.create(app, user_id, screen.unsubscribed_from_channel())
             continue
 
         # живых — проверяем на левелап
-        user_line = users[user_id]["loyality_programm"]
+        user_line = users[user_id]["loyalty_program"]
         current_level = user_line["level"]
-        schema_level: LoyalityLevel = server.server_vars.loyality_programm[current_level]
+        schema_level: LoyaltyLevel = server.server_vars.loyalty_program[current_level]
 
         user_exp_days = seconds_from_timestamp(user_line["subscribed_since"])/86400
         level_need_days = schema_level.days
@@ -73,13 +73,13 @@ def update_user_progress(users, app, app_human, verbose=True):
                 screen.create(app, user_id, screen.money_hidden_block_check())
             except (errors.exceptions.bad_request_400.UserIsBlocked, errors.exceptions.bad_request_400.InputUserDeactivated) as e:
                 print(f"{user_id} IS BLOCKED ME or something wtf: {e}")
-                users[user_id]["loyality_programm"]["subscribed_since"] = None
+                users[user_id]["loyalty_program"]["subscribed_since"] = None
                 continue
 
             reward = schema_level.reward
             send_money(app, app_human, reward, user_id)
-            users[user_id]["loyality_programm"]["level"] += 1
-            users[user_id]["loyality_programm"]["money_won"] += reward
+            users[user_id]["loyalty_program"]["level"] += 1
+            users[user_id]["loyalty_program"]["money_won"] += reward
 
             screen.create(app, user_id, screen.level_up(
                 congrats_link=schema_level.congrats_link,

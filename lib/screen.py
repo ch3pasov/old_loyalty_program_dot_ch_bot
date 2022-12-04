@@ -23,7 +23,7 @@ loyality_schema_level = """**👤 уровень: {level}**
 🗓 Дней, для левелапа: {days}
 🪙 Награда при левелапе в TON: {reward}"""
 
-loyality_schema_cooked = '\n\n'.join([loyality_schema_level.format(**line.__dict__) for line in server.server_vars.loyality_programm])
+loyality_schema_cooked = '\n\n'.join([loyality_schema_level.format(**line.__dict__) for line in server.server_vars.loyalty_program])
 
 button_to_schema = '''📈сетка уровней📈'''
 button_to_home = '''🏘на главную🏘'''
