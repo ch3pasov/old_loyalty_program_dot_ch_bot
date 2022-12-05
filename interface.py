@@ -1,14 +1,16 @@
 import global_vars
-from global_vars import print
+# from global_vars import print
 import lib.screen as screen
 import server.server_vars
 from lib.useful_lib import is_member, is_registered, seconds_from_timestamp, timestamp
 from lib.dataclasses import LoyaltyLevel
 from lib.money import send_money
 from pyrogram import filters
+import re
 
 users = global_vars.users
-print(f"Я запустил interface и смотрю на users. Его id {id(users)}")
+user_referers = global_vars.user_referers
+
 app_human = global_vars.app_human
 app = global_vars.app
 
@@ -16,12 +18,24 @@ app = global_vars.app
 @app.on_message(filters.command(["start"]) & filters.private)
 def my_handler(client, message):
 
+    referer_id = None
+    if len(message.command) >= 2:
+        command_text = message.command[1]
+        re_search = re.search(r"^referer_id=(\d+)$", command_text)
+        if re_search:
+            referer_id = re_search.group(1)
+
     user_id = str(message.from_user.id)
 
     if is_registered(user_id, users):
         screen.create(client, message.chat.id, screen.home_exist(user_id))
+        if referer_id:
+            screen.create(client, message.chat.id, screen.set_referer_confirm(referer_id=referer_id))
     else:
         screen.create(client, message.chat.id, screen.home_new())
+        if referer_id:
+            print(f"Незарегистрированный пользователь {user_id} зашёл по рефералке {referer_id}! Запомнил это.")
+            user_referers[user_id] = referer_id
 
 
 @app.on_callback_query(filters.regex('to_schema'))
@@ -71,7 +85,7 @@ def answer_register(client, callback_query):
         }
     )
     users[user_id]["loyalty_program"]["subscribed_since"] = timestamp()
-    # print(users[user_id])
+    print(f"Юзер {user_id} зарегистрировался!")
 
     screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.register_successfully_emoji())
 
@@ -93,6 +107,8 @@ def answer_register(client, callback_query):
         ))
 
     screen.create(client, callback_query.message.chat.id, screen.register_successfully())
+    if user_id in user_referers:
+        screen.create(client, callback_query.message.chat.id, screen.set_referer_confirm(referer_id=user_referers[user_id]))
 
 
 @app.on_callback_query(filters.regex('to_statistic'))
@@ -109,10 +125,9 @@ def answer_referal_program(client, callback_query):
 @app.on_callback_query(filters.regex(r"to_set_referer\?referer_id=(\d+)"))
 def answer(client, callback_query, **kwargs):
     global users
-    import re
 
     user_id = str(callback_query.from_user.id)
-    referer_id = re.search(r"to_set_referer\?referer_id=(\d+)", callback_query.data).group(1)
+    referer_id = re.search(r"^to_set_referer\?referer_id=(\d+)$", callback_query.data).group(1)
 
     if referer_id not in users:
         screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong("not user"))
@@ -179,9 +194,9 @@ def answer_messages(client, message):
         # команда
         search = re.search(r"^@[a-zA-Z0-9_]{1,20}bot добавить реферера с ID:[ ]{0,}([0-9a-zA-Z_]{1,})[ ]{0,}$", message_text)
         if search:
-            set_referer_param = search.group(1)
-            if re.search(r"[0-9]{1,}", set_referer_param):
-                screen.create(client, message.chat.id, screen.set_referer_confirm(referer_user_id=set_referer_param))
+            referer_id = search.group(1)
+            if re.search(r"^[0-9]{1,}$", referer_id):
+                screen.create(client, message.chat.id, screen.set_referer_confirm(referer_id=referer_id))
             else:
                 screen.create(client, message.chat.id, screen.set_referer_not_number())
         else:

@@ -4,6 +4,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from lib.useful_lib import seconds_from_timestamp, timestamp_to_datetime
 
 users = global_vars.users
+bot_username = global_vars.bot_username
 
 home_new_text = '''Привет! 🖖🏻
 Я провожу ПРОГРАММУ ЛОЯЛЬНОСТИ 😳 телеграм-канала @dot_ch.
@@ -11,7 +12,7 @@ home_new_text = '''Привет! 🖖🏻
 Правила такие:
 1. Подписываешься на мой канал: 👉🏻 @dot_ch.
 2. Регистрируешься у бота в ПРОГРАММЕ ЛОЯЛЬНОСТИ (чтобы потом не было вопросов чё это я тебе пишу 🤔).
-3. Не отписываешься от канала и поднимаешь уровень ☝🏻.
+3. Не отписываешься от канала и поднимаешь уровень. ☝🏻
 4. За прохождение каждого уровеня ты получаешь монетки TON (через @wallet).
 
 Увидеть нынешнюю сетку уровней и зарегистрироваться в ПРОГРАММЕ ЛОЯЛЬНОСТИ ты можешь по кнопкам ниже:'''
@@ -31,8 +32,9 @@ set_referer_not_number_text = '''Привет! Для добавления ре�
 
 referal_program_invite = '''— бот 🧞 программы 💾 лояльности ⛓ канала 🗣 @dot_ch 🤑.
 
-**TL;DR** подписываешься на канал, получаешь TON-награду за то, что не отписываешься
-Добавить меня как реферера — будучи зарегистрированным, введи команду `@dot_ch_bot добавить реферера с ID: {user_id}`.
+**TL;DR** подписываешься на канал, получаешь TON-награду за то, что не отписываешься.
+
+Ты можешь добавить меня как реферала — зарегистрируйся в боте и открой мою ссылку: t.me/{bot_username}?start=referer_id={my_id}.
 Спасибо!'''
 
 profile_text = '''Твой ID: `{user_id}`
@@ -277,7 +279,10 @@ def referal_program(user_id):
                 [
                     InlineKeyboardButton(  # Opens the inline interface in the current chat
                         "Пригласить друга",
-                        switch_inline_query=referal_program_invite.format(user_id=user_id)
+                        switch_inline_query=referal_program_invite.format(
+                            bot_username=bot_username,
+                            my_id=user_id
+                        )
                     ),
                     InlineKeyboardButton(
                         button_to_home,
@@ -289,15 +294,15 @@ def referal_program(user_id):
     }
 
 
-def set_referer_confirm(referer_user_id):
+def set_referer_confirm(referer_id):
     return {
-        "text": f'Ты хочешь назначить своим реферером юзера с ID=`{referer_user_id}`?',
+        "text": f'Ты хочешь назначить своим реферером юзера с ID=`{referer_id}`?',
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
                         "Да!",
-                        callback_data=f"to_set_referer?referer_id={referer_user_id}"
+                        callback_data=f"to_set_referer?referer_id={referer_id}"
                     ),
                     InlineKeyboardButton(
                         "Нет!!!",

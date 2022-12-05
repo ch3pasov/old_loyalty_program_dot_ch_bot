@@ -32,3 +32,11 @@ api_hash = secret.api_hash
 
 app_human = Client("account_human", api_id, api_hash)
 app = Client("account_robot", api_id, api_hash)
+
+print("login in robot!")
+app.start()
+print("login in human!")
+app_human.start()
+
+user_referers = {}
+bot_username = app.get_me().username
