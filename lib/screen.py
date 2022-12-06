@@ -260,7 +260,7 @@ def statistic():
     users_cnt = len(users)
     users_win = sum([float(users[user]['loyalty_program']['money_won']) for user in users])
     return {
-        "text": f'Всего пользователей: {users_cnt}\nПолучено суммарно: {users_win} TON 💎.',
+        "text": f'Всего пользователей: {users_cnt}\nПолучено суммарно: {users_win:.4f} TON 💎.',
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
