@@ -27,6 +27,16 @@ loyalty_program = [
     LoyaltyLevel(level=8, days=14, reward=0.01, congrats_text='😳🧌😳', congrats_link='https://youtu.be/WPywfWMPgt4?t=28'),
     LoyaltyLevel(level=9, days=21, reward=0.01, congrats_text='🧌🧌🧌🧌', congrats_link='https://youtu.be/xNoSi7acNgc'),
     LoyaltyLevel(level=10, days=28, reward=0.05, congrats_text='🧌🧌🧌🧌🧌🧌🧌🧌', congrats_link='https://youtu.be/0PiqqbyQRoo?t=14'),
+    LoyaltyLevel(level=11, days=35, reward=0.01, congrats_text='🤪🤪', congrats_link='https://youtu.be/kGGoeDrjL5g'),
+    LoyaltyLevel(level=12, days=42, reward=0.01, congrats_text='🚬🤡', congrats_link='https://youtu.be/o3bxfyq1wrk'),
+    LoyaltyLevel(level=13, days=49, reward=0.01, congrats_text='👨‍🎨🤡', congrats_link='https://youtu.be/eMbNihx1BNk'),
+    LoyaltyLevel(level=14, days=50, reward=0.0128, congrats_text='🐶✂️', congrats_link='https://youtu.be/z2xgSgAVQ-E'),
+    LoyaltyLevel(level=15, days=60, reward=0.0256, congrats_text='🐹🍼', congrats_link='https://youtu.be/UlM-DiHbJXE'),
+    LoyaltyLevel(level=16, days=75, reward=0.0256, congrats_text='🐷', congrats_link='https://youtu.be/taOw0intSWk'),
+    LoyaltyLevel(level=17, days=90, reward=0.0512, congrats_text='👠⚽️', congrats_link='https://youtu.be/eHe3WUdRnaE?t=126'),
+    LoyaltyLevel(level=18, days=100, reward=0.0512, congrats_text='#🇷🇺', congrats_link='https://youtu.be/XWaN_geKpj4?t=2'),
+    LoyaltyLevel(level=19, days=200, reward=0.1024, congrats_text='2️⃣0️⃣1️⃣8️⃣', congrats_link='https://youtu.be/TIjb8yR8f9Q'),
+    LoyaltyLevel(level=20, days=365, reward=0.2048, congrats_text='👶🏻👦🏻👨🏻🧔🏻‍♂️👴🏻💀', congrats_link='https://youtu.be/EFL4rgxYsJE'),
 ]
 
 money_drop_period_minutes = 1440
