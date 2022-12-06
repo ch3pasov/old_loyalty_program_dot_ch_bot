@@ -35,7 +35,7 @@ def my_handler(client, message):
     else:
         screen.create(client, message.chat.id, screen.home_new())
         if referer_id:
-            print(f"Незарегистрированный пользователь {user_id} зашёл по рефералке {referer_id}! Запомнил это.")
+            print(f"Незарегистрированный пользователь {user_id} зашёл по реферерке {referer_id}! Запомнил это.")
             user_referers[user_id] = referer_id
 
 
@@ -85,7 +85,7 @@ def answer_register(client, callback_query):
     users[user_id]["loyalty_program"]["subscribed_since"] = timestamp()
     print(f"Юзер {user_id} зарегистрировался!")
 
-    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.register_successfully_emoji())
+    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.congratulation_emoji())
 
     # мгновенно выдать уровень, если норм
     user_line = users[user_id]["loyalty_program"]
@@ -127,17 +127,18 @@ def answer(client, callback_query, **kwargs):
     user_id = str(callback_query.from_user.id)
     referer_id = re.search(r"^to_set_referer\?referer_id=(\d+)$", callback_query.data).group(1)
 
+    wrong = None
     if referer_id not in users:
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong("not user"))
-        return
-    if referer_id == user_id:
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong("referer = referal"))
-        return
-    if users[referer_id]['loyalty_program']['subscribed_since'] is None:
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong("not in loyalty program"))
-        return
-    if users[user_id]["registered_since"] <= users[referer_id]["registered_since"]:
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong("referer is older"))
+        wrong = "🤔 Не могу найти такого пользователя, проверь ещё раз."
+    elif referer_id == user_id:
+        wrong = "🧠 Ход гения, но не пройдёт — себя указывать нельзя!"
+    elif users[referer_id]['loyalty_program']['subscribed_since'] is None:
+        wrong = "👀 Этого человека сейчас нет в программе лояльности!"
+    elif users[user_id]["registered_since"] <= users[referer_id]["registered_since"]:
+        wrong = "👨🏻‍🍼 Твой реферер не может быть старше тебя!"
+
+    if wrong:
+        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong(wrong))
         return
 
     users[user_id]['loyalty_program']['referer_id'] = referer_id
@@ -147,7 +148,7 @@ def answer(client, callback_query, **kwargs):
         show_alert=False
     )
 
-    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_successfully_emoji())
+    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.congratulation_emoji())
     screen.create(client, callback_query.message.chat.id, screen.set_referer_successfully())
 
 
