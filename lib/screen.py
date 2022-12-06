@@ -28,7 +28,7 @@ loyality_schema_level = """**👤 уровень: {level}**
 
 loyality_schema_cooked = '\n\n'.join([loyality_schema_level.format(**line.__dict__) for line in server.server_vars.loyalty_program])
 
-referer_programm = '''**Реферерная программа**
+referer_program = '''**Реферерная программа**
 
 {referer_status}
 
@@ -277,12 +277,12 @@ def statistic():
 def referal_program(user_id):
     referer_id = users[user_id]['loyalty_program']['referer_id']
     if referer_id:
-        referer_status = f"У тебя уже установлен реферер: %%{referer_id}%%."
+        referer_status = f"У тебя уже установлен реферер: `{referer_id}`."
     else:
         referer_status = "Здесь ты можешь поучаствовать в реферерной программе ПРОГРАММЫ ЛОЯЛЬНОСТИ телеграм-канала Анатолия @ch_an."
 
     return {
-        "text": referer_programm.format(referer_status),
+        "text": referer_program.format(referer_status=referer_status),
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
