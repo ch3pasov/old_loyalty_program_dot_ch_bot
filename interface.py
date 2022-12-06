@@ -2,7 +2,8 @@ import global_vars
 # from global_vars import print
 import lib.screen as screen
 import server.server_vars
-from lib.useful_lib import is_member, is_registered, seconds_from_timestamp, timestamp
+from lib.useful_lib import seconds_from_timestamp, timestamp
+from lib.social_lib import is_member, is_registered
 from lib.dataclasses import LoyaltyLevel
 from lib.money import send_money
 from pyrogram import filters
@@ -27,7 +28,7 @@ def my_handler(client, message):
 
     user_id = str(message.from_user.id)
 
-    if is_registered(user_id, users):
+    if is_registered(user_id):
         screen.create(client, message.chat.id, screen.home_exist(user_id))
         if referer_id:
             screen.create(client, message.chat.id, screen.set_referer_confirm(referer_id=referer_id))
@@ -48,9 +49,7 @@ def answer_home(client, callback_query):
     # global users
     user_id = str(callback_query.from_user.id)
 
-    # users[user_id]['context'] = None
-
-    if is_registered(user_id, users):
+    if is_registered(user_id):
         screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.home_exist(user_id))
     else:
         screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.home_new())
@@ -63,11 +62,11 @@ def answer_register(client, callback_query):
     screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.loading())
     user_id = str(callback_query.from_user.id)
 
-    if is_registered(user_id, users):
+    if is_registered(user_id):
         screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.register_already_register())
         return 0
 
-    if not is_member(app, server.server_vars.dot_ch_id, user_id):
+    if not is_member(server.server_vars.dot_ch_id, user_id):
         screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.register_not_subscribed())
         return 0
 
@@ -80,8 +79,7 @@ def answer_register(client, callback_query):
                 "level": 0,
                 "money_won": 0,
                 "referer_id": None
-            },
-            "context": None
+            }
         }
     )
     users[user_id]["loyalty_program"]["subscribed_since"] = timestamp()
@@ -97,14 +95,14 @@ def answer_register(client, callback_query):
     user_exp_days = seconds_from_timestamp(user_line["subscribed_since"])/86400
     level_need_days = schema_level.days
     if user_exp_days >= level_need_days:
-        reward = schema_level.reward
-        send_money(app, app_human, reward, user_id)
-        users[user_id]["loyalty_program"]["level"] += 1
-        users[user_id]["loyalty_program"]["money_won"] += reward
-        screen.create(app, user_id, screen.level_up(
+        screen.create(client, user_id, screen.level_up(
             congrats_text=schema_level.congrats_text,
             congrats_link=schema_level.congrats_link,
         ))
+
+        reward = schema_level.reward
+        send_money(reward, user_id, referer_enable=True)
+        users[user_id]["loyalty_program"]["level"] += 1
 
     screen.create(client, callback_query.message.chat.id, screen.register_successfully())
     if user_id in user_referers:
@@ -174,13 +172,13 @@ def handler_channel_update(client, chat_member_updated):
         return
 
     user_id = str(chat_member_updated.old_chat_member.user.id)
-    if not is_registered(user_id, users):
+    if not is_registered(user_id):
         # отписавшийся от канала не в программе лояльности
         return
 
     users[user_id]["loyalty_program"]["subscribed_since"] = None
-    screen.create(app, user_id, screen.unsubscribed_from_channel_gif())
-    screen.create(app, user_id, screen.unsubscribed_from_channel())
+    screen.create(client, user_id, screen.unsubscribed_from_channel_gif())
+    screen.create(client, user_id, screen.unsubscribed_from_channel())
 
 
 # сообщения в личку

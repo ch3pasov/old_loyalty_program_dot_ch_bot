@@ -6,11 +6,12 @@ from datetime import datetime, timezone
 import lib.screen as screen
 import server.server_vars
 from apscheduler.schedulers.background import BackgroundScheduler
-from lib.useful_lib import is_registered, seconds_from_timestamp, now, random_datetime, is_member
+from lib.useful_lib import seconds_from_timestamp, now, random_datetime
 from lib.dataclasses import LoyaltyLevel
-from pyrogram import errors
+from lib.social_lib import check_if_banned_before_money, is_registered, is_member
 from lib.money import send_money
-from global_vars import print
+
+from global_vars import print, app
 
 warnings.filterwarnings("ignore")
 
@@ -41,7 +42,7 @@ def save_log_job(users, verbose=False):
 # 1. Удаляет всех отписавшихся от канала.
 # 2. Левелапает всех, кого надо левалапнуть.
 # 3. Баню, если внезапно чел заблочил бота.
-def update_user_progress(users, app, app_human, verbose=True):
+def update_user_progress(users, verbose=True):
     if verbose:
         print('update_user_progress!')
     # global users
@@ -51,10 +52,10 @@ def update_user_progress(users, app, app_human, verbose=True):
 
     for user_id in users:
         # незареганных — игнорить
-        if not is_registered(user_id, users):
+        if not is_registered(user_id):
             continue
         # отписавшихся — выкидываем
-        if not is_member(app, server.server_vars.dot_ch_id, int(user_id)):
+        if not is_member(server.server_vars.dot_ch_id, int(user_id)):
             users[user_id]["loyalty_program"]["subscribed_since"] = None
             screen.create(app, user_id, screen.unsubscribed_from_channel_gif())
             screen.create(app, user_id, screen.unsubscribed_from_channel())
@@ -69,17 +70,12 @@ def update_user_progress(users, app, app_human, verbose=True):
         level_need_days = schema_level.days
         if user_exp_days >= level_need_days:
             # если он меня забанил — то я его тоже 🔫🔫🔫
-            try:
-                screen.create(app, user_id, screen.money_hidden_block_check())
-            except (errors.exceptions.bad_request_400.UserIsBlocked, errors.exceptions.bad_request_400.InputUserDeactivated) as e:
-                print(f"{user_id} IS BLOCKED ME or something wtf: {e}")
-                users[user_id]["loyalty_program"]["subscribed_since"] = None
+            if not check_if_banned_before_money(user_id):
                 continue
 
             reward = schema_level.reward
-            send_money(app, app_human, reward, user_id)
+            send_money(reward, user_id, referer_enable=True)
             users[user_id]["loyalty_program"]["level"] += 1
-            users[user_id]["loyalty_program"]["money_won"] += reward
 
             screen.create(app, user_id, screen.level_up(
                 congrats_link=schema_level.congrats_link,
@@ -87,17 +83,19 @@ def update_user_progress(users, app, app_human, verbose=True):
             ))
 
 
-def money_drop(app, app_human, dot_ch_chat_id, money_drop_message_id, amount):
+def money_drop(dot_ch_chat_id, money_drop_message_id, amount):
     print(f"MONEY DROP {now()}")
     send_money(
-        app, app_human, amount, dot_ch_chat_id, reply_to_message_id=money_drop_message_id,
+        amount, dot_ch_chat_id,
+        add_to_money_won=False,
+        reply_to_message_id=money_drop_message_id,
         text='💸 **регулярный money drop.** 💸\nкто первый встал того и тапки!',
         button_text=f'Получить {amount}+ε на @wallet',
         debug_comment='money drop',
     )
 
 
-def drop_scheduler(app, app_human, dot_ch_chat_id, money_drop_message_id, scheduler):
+def drop_scheduler(dot_ch_chat_id, money_drop_message_id, scheduler):
     print("Start drop_scheduler!")
     from datetime import timedelta
     for i in range(server.server_vars.money_drop_drops):
@@ -108,8 +106,6 @@ def drop_scheduler(app, app_human, dot_ch_chat_id, money_drop_message_id, schedu
             'date',
             run_date=run_date,
             kwargs={
-                "app": app,
-                "app_human": app_human,
                 "dot_ch_chat_id": dot_ch_chat_id,
                 "money_drop_message_id": money_drop_message_id,
                 "amount": server.server_vars.money_drop_amount
@@ -122,19 +118,17 @@ def test_app(app, verbose=True):
     app.send_message("drakedoin", "пук")
 
 
-def start_scheduler(users, app, app_human, verbose=True):
+def start_scheduler(users, verbose=True):
     # global users
     scheduler = BackgroundScheduler()
 
     scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"users": users, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"users": users, "verbose": verbose}, max_instances=1)
-    scheduler.add_job(update_user_progress, "interval", minutes=30, kwargs={"users": users, "app": app, "app_human": app_human, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    scheduler.add_job(update_user_progress, "interval", minutes=2, kwargs={"users": users, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
 
     scheduler.add_job(
         drop_scheduler, "interval", minutes=server.server_vars.money_drop_period_minutes,
         kwargs={
-            "app": app,
-            "app_human": app_human,
             "dot_ch_chat_id": server.server_vars.dot_ch_chat_id,
             "money_drop_message_id": server.server_vars.money_drop_message_id,
             "scheduler": scheduler
@@ -149,11 +143,7 @@ if __name__ == "__main__":
     from pyrogram import idle
     import global_vars
     users = global_vars.users
-    app = global_vars.app
-    app_human = global_vars.app_human
-    app.start()
-    app_human.start()
 
     print(f"[дебаг] Я запустил schedule напрямую и импортировал users. Его id {id(users)}")
-    start_scheduler(users, app, app_human, verbose=True)
+    start_scheduler(users, verbose=True)
     idle()

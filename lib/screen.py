@@ -2,8 +2,9 @@ import global_vars
 import server.server_vars
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from lib.useful_lib import seconds_from_timestamp, timestamp_to_datetime
+from global_vars import users
 
-users = global_vars.users
+
 bot_username = global_vars.bot_username
 
 home_new_text = '''Привет! 🖖🏻
@@ -235,12 +236,6 @@ def level_up(congrats_text, congrats_link):
                         congrats_text,
                         url=congrats_link
                     )
-                ],
-                [
-                    InlineKeyboardButton(
-                        button_to_home,
-                        callback_data="to_home"
-                    )
                 ]
             ]
         )
@@ -425,10 +420,9 @@ def unsubscribed_from_channel():
     }
 
 
-def money_hidden_block_check():
+def money_hidden_block_check(text="💸"):
     return {
-        "animation": server.server_vars.money_animation,
-        "unsave": False
+        "text": text
     }
 
 
