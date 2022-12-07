@@ -30,7 +30,7 @@ def send_money(
             f"amount={amount}\nuser_id={user_id}\n{debug_comment}",
             reply_to_message_id=billing_message_id
         )
-
+        print(f"amount={amount}\tuser_id={user_id}\t{debug_comment}")
         # отправка чека адресату
         screen.create(app, user_id, screen.money(result.send_message, text=text, button_text=button_text, reply_to_message_id=reply_to_message_id))
 
