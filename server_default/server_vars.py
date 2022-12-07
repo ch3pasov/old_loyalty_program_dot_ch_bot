@@ -4,15 +4,11 @@ money_chat_id = -0  # id чата, куда Человек будет кидат
 dot_ch_id = -0  # id канала, на который нужно быть подписанным
 dot_ch_chat_id = -0  # id чата канала
 
-bot_username = "a"  # юзернейм бота
 creator_username = "a"  # юзернейм меня, чтобы призывать в случае экстренного выключения
 bot_debug_message_id = 0  # id сообщения, куда робот пишет, что начал\закончил свою работу
 money_drop_message_id = 0  # id сообщения для манидропов. Это id внутри чата канала
 # то есть # t.me/c/{dot_ch_chat_id}/{chat_message_id}
 
-# Ой вот тут вы умрёте доставать этот id, для каждого робота он разный. Удачи!
-money_animation = "a"
-unsubscribed_animation = "a"
 
 # программа лояльности
 loyalty_program = [

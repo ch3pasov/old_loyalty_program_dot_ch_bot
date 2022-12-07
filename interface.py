@@ -178,7 +178,7 @@ def handler_channel_update(client, chat_member_updated):
         return
 
     users[user_id]["loyalty_program"]["subscribed_since"] = None
-    screen.create(client, user_id, screen.unsubscribed_from_channel_gif())
+    screen.create(client, user_id, screen.unsubscribed_from_channel_emoji())
     screen.create(client, user_id, screen.unsubscribed_from_channel())
 
 

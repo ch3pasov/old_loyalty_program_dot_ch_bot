@@ -57,7 +57,7 @@ def update_user_progress(users, verbose=True):
         # отписавшихся — выкидываем
         if not is_member(server.server_vars.dot_ch_id, int(user_id)):
             users[user_id]["loyalty_program"]["subscribed_since"] = None
-            screen.create(app, user_id, screen.unsubscribed_from_channel_gif())
+            screen.create(app, user_id, screen.unsubscribed_from_channel_emoji())
             screen.create(app, user_id, screen.unsubscribed_from_channel())
             continue
 

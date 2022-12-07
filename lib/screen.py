@@ -426,10 +426,9 @@ def no_video_notes():
     }
 
 
-def unsubscribed_from_channel_gif():
+def unsubscribed_from_channel_emoji():
     return {
-        "animation": server.server_vars.unsubscribed_animation,
-        "unsave": False
+        "text": "😓",
     }
 
 
@@ -473,13 +472,6 @@ def money(send_message, text=None, button_text=None, reply_to_message_id=None):
 
 
 def create(client, chat_id, screen):
-    if "animation" in screen:
-        client.send_animation(
-            chat_id,
-            **screen
-        )
-        return 0
-
     client.send_message(
         chat_id,
         **screen
