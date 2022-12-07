@@ -30,7 +30,7 @@ with open('server/active_queues.json') as f:
 api_id = secret.api_id
 api_hash = secret.api_hash
 
-app_human = Client("account_human", api_id, api_hash)
+app_human = Client("account_billing", api_id, api_hash)
 app = Client("account_robot", api_id, api_hash)
 
 print("login in robot!")
