@@ -49,7 +49,7 @@ referer_program = '''**Реферерная программа**
 set_referer_not_number_text = '''😬 Привет! Для добавления реферера нужно добавить его численный ID пользователя.
 Попроси реферера прислать тебе сообщение с его 👤профилем👤 — его ID можно будет скопировать оттуда.'''
 
-referal_program_invite = '''— бот 🧞 программы 💾 лояльности ⛓ канала 🗣 Анатолия 🤧 @ch_an 🤑.
+referer_program_invite = '''— бот 🧞 программы 💾 лояльности ⛓ канала 🗣 Анатолия 🤧 @ch_an 🤑.
 
 **TL;DR** подписываешься на канал, получаешь TON-награду 💎 за то, что не отписываешься.
 
@@ -70,7 +70,7 @@ button_to_register = '''❇️регистрация❇️'''
 button_to_statistic = '''📊статистика📊'''
 button_to_profile = '''👤Мой профиль👤'''
 button_to_profile_refresh = '''🔄Мой профиль🔄'''
-button_to_referal_program = '''😳Реферерная программа😳'''
+button_to_referer_program = '''😳Реферерная программа😳'''
 
 
 def home_new():
@@ -145,7 +145,7 @@ def loyalty_schema(user_level=None):
                 ]
             ]
         ),
-        "parse_mode": ParseMode.HTML
+        "parse_mode": ParseMode.DEFAULT
     }
 
 
@@ -236,8 +236,8 @@ def profile(user_id):
             [
                 [
                     InlineKeyboardButton(
-                        button_to_referal_program,
-                        callback_data="to_referal_program"
+                        button_to_referer_program,
+                        callback_data="to_referer_program"
                     ),
                 ],
                 [
@@ -289,7 +289,7 @@ def statistic():
     }
 
 
-def referal_program(user_id):
+def referer_program(user_id):
     referer_id = users[user_id]['loyalty_program']['referer_id']
     if referer_id:
         referer_status = f"У тебя уже установлен реферер: `{referer_id}`."
@@ -303,7 +303,7 @@ def referal_program(user_id):
                 [
                     InlineKeyboardButton(  # Opens the inline interface in the current chat
                         "Пригласить друга",
-                        switch_inline_query=referal_program_invite.format(
+                        switch_inline_query=referer_program_invite.format(
                             bot_username=bot_username,
                             my_id=user_id
                         )
@@ -336,7 +336,7 @@ def set_referer_confirm(referer_id):
                     ),
                     InlineKeyboardButton(
                         "Нет ❌",
-                        callback_data="to_referal_program"
+                        callback_data="to_referer_program"
                     )
                 ],
             ]
@@ -352,7 +352,7 @@ def set_referer_smth_wrong(text):
                 [
                     InlineKeyboardButton(
                         "◀️ К реферерной программе",
-                        callback_data="to_referal_program"
+                        callback_data="to_referer_program"
                     )
                 ],
             ]
@@ -367,8 +367,8 @@ def set_referer_successfully():
             [
                 [
                     InlineKeyboardButton(
-                        button_to_referal_program,
-                        callback_data="to_referal_program"
+                        button_to_referer_program,
+                        callback_data="to_referer_program"
                     )
                 ]
             ]
@@ -399,8 +399,8 @@ def set_referer_not_number():
             [
                 [
                     InlineKeyboardButton(
-                        button_to_profile,
-                        callback_data="to_profile"
+                        "◀️ К реферерной программе",
+                        callback_data="to_referer_program"
                     )
                 ]
             ]
@@ -450,7 +450,17 @@ def unsubscribed_from_channel():
 
 def money_hidden_block_check(text="💸"):
     return {
-        "text": text
+        "text": text,
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        button_to_home,
+                        callback_data="to_home"
+                    )
+                ]
+            ]
+        )
     }
 
 

@@ -114,10 +114,10 @@ def answer_statistic(client, callback_query):
     screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.statistic())
 
 
-@app.on_callback_query(filters.regex('to_referal_program'))
-def answer_referal_program(client, callback_query):
+@app.on_callback_query(filters.regex('to_referer_program'))
+def answer_referer_program(client, callback_query):
     user_id = str(callback_query.from_user.id)
-    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.referal_program(user_id))
+    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.referer_program(user_id))
 
 
 @app.on_callback_query(filters.regex(r"to_set_referer\?referer_id=(\d+)"))
@@ -132,6 +132,8 @@ def answer(client, callback_query, **kwargs):
         wrong = "🤔 Не могу найти такого пользователя, проверь ещё раз."
     elif referer_id == user_id:
         wrong = "🧠 Ход гения, но не пройдёт — себя указывать нельзя!"
+    elif referer_id == users[user_id]['loyalty_program']['referer_id']:
+        wrong = "🤷🏻‍♀️ У тебя уже установлен этот реферер. Мб имелся в виду другой реферер?"
     elif users[referer_id]['loyalty_program']['subscribed_since'] is None:
         wrong = "👀 Этого человека сейчас нет в программе лояльности!"
     elif users[user_id]["registered_since"] <= users[referer_id]["registered_since"]:
@@ -191,7 +193,7 @@ def answer_messages(client, message):
 
     if re.search(r"^@[a-zA-Z0-9_]{1,20}bot", message_text):
         # команда
-        search = re.search(r"^@[a-zA-Z0-9_]{1,20}bot добавить реферера с ID:[ ]{0,}([0-9a-zA-Z_]{1,})[ ]{0,}$", message_text)
+        search = re.search(r"^@[a-zA-Z0-9_]{1,20}bot добавить реферера с ID:[ ]{0,}([^\s]+)", message_text)
         if search:
             referer_id = search.group(1)
             if re.search(r"^[0-9]{1,}$", referer_id):
