@@ -1,6 +1,7 @@
 import global_vars
 import server.server_vars
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.enums import ParseMode
 from lib.useful_lib import seconds_from_timestamp, timestamp_to_datetime
 from global_vars import users
 
@@ -22,11 +23,13 @@ home_exist_text = '''Привет, юзер с ID `{user_id}`! 😳
 
 Увидеть сетку уровней, свой профиль и глобальную статистику ты можешь по кнопкам ниже:'''
 
-loyality_schema_level = """**👤 уровень: {level}**
+loyalty_schema_columns = "👤уровень\t🗓Дней\t🪙Награда"
+
+loyalty_schema_level = """**👤 уровень: {level}**
 🗓 Дней, для левелапа: {days}
 🪙 Награда при левелапе: {reward}💎"""
 
-loyality_schema_cooked = '\n\n'.join([loyality_schema_level.format(**line.__dict__) for line in server.server_vars.loyalty_program])
+loyalty_schema_cooked = '\n\n'.join([loyalty_schema_level.format(**line.__dict__) for line in server.server_vars.loyalty_program])
 
 referer_program = '''**Реферерная программа**
 
@@ -118,9 +121,20 @@ def home_exist(user_id):
     }
 
 
-def loyality_schema():
+def loyalty_schema(user_level=None):
+    # out = [loyalty_schema_columns]
+    # '''<s>strikethrough</s>'''
+    # for loyaltylevel in server.server_vars.loyalty_program:
+    #     to_add = f"{loyaltylevel.level}\t{loyaltylevel.days}\t{loyaltylevel.reward}"
+    #     if user_level:
+    #         if user_level > loyaltylevel.level:
+    #             to_add = "<s>" + to_add + "</s>"
+    #     out.append(to_add)
+
+    # text = "\n".join(out)
+    # print(text)
     return {
-        "text": loyality_schema_cooked,
+        "text": loyalty_schema_cooked,
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
@@ -130,7 +144,8 @@ def loyality_schema():
                     )
                 ]
             ]
-        )
+        ),
+        "parse_mode": ParseMode.HTML
     }
 
 

@@ -41,7 +41,7 @@ def my_handler(client, message):
 
 @app.on_callback_query(filters.regex('to_schema'))
 def answer_schema(client, callback_query):
-    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.loyality_schema())
+    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.loyalty_schema())
 
 
 @app.on_callback_query(filters.regex('to_home'))
