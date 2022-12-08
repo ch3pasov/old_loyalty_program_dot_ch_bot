@@ -2,7 +2,7 @@ from lib import screen
 from lib.useful_lib import timestamp
 from lib.social_lib import check_if_banned_before_money
 import server.server_vars
-from global_vars import app, app_human, users
+from global_vars import app, app_billing, users, print
 
 
 def send_money(
@@ -16,16 +16,16 @@ def send_money(
     non_collision_amount = amount + int(timestamp() * 10**6) % 10**3 * 10**(-7) + int(user_id) % 10**3 * 10**(-10)
     assert non_collision_amount < 1, "МНОГО ДЕНЕГ"
 
-    r = app_human.get_inline_bot_results('@wallet', str(non_collision_amount))
+    r = app_billing.get_inline_bot_results('@wallet', str(non_collision_amount))
 
     result = r.results[0]
     if "TON" in result.title and "BTC" not in result.title:
         # создание чека в биллинге
-        updates = app_human.send_inline_bot_result(server.server_vars.money_chat_id, r.query_id, result.id).updates
+        updates = app_billing.send_inline_bot_result(server.server_vars.money_chat_id, r.query_id, result.id).updates
         billing_message_id = updates[0].id
 
         # создание дебаг-сообщения в биллинге
-        app_human.send_message(
+        app_billing.send_message(
             server.server_vars.money_chat_id,
             f"amount={amount}\nuser_id={user_id}\n{debug_comment}",
             reply_to_message_id=billing_message_id

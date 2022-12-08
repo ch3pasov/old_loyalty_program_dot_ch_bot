@@ -12,7 +12,7 @@ import re
 users = global_vars.users
 user_referers = global_vars.user_referers
 
-app_human = global_vars.app_human
+app_billing = global_vars.app_billing
 app = global_vars.app
 
 
