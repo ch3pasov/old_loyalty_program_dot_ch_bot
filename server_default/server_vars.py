@@ -33,6 +33,7 @@ loyalty_program = [
     LoyaltyLevel(level=18, days=100, reward=0.0512, congrats_text='#🇷🇺', congrats_link='https://youtu.be/XWaN_geKpj4?t=2'),
     LoyaltyLevel(level=19, days=200, reward=0.1024, congrats_text='2️⃣0️⃣1️⃣8️⃣', congrats_link='https://youtu.be/TIjb8yR8f9Q'),
     LoyaltyLevel(level=20, days=365, reward=0.2048, congrats_text='👶🏻👦🏻👨🏻🧔🏻‍♂️👴🏻💀', congrats_link='https://youtu.be/EFL4rgxYsJE'),
+    LoyaltyLevel(level=21, days=3285, reward=0.8192, congrats_text='🏆😹🍀', congrats_link='https://youtu.be/qHtrjuw0hqY?t=18')
 ]
 
 money_drop_period_minutes = 1440

@@ -41,7 +41,12 @@ def my_handler(client, message):
 
 @app.on_callback_query(filters.regex('to_schema'))
 def answer_schema(client, callback_query):
-    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.loyalty_schema())
+    user_id = str(callback_query.from_user.id)
+    if user_id in users:
+        user_level = users[user_id]['loyalty_program']['level']
+    else:
+        user_level = None
+    screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.schema(user_level))
 
 
 @app.on_callback_query(filters.regex('to_home'))
