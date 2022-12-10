@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class LoyalityLevel:
+class LoyaltyLevel:
     level: int
     days: int
     reward: float
