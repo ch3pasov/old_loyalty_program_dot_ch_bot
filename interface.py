@@ -190,7 +190,7 @@ def handler_channel_update(client, chat_member_updated):
 
 
 # сообщения в личку
-@app.on_message(filters.private & filters.text)
+@app.on_message(filters.private & filters.text & filters.incoming)
 def answer_messages(client, message):
     import re
 
@@ -212,11 +212,11 @@ def answer_messages(client, message):
         screen.create(client, message.chat.id, screen.no_messages())
 
 
-@app.on_message(filters.private & filters.voice)
+@app.on_message(filters.private & filters.voice & filters.incoming)
 def answer_voices(client, message):
     screen.create(client, message.chat.id, screen.no_voices())
 
 
-@app.on_message(filters.private & filters.video_note)
+@app.on_message(filters.private & filters.video_note & filters.incoming)
 def answer_video_notes(client, message):
     screen.create(client, message.chat.id, screen.no_video_notes())
