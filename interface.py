@@ -142,7 +142,7 @@ def answer(client, callback_query, **kwargs):
     elif users[referer_id]['loyalty_program']['subscribed_since'] is None:
         wrong = "👀 Этого человека сейчас нет в программе лояльности!"
     elif users[user_id]["registered_since"] <= users[referer_id]["registered_since"]:
-        wrong = "👨🏻‍🍼 Твой реферер не может быть старше тебя!"
+        wrong = "👨🏻‍🍼 Твой реферер не может быть младше тебя!\nВремя регистрации можно проверить во вкладке с профилем."
 
     if wrong:
         screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong(wrong))

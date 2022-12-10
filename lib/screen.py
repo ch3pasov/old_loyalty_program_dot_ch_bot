@@ -23,6 +23,8 @@ home_exist_text = '''Привет, юзер с ID `{user_id}`! 😳
 
 Увидеть сетку уровней, свой профиль и глобальную статистику ты можешь по кнопкам ниже:'''
 
+level_schema_prequel = '''Стаж показан в днях, награда — в TON'ах, дело — в шляпе.
+'''
 level_schema_header = f"`{'Стаж':<7}{'Награда':<10}{'Уровень':<3}`\n"
 level_schema_preform = [
     (
@@ -65,11 +67,13 @@ referer_program_text = '''**Реферерная программа**
 1. Каждый реферал может указать своего реферера — того, кто будет получать бонусы.
 2. Реферер должен быть активным участником ПРОГРАММЫ ЛОЯЛЬНОСТИ и зарегистрирован раньше, чем реферал.
 3. Реферал в любой момент может поменять реферера на другого.
-4. Реферер получает как бонус половину от всех выигрышей реферала в программе лояльности, реферал ничего не теряет и получает глубокое уважение от своего реферера.
+4. Реферер получает как бонус половину от всех выигрышей реферала в программе лояльности; реферал ничего не теряет и получает глубокое уважение от своего реферера.
 
 Два уточнения:
 1. Бонусный чек тоже считается выигрышем. Таким образом, реферер твоего реферера тоже может получить бонус.
-2. по техническим причинам невозможно создавать чеки на <0.0001 💎, поэтому реферер получает чек, только если реферал получает ≥0.0002 💎.'''
+2. по техническим причинам невозможно создавать чеки на <0.0001 💎, поэтому реферер получает чек, только если реферал получает ≥0.0002 💎.
+
+Твоя пригласительная ссылка: `{referer_link}`'''
 
 set_referer_not_number_text = '''😬 Привет! Для добавления реферера нужно добавить его численный ID пользователя.
 Попроси реферера прислать тебе сообщение с его 👤профилем👤 — его ID можно будет скопировать оттуда.'''
@@ -89,13 +93,13 @@ profile_text = '''Твой ID: `{user_id}`
 Суммарный выигрыш в программе лояльности: {user_money_won:.4f}
 ID твоего реферера: `{user_referer_id}`'''
 
-button_to_schema = '''📈сетка уровней📈'''
+button_to_schema = '''📈уровни📈'''
 button_to_home = '''🏘на главную🏘'''
 button_to_register = '''❇️регистрация❇️'''
 button_to_statistic = '''📊статистика📊'''
-button_to_profile = '''👤Мой профиль👤'''
-button_to_profile_refresh = '''🔄Мой профиль🔄'''
-button_to_referer_program = '''😳Реферерная программа😳'''
+button_to_profile = '''👤мой профиль👤'''
+button_to_profile_refresh = '''🔄мой профиль🔄'''
+button_to_referer_program = '''😳реферерная программа😳'''
 
 
 def home_new():
@@ -127,6 +131,12 @@ def home_exist(user_id):
             [
                 [
                     InlineKeyboardButton(
+                        button_to_referer_program,
+                        callback_data="to_referer_program"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
                         button_to_profile,
                         callback_data="to_profile"
                     ),
@@ -148,7 +158,7 @@ def home_exist(user_id):
 
 def schema(user_level=None):
     return {
-        "text": render_level_schema(user_level),
+        "text": level_schema_prequel+render_level_schema(user_level),
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
@@ -250,18 +260,14 @@ def profile(user_id):
             [
                 [
                     InlineKeyboardButton(
-                        button_to_referer_program,
-                        callback_data="to_referer_program"
-                    ),
+                        button_to_profile_refresh,
+                        callback_data="to_profile"
+                    )
                 ],
                 [
                     InlineKeyboardButton(
                         button_to_home,
                         callback_data="to_home"
-                    ),
-                    InlineKeyboardButton(
-                        button_to_profile_refresh,
-                        callback_data="to_profile"
                     )
                 ]
             ]
@@ -306,17 +312,17 @@ def statistic():
 def referer_program(user_id):
     referer_id = users[user_id]['loyalty_program']['referer_id']
     if referer_id:
-        referer_status = f"У тебя уже установлен реферер: `{referer_id}`."
+        referer_status = f"Твой реферер на данный момент: `{referer_id}`."
     else:
         referer_status = "Здесь ты можешь поучаствовать в реферерной программе ПРОГРАММЫ ЛОЯЛЬНОСТИ телеграм-канала Анатолия @ch_an."
 
     return {
-        "text": referer_program_text.format(referer_status=referer_status),
+        "text": referer_program_text.format(referer_status=referer_status, referer_link=f"http://t.me/{bot_username}?start=referer_id={user_id}"),
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(  # Opens the inline interface in the current chat
-                        "Пригласить друга",
+                        "💬пригласить друга💬",
                         switch_inline_query=referer_program_invite.format(
                             bot_username=bot_username,
                             my_id=user_id
@@ -324,13 +330,15 @@ def referer_program(user_id):
                     )
                 ],
                 [
+                    InlineKeyboardButton(  # Opens the inline interface in the current chat
+                        "🖇добавить реферера🖇",
+                        switch_inline_query_current_chat="добавить реферера с ID: "
+                    )
+                ],
+                [
                     InlineKeyboardButton(
                         button_to_home,
                         callback_data="to_home"
-                    ),
-                    InlineKeyboardButton(  # Opens the inline interface in the current chat
-                        "Добавить реферера",
-                        switch_inline_query_current_chat="добавить реферера с ID: "
                     )
                 ],
             ]
@@ -340,7 +348,7 @@ def referer_program(user_id):
 
 def set_referer_confirm(referer_id):
     return {
-        "text": f'Ты хочешь назначить своим реферером юзера с ID=`{referer_id}`?',
+        "text": f'Назначить твоим реферером юзера с ID=`{referer_id}`?',
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
@@ -365,7 +373,7 @@ def set_referer_smth_wrong(text):
             [
                 [
                     InlineKeyboardButton(
-                        "◀️ К реферерной программе",
+                        "◀️ к реферерной программе",
                         callback_data="to_referer_program"
                     )
                 ],
@@ -413,7 +421,7 @@ def set_referer_not_number():
             [
                 [
                     InlineKeyboardButton(
-                        "◀️ К реферерной программе",
+                        "◀️ к реферерной программе",
                         callback_data="to_referer_program"
                     )
                 ]
