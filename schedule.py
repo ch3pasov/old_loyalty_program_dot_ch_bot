@@ -6,10 +6,10 @@ from datetime import datetime, timezone
 import lib.screen as screen
 import server.server_vars
 from apscheduler.schedulers.background import BackgroundScheduler
-from lib.useful_lib import seconds_from_timestamp, now, random_datetime
+from lib.useful_lib import seconds_from_timestamp, random_datetime
 from lib.dataclasses import LoyaltyLevel
 from lib.social_lib import check_if_banned_before_money, is_registered, is_member
-from lib.money import send_money
+from lib.money import send_money, money_drop
 
 from global_vars import print, app, users, active_queues
 
@@ -87,18 +87,6 @@ def update_user_progress(users, verbose=True):
                 congrats_link=schema_level.congrats_link,
                 congrats_text=schema_level.congrats_text,
             ))
-
-
-def money_drop(dot_ch_chat_id, money_drop_message_id, amount):
-    print(f"MONEY DROP {now()}")
-    send_money(
-        amount, dot_ch_chat_id,
-        add_to_money_won=False,
-        reply_to_message_id=money_drop_message_id,
-        text='💸 **регулярный money drop.** 💸\nкто первый встал того и тапки!',
-        button_text=f'Получить {amount}+ε на @wallet',
-        debug_comment='money drop',
-    )
 
 
 def drop_scheduler(dot_ch_chat_id, money_drop_message_id, scheduler):

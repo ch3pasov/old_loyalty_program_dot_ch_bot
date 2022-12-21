@@ -1,5 +1,5 @@
 from lib import screen
-from lib.useful_lib import timestamp
+from lib.useful_lib import timestamp, now
 from lib.social_lib import check_if_banned_before_money
 import server.server_vars
 from global_vars import app, app_billing, users, print
@@ -50,3 +50,15 @@ def send_money(
 
     else:
         raise ValueError("BTC! СЛЕВА НАПРАВО")
+
+
+def money_drop(dot_ch_chat_id, money_drop_message_id, amount):
+    print(f"MONEY DROP {now()}")
+    send_money(
+        amount, dot_ch_chat_id,
+        add_to_money_won=False,
+        reply_to_message_id=money_drop_message_id,
+        text='💸 **регулярный money drop.** 💸\nкто первый встал того и тапки!',
+        button_text=f'Получить {amount}+ε на @wallet',
+        debug_comment='money drop',
+    )

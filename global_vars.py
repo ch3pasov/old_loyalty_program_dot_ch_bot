@@ -4,11 +4,11 @@ import sys
 import json
 
 from pyrogram import Client
-import server.secret as secret
+import server.secret.secret as secret
 
 formatter = logging.Formatter('%(asctime)s %(levelname)s [%(filename)s:%(lineno)s] %(message)s')
 handler_fancy_stdout = logging.StreamHandler(sys.stdout)
-handler_logger = logging.FileHandler("common.log", mode='a')
+handler_logger = logging.FileHandler("server/common.log", mode='a')
 handler_fancy_stdout.setFormatter(formatter)
 handler_logger.setFormatter(formatter)
 # Корневой логгер. Должен ловить все ошибки и писать в файл.
@@ -30,8 +30,8 @@ with open('server/active_queues.json') as f:
 api_id = secret.api_id
 api_hash = secret.api_hash
 
-app_billing = Client("account_billing", api_id, api_hash)
-app = Client("account_robot", api_id, api_hash)
+app_billing = Client("server/secret/account_billing", api_id, api_hash)
+app = Client("server/secret/account_robot", api_id, api_hash)
 
 print("login in robot!")
 app.start()

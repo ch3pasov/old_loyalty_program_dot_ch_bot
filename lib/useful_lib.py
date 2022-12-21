@@ -29,6 +29,26 @@ def random_datetime(up_timedelta):
     return datetime.now(timezone.utc)+up_timedelta*random()
 
 
+def sanitize_comment_message(message):
+    if message.text:
+        message_text = message.text
+    elif message.caption:
+        message_text = message.caption
+    else:
+        return ""
+
+    if message_text == "":
+        return ""
+
+    # удаляем плохие символы, что могут сломать разметку
+    message_text = ''.join(i for i in message_text if i not in r'\`*_|~')
+    # обрезаем коммент до приемлимых 30 символов
+    message_text = message_text[:30]
+    # наклоним италиком
+    message_text = "__"+message_text+"__"
+    return message_text
+
+
 def emoji_fingerprint():
     from random import choice
     emoji_list = [

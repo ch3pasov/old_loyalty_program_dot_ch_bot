@@ -503,16 +503,78 @@ def money(send_message, text=None, button_text=None, reply_to_message_id=None):
     }
 
 
+def queue_initial_post():
+    return {
+        "text": "очередь"
+    }
+
+
+def queue_first_comment(queue_id, chat_message_id):
+    return {
+        "text": '👥👥👥',
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "👥",
+                        callback_data=f"queue?id={queue_id}"
+                    )
+                ]
+            ]
+        ),
+        "reply_to_message_id": chat_message_id
+    }
+
+
+def queue_state(queue):
+    queue_id = queue["channel_message_id"]
+    comments_cnt = queue["comments_cnt"]
+    comments_fingerprint = queue["comments_fingerprint"]
+    chat_message_id = queue["chat_message_id"]
+    queue_order = queue["queue"]
+
+    queue_text = [f"{n+1}. {queue_order[n]}" for n in range(len(queue_order))]
+    last_n_events = queue["last_n_events"]
+    post_text = "**Очередь:**\n" + '\n'.join(queue_text) + "\n\n**Последние 5 событий:**\n" + '\n'.join(last_n_events[::-1])
+
+    return {
+        "text": post_text,
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "👥",
+                        callback_data=f"queue?id={queue_id}"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        f"{comments_fingerprint} комменты ({comments_cnt})",
+                        url=f'https://t.me/c/{(-server.server_vars.dot_ch_chat_id)%10**10}/{chat_message_id}?thread={chat_message_id}'
+                    )
+                ]
+            ]
+        )
+    }
+
+
 def create(client, chat_id, screen):
-    client.send_message(
+    return client.send_message(
         chat_id,
         **screen
     )
 
 
 def update(client, chat_id, message_id, screen):
-    client.edit_message_text(
-        chat_id=chat_id,
-        message_id=message_id,
-        **screen
-    )
+    if "text" in screen:
+        return client.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            **screen
+        )
+    else:
+        return client.edit_message_reply_markup(
+            chat_id=chat_id,
+            message_id=message_id,
+            **screen
+        )
