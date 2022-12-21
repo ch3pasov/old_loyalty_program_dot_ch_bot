@@ -13,7 +13,7 @@ common.log
 server/
 
 # это чисто для меня
-sandbox*
+/**/sandbox*
 
 
 

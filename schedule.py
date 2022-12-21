@@ -11,13 +11,13 @@ from lib.dataclasses import LoyaltyLevel
 from lib.social_lib import check_if_banned_before_money, is_registered, is_member
 from lib.money import send_money
 
-from global_vars import print, app
+from global_vars import print, app, users, active_queues
 
 warnings.filterwarnings("ignore")
 
 
 # бэкап в папку server/logs/
-def backup_log_job(users, verbose=False):
+def backup_log_job(verbose=False):
     if verbose:
         print('backup!')
 
@@ -26,10 +26,13 @@ def backup_log_job(users, verbose=False):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(users, f, ensure_ascii=False, indent=4)
+    filename = f"server/logs/{now.strftime('%Y-%m-%d')}/{now.strftime('%H_%M')}/active_queues.json"
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(active_queues, f, ensure_ascii=False, indent=4)
 
 
 # сохранение нынешнего users в server/users.json
-def save_log_job(users, verbose=False):
+def save_log_job(verbose=False):
     if verbose:
         print('save!')
     # global users
@@ -37,6 +40,9 @@ def save_log_job(users, verbose=False):
     filename = "server/users.json"
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(users, f, ensure_ascii=False, indent=4)
+    filename = "server/active_queues.json"
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(active_queues, f, ensure_ascii=False, indent=4)
 
 
 # 1. Удаляет всех отписавшихся от канала.
@@ -118,12 +124,12 @@ def test_app(app, verbose=True):
     app.send_message("drakedoin", "пук")
 
 
-def start_scheduler(users, verbose=True):
+def start_scheduler(verbose=True):
     # global users
     scheduler = BackgroundScheduler()
 
-    scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"users": users, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
-    scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"users": users, "verbose": verbose}, max_instances=1)
+    scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"verbose": verbose}, max_instances=1)
     scheduler.add_job(update_user_progress, "interval", minutes=2, kwargs={"users": users, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
 
     scheduler.add_job(
@@ -141,9 +147,7 @@ def start_scheduler(users, verbose=True):
 
 if __name__ == "__main__":
     from pyrogram import idle
-    import global_vars
-    users = global_vars.users
 
     print(f"[дебаг] Я запустил schedule напрямую и импортировал users. Его id {id(users)}")
-    start_scheduler(users, verbose=True)
+    start_scheduler(verbose=True)
     idle()

@@ -8,6 +8,10 @@ def now():
     return datetime.now(timezone.utc)
 
 
+def now_text():
+    return now().strftime('%T')
+
+
 def timestamp():
     return now().timestamp()
 
@@ -23,3 +27,16 @@ def seconds_from_timestamp(timestamp):
 def random_datetime(up_timedelta):
     from random import random
     return datetime.now(timezone.utc)+up_timedelta*random()
+
+
+def emoji_fingerprint():
+    from random import choice
+    emoji_list = [
+        '💟', '☮️', '✝️', '☪️', '🕉', '☸️', '✡️', '🔯', '🕎',
+        '☯️', '☦️', '🛐', '⛎', '♈️', '♉️', '♊️', '♋️',
+        '♌️', '♍️', '♎️', '♏️', '♐️', '♑️', '♒️', '♓️',
+        '🆔', '⚛️', '📴', '📳', '🈶', '🈚️', '🈸', '🈺',
+        '🈷️', '✴️', '🆚', '🈴', '🈵', '🈹', '🈲', '🅰️',
+        '🅱️', '🆎', '🆑', '🅾️', '🆘']
+
+    return choice(emoji_list)
