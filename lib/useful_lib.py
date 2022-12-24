@@ -1,5 +1,5 @@
 # import server.server_vars
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 # import lib.screen as screen
 
@@ -8,8 +8,16 @@ def now():
     return datetime.now(timezone.utc)
 
 
+def now_plus_15_minutes():
+    return datetime.now(timezone.utc) + timedelta(minutes=15)
+
+
+def datetime_to_text(dt):
+    return dt.strftime('%T')
+
+
 def now_text():
-    return now().strftime('%T')
+    return datetime_to_text(now())
 
 
 def timestamp():
@@ -41,7 +49,7 @@ def sanitize_comment_message(message):
         return ""
 
     # удаляем плохие символы, что могут сломать разметку
-    message_text = ''.join(i for i in message_text if i not in r'\`*_|~')
+    message_text = ''.join((i if i not in r'\`/*_|~@.' else ' ') for i in message_text)
     # обрезаем коммент до приемлимых 30 символов
     message_text = message_text[:30]
     # наклоним италиком

@@ -321,7 +321,7 @@ def referer_program(user_id):
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
-                    InlineKeyboardButton(  # Opens the inline interface in the current chat
+                    InlineKeyboardButton(
                         "💬пригласить друга💬",
                         switch_inline_query=referer_program_invite.format(
                             bot_username=bot_username,
@@ -330,7 +330,7 @@ def referer_program(user_id):
                     )
                 ],
                 [
-                    InlineKeyboardButton(  # Opens the inline interface in the current chat
+                    InlineKeyboardButton(
                         "🖇добавить реферера🖇",
                         switch_inline_query_current_chat="добавить реферера с ID: "
                     )
@@ -533,7 +533,7 @@ def queue_state(queue):
     chat_message_id = queue["chat_message_id"]
     queue_order = queue["queue"]
 
-    queue_text = [f"{n+1}. {queue_order[n]}" for n in range(len(queue_order))]
+    queue_text = [f"{n+1}. {queue_order[n]['user_id']}" for n in range(len(queue_order))]
     last_n_events = queue["last_n_events"]
     post_text = "**Очередь:**\n" + '\n'.join(queue_text) + "\n\n**Последние 5 событий:**\n" + '\n'.join(last_n_events[::-1])
 
