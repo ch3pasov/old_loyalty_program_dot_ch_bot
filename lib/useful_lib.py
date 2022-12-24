@@ -8,8 +8,8 @@ def now():
     return datetime.now(timezone.utc)
 
 
-def now_plus_15_minutes():
-    return datetime.now(timezone.utc) + timedelta(minutes=15)
+def now_plus_n_minutes(n):
+    return datetime.now(timezone.utc) + timedelta(minutes=n)
 
 
 def datetime_to_text(dt):
@@ -20,7 +20,7 @@ def now_text():
     return datetime_to_text(now())
 
 
-def timestamp():
+def timestamp_now():
     return now().timestamp()
 
 
@@ -28,8 +28,13 @@ def timestamp_to_datetime(timestamp):
     return datetime.fromtimestamp(timestamp, timezone.utc).strftime('%F %T.%f')
 
 
+def seconds_between_timestamps(timestamp_after, timestamp_before):
+    return (datetime.fromtimestamp(timestamp_after) - datetime.fromtimestamp(timestamp_before)).total_seconds()
+
+
 def seconds_from_timestamp(timestamp):
-    return (now() - datetime.fromtimestamp(timestamp, timezone.utc)).total_seconds()
+    return seconds_between_timestamps(timestamp_now(), timestamp)
+    # return (now() - datetime.fromtimestamp(timestamp, timezone.utc)).total_seconds()
 
 
 def random_datetime(up_timedelta):

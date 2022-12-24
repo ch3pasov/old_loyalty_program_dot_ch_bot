@@ -1,74 +1,62 @@
 
-# import warnings
-# from datetime import datetime
+import warnings
+from datetime import datetime
 
-# import lib.screen as screen
-# import server.server_vars
-# from apscheduler.schedulers.background import BackgroundScheduler
-# from lib.useful_lib import seconds_from_timestamp
-# from lib.dataclasses import LoyaltyLevel
-# from lib.social_lib import check_if_banned_before_money, is_registered, is_member
-# from lib.money import send_money
+from apscheduler.schedulers.background import BackgroundScheduler
+from lib.queue_lib import slow_update_comments_queue, update_queue, clear_queue_user, add_event_queue
+from lib.useful_lib import timestamp_now, seconds_between_timestamps
+from global_vars import print, active_queues, queue_users
 
-# from global_vars import print, app, users
-
-# warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore")
 
 
-# # 1. Удаляет всех отписавшихся от канала.
-# # 2. Левелапает всех, кого надо левалапнуть.
-# # 3. Баню, если внезапно чел заблочил бота.
-# def update_user_progress(users, verbose=True):
-#     if verbose:
-#         print('update_user_progress!')
-#     # global users
-
-#     # member_ids = [member.user.id for member in app.get_chat_members(server.server_vars.dot_ch_id)]
-#     # print(member_ids)
-
-#     for user_id in users:
-#         # незареганных — игнорить
-#         if not is_registered(user_id):
-#             continue
-#         # отписавшихся — выкидываем
-#         if not is_member(server.server_vars.dot_ch_id, int(user_id)):
-#             users[user_id]["loyalty_program"]["subscribed_since"] = None
-#             screen.create(app, user_id, screen.unsubscribed_from_channel_emoji())
-#             screen.create(app, user_id, screen.unsubscribed_from_channel())
-#             continue
-
-#         # живых — проверяем на левелап
-#         user_line = users[user_id]["loyalty_program"]
-#         current_level = user_line["level"]
-#         schema_level: LoyaltyLevel = server.server_vars.loyalty_program[current_level]
-
-#         user_exp_days = seconds_from_timestamp(user_line["subscribed_since"])/86400
-#         level_need_days = schema_level.days
-#         if user_exp_days >= level_need_days:
-#             # если он меня забанил — то я его тоже 🔫🔫🔫
-#             if not check_if_banned_before_money(user_id):
-#                 continue
-
-#             reward = schema_level.reward
-#             send_money(reward, user_id, referer_enable=True)
-#             users[user_id]["loyalty_program"]["level"] += 1
-
-#             screen.create(app, user_id, screen.level_up(
-#                 congrats_link=schema_level.congrats_link,
-#                 congrats_text=schema_level.congrats_text,
-#             ))
+# Пересчитываю комменты в очередях
+def update_all_queues(verbose=True):
+    if verbose:
+        print("update_all_queues!")
+    for queue_id in active_queues:
+        slow_update_comments_queue(queue_id)
+        update_queue(queue_id)
 
 
-# def start_loyalty_scheduler(verbose=True):
-#     # global users
-#     scheduler = BackgroundScheduler()
-#     scheduler.add_job(update_user_progress, "interval", minutes=2, kwargs={"users": users, "verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+def update_queue_users(verbose=True):
+    if verbose:
+        print('update_queue_users!')
 
-#     scheduler.start()
+    timestamp_now_const = timestamp_now()
+    queues_to_update = set()
+    for user_id in queue_users:
+        queue_user = queue_users[user_id]
+
+        # print(queue_user)
+        # print(seconds_between_timestamps(timestamp_now_const, queue_user["last_clicked"]), queue_user["minutes_to_refresh"]*60)
+
+        in_queue = queue_user["in_queue"]
+        if not in_queue:
+            # чел не в очереди
+            continue
+        if seconds_between_timestamps(timestamp_now_const, queue_user["last_clicked"]) < queue_user["minutes_to_refresh"]*60:
+            # чел недавно кликал
+            continue
+        # надо выгнать чела из очереди
+
+        add_event_queue(in_queue, queue_user, "вылетает из очереди!", event_emoji='🥾')
+        clear_queue_user(user_id)
+        queues_to_update.add(in_queue)
+    for queue_id in queues_to_update:
+        update_queue(queue_id)
 
 
-# if __name__ == "__main__":
-#     from pyrogram import idle
+def start_queue_scheduler(verbose=True):
+    # global users
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(update_all_queues, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    scheduler.add_job(update_queue_users, "interval", seconds=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    scheduler.start()
 
-#     start_loyalty_scheduler(verbose=True)
-#     idle()
+
+if __name__ == "__main__":
+    from pyrogram import idle
+
+    start_queue_scheduler(verbose=True)
+    idle()

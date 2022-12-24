@@ -1,6 +1,6 @@
 from pyrogram import errors
 
-from global_vars import app, users
+from global_vars import app, users, queue_users
 import lib.screen as screen
 
 
@@ -21,6 +21,19 @@ def is_registered(user_id):
     if users[user_id]["loyalty_program"]["subscribed_since"] is None:
         return False
     return True
+
+
+def is_queue_user(user_id):
+    if user_id in queue_users:
+        return True
+    return False
+
+
+def is_user_in_queue(user_id):
+    if is_queue_user(user_id):
+        if queue_users[user_id]["in_queue"]:
+            return True
+    return False
 
 
 def check_if_banned_before_money(user_id, text="💸"):

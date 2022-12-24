@@ -1,5 +1,5 @@
 from lib import screen
-from lib.useful_lib import timestamp, now
+from lib.useful_lib import timestamp_now, now
 from lib.social_lib import check_if_banned_before_money
 import server.server_vars
 from global_vars import app, app_billing, users, print
@@ -13,7 +13,7 @@ def send_money(
 ):
 
     assert amount >= 0.0001, "wallet не позволяет отправлять меньше 0.0001 TON!"
-    non_collision_amount = amount + int(timestamp() * 10**6) % 10**3 * 10**(-7) + int(user_id) % 10**3 * 10**(-10)
+    non_collision_amount = amount + int(timestamp_now() * 10**6) % 10**3 * 10**(-7) + int(user_id) % 10**3 * 10**(-10)
     assert non_collision_amount < 1, "МНОГО ДЕНЕГ"
 
     r = app_billing.get_inline_bot_results('@wallet', str(non_collision_amount))

@@ -3,7 +3,7 @@ import server.server_vars
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 # from pyrogram.enums import ParseMode
 from lib.useful_lib import seconds_from_timestamp, timestamp_to_datetime
-from global_vars import users
+from global_vars import users, queue_users
 
 
 bot_username = global_vars.bot_username
@@ -533,9 +533,10 @@ def queue_state(queue):
     chat_message_id = queue["chat_message_id"]
     queue_order = queue["queue"]
 
-    queue_text = [f"{n+1}. {queue_order[n]['user_id']}" for n in range(len(queue_order))]
+    queue_text = [f"{n+1}. {queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))]
     last_n_events = queue["last_n_events"]
-    post_text = "**Очередь:**\n" + '\n'.join(queue_text) + "\n\n**Последние 5 событий:**\n" + '\n'.join(last_n_events[::-1])
+    minutes_to_refresh = queue["minutes_to_refresh"]
+    post_text = "**Очередь:**\n" + ('\n'.join(queue_text) if queue_text else "🫥") + f"\n\n**Минут для вылета:** **{minutes_to_refresh}**" + "\n\n**Последние 5 событий:**\n" + '\n'.join(last_n_events[::-1])
 
     return {
         "text": post_text,

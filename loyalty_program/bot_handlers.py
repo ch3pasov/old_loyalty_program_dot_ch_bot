@@ -2,7 +2,7 @@ import global_vars
 from global_vars import print
 import lib.screen as screen
 import server.server_vars
-from lib.useful_lib import seconds_from_timestamp, timestamp
+from lib.useful_lib import seconds_from_timestamp, timestamp_now
 from lib.social_lib import is_member, is_registered
 from lib.dataclasses import LoyaltyLevel
 from lib.money import send_money
@@ -76,7 +76,7 @@ def start_handlers():
         users.setdefault(
             user_id,
             {
-                "registered_since": timestamp(),
+                "registered_since": timestamp_now(),
                 "loyalty_program": {
                     "subscribed_since": None,
                     "level": 0,
@@ -85,7 +85,7 @@ def start_handlers():
                 }
             }
         )
-        users[user_id]["loyalty_program"]["subscribed_since"] = timestamp()
+        users[user_id]["loyalty_program"]["subscribed_since"] = timestamp_now()
         print(f"Юзер {user_id} зарегистрировался!")
 
         screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.congratulation_emoji())

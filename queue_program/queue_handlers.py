@@ -1,13 +1,15 @@
 import global_vars
-from global_vars import print, active_queues, queue_users
+from global_vars import print, active_queues
 import server.server_vars
 from pyrogram import filters
-from lib.useful_lib import now_text, sanitize_comment_message, timestamp, datetime_to_text, now_plus_15_minutes
+from lib.useful_lib import sanitize_comment_message, datetime_to_text, now_plus_n_minutes, timestamp_now
 from lib.queue_lib import (
     fast_update_comments_queue,
     add_event_queue,
     update_queue,
+    prerender_queue_user_and_update_name_and_get_queue_user
 )
+from lib.social_lib import is_user_in_queue
 import re
 
 users = global_vars.users
@@ -23,53 +25,59 @@ def start_queue_handlers():
 
         queue_id = re.search(r"queue\?id=(\d+)", callback_query.data).group(1)
         user_id = str(callback_query.from_user.id)
-        # print(callback_query.from_user.id, callback_query.data, callback_query.id)
-        # print(kwargs)
 
-        event = f"{now_text()}: `{user_id}` нажал на `{queue_id}`"
-        add_event_queue(queue_id, event)
+        queue_user = prerender_queue_user_and_update_name_and_get_queue_user(callback_query.from_user)
 
         queue = active_queues[queue_id]["queue"]
-        if user_id not in [queue_place["user_id"] for queue_place in queue]:
-            queue.append(
-                {
-                    "user_id": user_id,
-                    "last_clicked": timestamp()
-                }
-            )
-            callback_query.answer(
-                f"🆕👥 Кликни снова до {datetime_to_text(now_plus_15_minutes())} (15 мин)",
-                show_alert=False
-            )
+        minutes_to_refresh = active_queues[queue_id]["minutes_to_refresh"]
+        # if user_id in all_queues:
+        if is_user_in_queue(user_id):
+            if user_id in queue:
+                queue_user["last_clicked"] = timestamp_now()
+                callback_query.answer(
+                    f"👤👥 Кликни снова до {datetime_to_text(now_plus_n_minutes(minutes_to_refresh))} ({minutes_to_refresh} мин)",
+                    show_alert=False
+                )
+            else:
+                callback_query.answer(
+                    "❌👥 Ты уже стоишь в другой очереди!",
+                    show_alert=False
+                )
         else:
-            user_queue_index = [queue_place["user_id"] for queue_place in queue].index(user_id)
-            queue[user_queue_index]["last_clicked"] = timestamp()
+            queue.append(user_id)
+            queue_user["in_queue"] = queue_id
+            queue_user["last_clicked"] = timestamp_now()
+            queue_user["minutes_to_refresh"] = minutes_to_refresh
+
             callback_query.answer(
-                f"👤👥 Кликни снова до {datetime_to_text(now_plus_15_minutes())} (15 мин)",
+                f"🆕👥 Кликни снова до {datetime_to_text(now_plus_n_minutes(minutes_to_refresh))} ({minutes_to_refresh} мин)",
                 show_alert=False
             )
 
-        update_queue(queue_id)
+            print(f'new in queue {queue_id}')
+            event = "заходит в очередь!"
+            add_event_queue(queue_id, queue_user, event, event_emoji='👥')
+
+            update_queue(queue_id)
 
     @app.on_message(filters.chat(server.server_vars.dot_ch_chat_id) & filters.reply)
     def answer_comment(client, message):
-        print('message!')
+        # print('message!')
 
         top_message_id = message.reply_to_top_message_id if message.reply_to_top_message_id else message.reply_to_message_id
 
         queue_ids = [active_queue_id for active_queue_id in active_queues if active_queues[active_queue_id]["chat_message_id"] == top_message_id]
         if queue_ids:
+            print('new comment!')
             queue_id = queue_ids[0]
 
-            user_id = str(message.from_user.id)
+            queue_user = prerender_queue_user_and_update_name_and_get_queue_user(message.from_user)
 
-            print(message)
             message_text_sanitized = sanitize_comment_message(message)
 
-            print(f"message_text_sanitized {message_text_sanitized}")
-
-            event = f"{now_text()}: `{user_id}` написал коммент: {message_text_sanitized}"
-            add_event_queue(queue_id, event)
+            comment_url = f"https://t.me/c/{(-server.server_vars.dot_ch_chat_id)%10**10}/{message.id}?thread={top_message_id}"
+            event = f"[пишет]({comment_url}): {message_text_sanitized}"
+            add_event_queue(queue_id, queue_user, event, event_emoji='🗣')
 
             fast_update_comments_queue(queue_id, change=1)
             update_queue(queue_id)
