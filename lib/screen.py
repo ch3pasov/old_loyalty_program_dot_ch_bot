@@ -536,7 +536,12 @@ def queue_state(queue):
     queue_text = [f"{n+1}. {queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))]
     last_n_events = queue["last_n_events"]
     minutes_to_refresh = queue["minutes_to_refresh"]
-    post_text = "**Очередь:**\n" + ('\n'.join(queue_text) if queue_text else "🫥") + f"\n\n**Минут для вылета:** **{minutes_to_refresh}**" + "\n\n**Последние 5 событий:**\n" + '\n'.join(last_n_events[::-1])
+    post_text = \
+        "**Очередь:**\n"\
+        + ('\n'.join(queue_text) if queue_text else "🫥")\
+        + f"\n\n**Минут для вылета:** **{minutes_to_refresh}**"\
+        + "\n\n**Последние 5 событий:**\n"\
+        + '\n'.join(last_n_events[::-1])
 
     return {
         "text": post_text,
