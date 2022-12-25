@@ -28,6 +28,7 @@ def create_queue():
             "cnt": 0,
             "fingerprint": "👀"
         },
+        "cabinet": None,
         "minutes_to_refresh": 15
     }
 
@@ -51,9 +52,22 @@ def update_queue(queue_id):
         print(f'{queue_id} ничего не изменилось')
 
 
-def add_event_queue(queue_id, queue_user, event, event_emoji=''):
-    event_pretty = f"`{now_text()}` {event_emoji} {queue_user['name']} {event}"
-    active_queues[queue_id]["last_n_events"] = (active_queues[queue_id]["last_n_events"]+[event_pretty])[-5:]
+def add_queue_event(queue_id, event, event_emoji=''):
+    new_event = f"`{now_text()}` {event_emoji} {event}"
+    active_queues[queue_id]["last_n_events"] = (active_queues[queue_id]["last_n_events"]+[new_event])[-5:]
+
+
+def add_user_queue_event(queue_id, queue_user, event, event_emoji=''):
+    add_queue_event(queue_id, f"{queue_user['name']} {event}", event_emoji=event_emoji)
+
+
+def add_global_queue_event(queue_id, event, event_emoji=''):
+    add_queue_event(queue_id, event, event_emoji=event_emoji)
+    app.send_message(
+        server.server_vars.dot_ch_chat_id,
+        event_emoji,
+        reply_to_message_id=active_queues[queue_id]["chat_message_id"]
+    )
 
 
 def slow_update_comments_queue(queue_id):
@@ -92,5 +106,15 @@ def clear_queue_user(user_id):
 
 
 def kick_user_from_queue(queue_user, user_id):
-    add_event_queue(queue_user["in_queue"], queue_user, "вылетает из очереди!", event_emoji='🥾')
+    add_user_queue_event(queue_user["in_queue"], queue_user, "вылетает из очереди!", event_emoji='🥾')
     clear_queue_user(user_id)
+
+
+def open_cabinet(queue_id):
+    active_queues[queue_id]['cabinet']['state'] = "work"
+    add_global_queue_event(queue_id, "раздача началась!", event_emoji='🚩')
+
+
+def close_cabinet(queue_id):
+    active_queues[queue_id]['cabinet']['state'] = "after_work"
+    add_global_queue_event(queue_id, "раздача закончилась!", event_emoji='🏁')

@@ -2,7 +2,7 @@ import global_vars
 import server.server_vars
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 # from pyrogram.enums import ParseMode
-from lib.useful_lib import seconds_from_timestamp, timestamp_to_datetime
+from lib.useful_lib import seconds_from_timestamp, timestamp_to_datetime_text_long, timestamp_to_time_text
 from global_vars import users, queue_users
 
 
@@ -243,7 +243,7 @@ def register_successfully():
 def profile(user_id):
     user_level = users[user_id]["loyalty_program"]["level"]
     user_exp_days = seconds_from_timestamp(users[user_id]["loyalty_program"]["subscribed_since"])/86400
-    user_registration_time = timestamp_to_datetime(users[user_id]["registered_since"])
+    user_registration_time = timestamp_to_datetime_text_long(users[user_id]["registered_since"])
     user_money_won = users[user_id]["loyalty_program"]["money_won"]
     user_referer_id = users[user_id]["loyalty_program"]["referer_id"]
 
@@ -533,15 +533,23 @@ def queue_state(queue):
     chat_message_id = queue["chat_message_id"]
     queue_order = queue["queue"]
 
-    queue_text = [f"{n+1}. {queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))]
+    if queue_order:
+        queue_text = "\n".join([f"{n+1}. {queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))])
+    else:
+        queue_text = "🫥"
+
     last_n_events = queue["last_n_events"]
     minutes_to_refresh = queue["minutes_to_refresh"]
-    post_text = \
-        "**Очередь:**\n"\
-        + ('\n'.join(queue_text) if queue_text else "🫥")\
-        + f"\n\n**Минут для вылета:** **{minutes_to_refresh}**"\
-        + "\n\n**Последние 5 событий:**\n"\
-        + '\n'.join(last_n_events[::-1])
+
+    post_text = "**Очередь:**"
+    post_text += "\n"+queue_text
+    post_text += f"\n\n**Минут для вылета:** **{minutes_to_refresh}**"
+    if queue["cabinet"]:
+        start = timestamp_to_time_text(queue['cabinet']['meta']['start'])
+        end = timestamp_to_time_text(queue['cabinet']['meta']['end'])
+        post_text += f"\n**Время раздачи:** {start}-{end}"
+    post_text += "\n\n**Последние 5 событий:**\n"
+    post_text += '\n'.join(last_n_events[::-1])
 
     return {
         "text": post_text,

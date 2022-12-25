@@ -5,7 +5,7 @@ from pyrogram import filters
 from lib.useful_lib import sanitize_comment_message, datetime_to_text, now_plus_n_minutes, timestamp_now
 from lib.queue_lib import (
     fast_update_comments_queue,
-    add_event_queue,
+    add_user_queue_event,
     update_queue,
     prerender_queue_user_and_update_name_and_get_queue_user
 )
@@ -33,7 +33,7 @@ def start_queue_handlers():
 
         queue = active_queues[queue_id]["queue"]
         minutes_to_refresh = active_queues[queue_id]["minutes_to_refresh"]
-        # if user_id in all_queues:
+
         if is_user_in_queue(user_id):
             if user_id not in queue:
                 callback_query.answer(
@@ -64,11 +64,12 @@ def start_queue_handlers():
 
             print(f'new in queue {queue_id}')
             event = "заходит в очередь!"
-            add_event_queue(queue_id, queue_user, event, event_emoji='👥')
+            add_user_queue_event(queue_id, queue_user, event, event_emoji='👥')
 
             update_queue(queue_id)
 
-        print("add job!")
+        if queue_local_scheduler.get_job(user_id):
+            queue_local_scheduler.remove_job(user_id)
         queue_local_scheduler.add_job(
             check_to_kick,
             "date",
@@ -77,9 +78,10 @@ def start_queue_handlers():
                 "user_id": user_id,
                 "last_clicked": queue_user["last_clicked"],
                 "verbose": True
-            }
+            },
+            id=user_id
         )
-        print(click_deadline)
+        print(queue_local_scheduler.get_job(user_id))
 
     @app.on_message(filters.chat(server.server_vars.dot_ch_chat_id) & filters.reply)
     def answer_comment(client, message):
@@ -98,7 +100,7 @@ def start_queue_handlers():
 
             comment_url = f"https://t.me/c/{(-server.server_vars.dot_ch_chat_id)%10**10}/{message.id}?thread={top_message_id}"
             event = f"[пишет]({comment_url}): {message_text_sanitized}"
-            add_event_queue(queue_id, queue_user, event, event_emoji='🗣')
+            add_user_queue_event(queue_id, queue_user, event, event_emoji='🗣')
 
             fast_update_comments_queue(queue_id, change=1)
             update_queue(queue_id)

@@ -25,7 +25,15 @@ def timestamp_now():
 
 
 def timestamp_to_datetime(timestamp):
-    return datetime.fromtimestamp(timestamp, timezone.utc).strftime('%F %T.%f')
+    return datetime.fromtimestamp(timestamp, timezone.utc)
+
+
+def timestamp_to_datetime_text_long(timestamp):
+    return timestamp_to_datetime(timestamp).strftime('%F %T.%f')
+
+
+def timestamp_to_time_text(timestamp):
+    return datetime_to_text(datetime.fromtimestamp(timestamp, timezone.utc))
 
 
 def seconds_between_timestamps(timestamp_after, timestamp_before):
