@@ -528,8 +528,8 @@ def queue_first_comment(queue_id, chat_message_id):
 
 def queue_state(queue):
     queue_id = queue["channel_message_id"]
-    comments_cnt = queue["comments_cnt"]
-    comments_fingerprint = queue["comments_fingerprint"]
+    comments_cnt = queue["comments"]["cnt"]
+    comments_fingerprint = queue["comments"]["fingerprint"]
     chat_message_id = queue["chat_message_id"]
     queue_order = queue["queue"]
 

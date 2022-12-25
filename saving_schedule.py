@@ -50,12 +50,12 @@ def save_log_job(verbose=False):
 
 def start_saving_scheduler(verbose=True):
     # global users
-    scheduler = BackgroundScheduler()
+    saving_scheduler = BackgroundScheduler()
 
-    scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
-    scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"verbose": verbose}, max_instances=1)
+    saving_scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    saving_scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"verbose": verbose}, max_instances=1)
 
-    scheduler.start()
+    saving_scheduler.start()
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ from lib.queue_lib import (
     prerender_queue_user_and_update_name_and_get_queue_user
 )
 from lib.social_lib import is_user_in_queue
+from queue_program.queue_schedule import start_queue_local_scheduler, check_to_kick
 import re
 
 users = global_vars.users
@@ -20,6 +21,8 @@ app = global_vars.app
 
 
 def start_queue_handlers():
+    queue_local_scheduler = start_queue_local_scheduler()
+
     @app.on_callback_query(filters.regex(r"queue\?id=(\d+)"))
     def queue_click(client, callback_query, **kwargs):
 
@@ -32,15 +35,18 @@ def start_queue_handlers():
         minutes_to_refresh = active_queues[queue_id]["minutes_to_refresh"]
         # if user_id in all_queues:
         if is_user_in_queue(user_id):
-            if user_id in queue:
-                queue_user["last_clicked"] = timestamp_now()
-                callback_query.answer(
-                    f"👤👥 Кликни снова до {datetime_to_text(now_plus_n_minutes(minutes_to_refresh))} ({minutes_to_refresh} мин)",
-                    show_alert=False
-                )
-            else:
+            if user_id not in queue:
                 callback_query.answer(
                     "❌👥 Ты уже стоишь в другой очереди!",
+                    show_alert=False
+                )
+                return
+            else:
+                queue_user["last_clicked"] = timestamp_now()
+                click_deadline = now_plus_n_minutes(minutes_to_refresh)
+                click_deadline_text = datetime_to_text(click_deadline)
+                callback_query.answer(
+                    f"👤👥 Кликни снова до {click_deadline_text} ({minutes_to_refresh} мин)",
                     show_alert=False
                 )
         else:
@@ -49,8 +55,10 @@ def start_queue_handlers():
             queue_user["last_clicked"] = timestamp_now()
             queue_user["minutes_to_refresh"] = minutes_to_refresh
 
+            click_deadline = now_plus_n_minutes(minutes_to_refresh)
+            click_deadline_text = datetime_to_text(click_deadline)
             callback_query.answer(
-                f"🆕👥 Кликни снова до {datetime_to_text(now_plus_n_minutes(minutes_to_refresh))} ({minutes_to_refresh} мин)",
+                f"🆕👥 Кликни снова до {click_deadline_text} ({minutes_to_refresh} мин)",
                 show_alert=False
             )
 
@@ -59,6 +67,19 @@ def start_queue_handlers():
             add_event_queue(queue_id, queue_user, event, event_emoji='👥')
 
             update_queue(queue_id)
+
+        print("add job!")
+        queue_local_scheduler.add_job(
+            check_to_kick,
+            "date",
+            run_date=click_deadline,
+            kwargs={
+                "user_id": user_id,
+                "last_clicked": queue_user["last_clicked"],
+                "verbose": True
+            }
+        )
+        print(click_deadline)
 
     @app.on_message(filters.chat(server.server_vars.dot_ch_chat_id) & filters.reply)
     def answer_comment(client, message):

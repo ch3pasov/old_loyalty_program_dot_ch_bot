@@ -12,14 +12,14 @@ from global_vars import print
 warnings.filterwarnings("ignore")
 
 
-def drop_scheduler(dot_ch_chat_id, money_drop_message_id, scheduler, verbose=True):
+def drop_scheduler(dot_ch_chat_id, money_drop_message_id, moneydrop_scheduler, verbose=True):
     if verbose:
         print("Start drop_scheduler!")
     from datetime import timedelta
     for i in range(server.server_vars.money_drop_drops):
         run_date = random_datetime(timedelta(minutes=server.server_vars.money_drop_period_minutes))
         print(run_date)
-        scheduler.add_job(
+        moneydrop_scheduler.add_job(
             money_drop,
             'date',
             run_date=run_date,
@@ -33,19 +33,19 @@ def drop_scheduler(dot_ch_chat_id, money_drop_message_id, scheduler, verbose=Tru
 
 def start_moneydrop_scheduler(verbose=True):
     # global users
-    scheduler = BackgroundScheduler()
+    moneydrop_scheduler = BackgroundScheduler()
 
-    scheduler.add_job(
+    moneydrop_scheduler.add_job(
         drop_scheduler, "interval", minutes=server.server_vars.money_drop_period_minutes,
         kwargs={
             "verbose": verbose,
             "dot_ch_chat_id": server.server_vars.dot_ch_chat_id,
             "money_drop_message_id": server.server_vars.money_drop_message_id,
-            "scheduler": scheduler
+            "scheduler": moneydrop_scheduler
         }, max_instances=1, next_run_time=datetime.now()
     )
 
-    scheduler.start()
+    moneydrop_scheduler.start()
 
 
 if __name__ == "__main__":

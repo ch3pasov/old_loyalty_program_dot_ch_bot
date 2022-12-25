@@ -24,8 +24,10 @@ def create_queue():
         "chat_message_id": chat_message_id,
         "queue": [],
         "last_n_events": [],
-        "comments_cnt": 0,
-        "comments_fingerprint": "👀",
+        "comments": {
+            "cnt": 0,
+            "fingerprint": "👀"
+        },
         "minutes_to_refresh": 15
     }
 
@@ -57,12 +59,12 @@ def add_event_queue(queue_id, queue_user, event, event_emoji=''):
 def slow_update_comments_queue(queue_id):
     comments_cnt = app_billing.get_discussion_replies_count(server.server_vars.dot_ch_chat_id, message_id=active_queues[queue_id]["chat_message_id"])
 
-    active_queues[queue_id]["comments_cnt"] = comments_cnt
+    active_queues[queue_id]["comments"]["cnt"] = comments_cnt
 
 
 def fast_update_comments_queue(queue_id, change=1):
-    active_queues[queue_id]["comments_cnt"] += change
-    active_queues[queue_id]["comments_fingerprint"] = emoji_fingerprint()
+    active_queues[queue_id]["comments"]["cnt"] += change
+    active_queues[queue_id]["comments"]["dfingerprint"] = emoji_fingerprint()
 
 
 def prerender_queue_user_and_update_name_and_get_queue_user(user):
@@ -84,9 +86,11 @@ def prerender_queue_user_and_update_name_and_get_queue_user(user):
 
 def clear_queue_user(user_id):
     in_queue = queue_users[user_id]["in_queue"]
-    queue_users[user_id] = {
-        "in_queue": None,
-        "last_clicked": None,
-        "minutes_to_refresh": None
-    }
+    for key in ["in_queue", "last_clicked", "minutes_to_refresh"]:
+        queue_users[user_id][key] = None
     active_queues[in_queue]['queue'].remove(user_id)
+
+
+def kick_user_from_queue(queue_user, user_id):
+    add_event_queue(queue_user["in_queue"], queue_user, "вылетает из очереди!", event_emoji='🥾')
+    clear_queue_user(user_id)

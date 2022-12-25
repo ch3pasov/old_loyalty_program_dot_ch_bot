@@ -54,7 +54,7 @@ def sanitize_comment_message(message):
         return ""
 
     # удаляем плохие символы, что могут сломать разметку
-    message_text = ''.join((i if i not in r'\`/*_|~@.' else ' ') for i in message_text)
+    message_text = ''.join((i if i not in r'\`/*_|~@.' else '') for i in message_text)
     # обрезаем коммент до приемлимых 30 символов
     message_text = message_text[:30]
     # наклоним италиком

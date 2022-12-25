@@ -3,7 +3,7 @@ import warnings
 from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from lib.queue_lib import slow_update_comments_queue, update_queue, clear_queue_user, add_event_queue
+from lib.queue_lib import slow_update_comments_queue, update_queue, kick_user_from_queue
 from lib.useful_lib import timestamp_now, seconds_between_timestamps
 from global_vars import print, active_queues, queue_users
 
@@ -40,23 +40,46 @@ def update_queue_users(verbose=True):
             continue
         # надо выгнать чела из очереди
 
-        add_event_queue(in_queue, queue_user, "вылетает из очереди!", event_emoji='🥾')
-        clear_queue_user(user_id)
+        kick_user_from_queue(queue_user, user_id)
         queues_to_update.add(in_queue)
     for queue_id in queues_to_update:
         update_queue(queue_id)
 
 
-def start_queue_scheduler(verbose=True):
-    # global users
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(update_all_queues, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
-    scheduler.add_job(update_queue_users, "interval", seconds=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
-    scheduler.start()
+def check_to_kick(user_id, last_clicked, verbose=True):
+    queue_user = queue_users[user_id]
+    in_queue = queue_user["in_queue"]
+    if not in_queue:
+        if verbose:
+            print(f"{user_id} not in queue!")
+        return
+    if last_clicked != queue_user["last_clicked"]:
+        if verbose:
+            print(f"{user_id} user clicked!")
+        return
+    # выгнать
+    if verbose:
+        print(f"{user_id} kick user!")
+    kick_user_from_queue(queue_user, user_id)
+    print(in_queue)
+    update_queue(in_queue)
+
+
+def start_queue_global_scheduler(verbose=True):
+    queue_global_scheduler = BackgroundScheduler()
+    queue_global_scheduler.add_job(update_all_queues, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    queue_global_scheduler.add_job(update_queue_users, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    queue_global_scheduler.start()
+
+
+def start_queue_local_scheduler():
+    queue_local_scheduler = BackgroundScheduler()
+    queue_local_scheduler.start()
+    return queue_local_scheduler
 
 
 if __name__ == "__main__":
     from pyrogram import idle
 
-    start_queue_scheduler(verbose=True)
+    start_queue_global_scheduler(verbose=True)
     idle()

@@ -65,10 +65,10 @@ def update_user_progress(verbose=True):
 
 
 def start_loyalty_scheduler(verbose=True):
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(update_user_progress, "interval", minutes=2, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    loyalty_scheduler = BackgroundScheduler()
+    loyalty_scheduler.add_job(update_user_progress, "interval", minutes=2, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
 
-    scheduler.start()
+    loyalty_scheduler.start()
 
 
 if __name__ == "__main__":
