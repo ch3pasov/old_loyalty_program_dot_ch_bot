@@ -1,5 +1,5 @@
 import global_vars
-from global_vars import print, active_queues
+from global_vars import print, active_queues, queue_local_scheduler
 import server.server_vars
 from pyrogram import filters
 from lib.useful_lib import sanitize_comment_message, datetime_to_text, now_plus_n_minutes, timestamp_now
@@ -10,7 +10,7 @@ from lib.queue_lib import (
     prerender_queue_user_and_update_name_and_get_queue_user
 )
 from lib.social_lib import is_user_in_queue
-from queue_program.queue_schedule import start_queue_local_scheduler, check_to_kick
+from queue_program.queue_schedule import check_to_kick
 import re
 
 users = global_vars.users
@@ -21,8 +21,6 @@ app = global_vars.app
 
 
 def start_queue_handlers():
-    queue_local_scheduler = start_queue_local_scheduler()
-
     @app.on_callback_query(filters.regex(r"queue\?id=(\d+)"))
     def queue_click(client, callback_query, **kwargs):
 
@@ -81,7 +79,7 @@ def start_queue_handlers():
             },
             id=user_id
         )
-        print(queue_local_scheduler.get_job(user_id))
+        # print(queue_local_scheduler.get_job(user_id))
 
     @app.on_message(filters.chat(server.server_vars.dot_ch_chat_id) & filters.reply)
     def answer_comment(client, message):

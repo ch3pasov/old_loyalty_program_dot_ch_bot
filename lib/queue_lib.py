@@ -1,4 +1,3 @@
-import json
 import server.server_vars
 from global_vars import active_queues, queue_users, app, app_billing, print
 from pyrogram import errors
@@ -36,10 +35,6 @@ def create_queue():
     screen.create(app, server.server_vars.dot_ch_chat_id, screen.queue_first_comment(queue_id, chat_message_id))
 
     active_queues[queue_id] = queue
-    filename = "server/active_queues.json"
-    with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(active_queues, f, ensure_ascii=False, indent=4)
-
     print(f"Очередь {queue_id} создана!")
 
 
@@ -110,11 +105,15 @@ def kick_user_from_queue(queue_user, user_id):
     clear_queue_user(user_id)
 
 
-def open_cabinet(queue_id):
+def open_cabinet(queue_id, to_update_queue=False):
     active_queues[queue_id]['cabinet']['state'] = "work"
     add_global_queue_event(queue_id, "раздача началась!", event_emoji='🚩')
+    if to_update_queue:
+        update_queue(queue_id)
 
 
-def close_cabinet(queue_id):
+def close_cabinet(queue_id, to_update_queue=False):
     active_queues[queue_id]['cabinet']['state'] = "after_work"
     add_global_queue_event(queue_id, "раздача закончилась!", event_emoji='🏁')
+    if to_update_queue:
+        update_queue(queue_id)
