@@ -8,8 +8,12 @@ def now():
     return datetime.now(timezone.utc)
 
 
+def dt_plus_n_minutes(dt, n):
+    return dt + timedelta(minutes=n)
+
+
 def now_plus_n_minutes(n):
-    return datetime.now(timezone.utc) + timedelta(minutes=n)
+    return dt_plus_n_minutes(datetime.now(timezone.utc), n)
 
 
 def datetime_to_text(dt):

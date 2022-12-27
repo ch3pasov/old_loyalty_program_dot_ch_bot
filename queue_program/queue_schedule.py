@@ -4,7 +4,7 @@ from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from lib.queue_lib import slow_update_comments_queue, update_queue, kick_user_from_queue, open_cabinet, close_cabinet
-from lib.useful_lib import timestamp_now, seconds_between_timestamps, timestamp_to_datetime
+from lib.useful_lib import timestamp_now, seconds_between_timestamps, timestamp_to_datetime, dt_plus_n_minutes
 from global_vars import print, active_queues, queue_users
 
 warnings.filterwarnings("ignore")
@@ -88,7 +88,7 @@ def update_queue_users(verbose=True):
         update_queue(queue_id)
 
 
-def set_queue_states_schedulers(scheduler, verbose=True):
+def initial_set_queue_state_scheduler_jobs(scheduler, verbose=True):
     for queue_id in active_queues:
         cabinet = active_queues[queue_id]['cabinet']
         if cabinet:
@@ -103,11 +103,39 @@ def set_queue_states_schedulers(scheduler, verbose=True):
                 scheduler.add_job(close_cabinet, "date", run_date=close_date, args=[queue_id, True])
 
 
+def set_kick_user_scheduler_job(scheduler, user_id):
+    last_clicked = queue_users[user_id]["last_clicked"]
+    minutes_to_refresh = queue_users[user_id]["minutes_to_refresh"]
+
+    click_deadline = dt_plus_n_minutes(timestamp_to_datetime(last_clicked), minutes_to_refresh)
+    if scheduler.get_job(user_id):
+        scheduler.remove_job(user_id)
+    scheduler.add_job(
+        check_to_kick,
+        "date",
+        run_date=click_deadline,
+        kwargs={
+            "user_id": user_id,
+            "last_clicked": last_clicked,
+            "verbose": True
+        },
+        id=user_id
+    )
+
+
+def initial_set_kick_user_scheduler_jobs(scheduler, verbose=True):
+    print(1)
+    for user_id in queue_users:
+        if queue_users[user_id]["in_queue"]:
+            set_kick_user_scheduler_job(scheduler, user_id)
+
+
 def start_queue_scheduler(verbose=True):
     queue_scheduler = BackgroundScheduler()
     queue_scheduler.add_job(update_all_queues, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     queue_scheduler.add_job(update_queue_users, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
-    set_queue_states_schedulers(queue_scheduler)
+    initial_set_queue_state_scheduler_jobs(queue_scheduler)
+    initial_set_kick_user_scheduler_jobs(queue_scheduler)
     print(queue_scheduler.get_jobs())
     queue_scheduler.start()
 

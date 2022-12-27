@@ -10,7 +10,7 @@ from lib.queue_lib import (
     prerender_queue_user_and_update_name_and_get_queue_user
 )
 from lib.social_lib import is_user_in_queue
-from queue_program.queue_schedule import check_to_kick
+from queue_program.queue_schedule import set_kick_user_scheduler_job
 import re
 
 users = global_vars.users
@@ -66,19 +66,7 @@ def start_queue_handlers():
 
             update_queue(queue_id)
 
-        if queue_local_scheduler.get_job(user_id):
-            queue_local_scheduler.remove_job(user_id)
-        queue_local_scheduler.add_job(
-            check_to_kick,
-            "date",
-            run_date=click_deadline,
-            kwargs={
-                "user_id": user_id,
-                "last_clicked": queue_user["last_clicked"],
-                "verbose": True
-            },
-            id=user_id
-        )
+        set_kick_user_scheduler_job(queue_local_scheduler, user_id)
         # print(queue_local_scheduler.get_job(user_id))
 
     @app.on_message(filters.chat(server.server_vars.dot_ch_chat_id) & filters.reply)
