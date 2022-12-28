@@ -120,6 +120,11 @@ def start_handlers():
         user_id = str(callback_query.from_user.id)
         screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.referer_program(user_id))
 
+    @app.on_callback_query(filters.regex('to_referals_list'))
+    def answer_referals_list(client, callback_query):
+        user_id = str(callback_query.from_user.id)
+        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.referals_list(user_id))
+
     @app.on_callback_query(filters.regex(r"to_set_referer\?referer_id=(\d+)"))
     def answer(client, callback_query, **kwargs):
         global users

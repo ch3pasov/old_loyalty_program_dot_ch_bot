@@ -100,6 +100,7 @@ button_to_statistic = '''📊статистика📊'''
 button_to_profile = '''👤мой профиль👤'''
 button_to_profile_refresh = '''🔄мой профиль🔄'''
 button_to_referer_program = '''😳реферерная программа😳'''
+button_back_to_referer_program = '''◀️ к реферерной программе'''
 
 
 def home_new():
@@ -337,8 +338,38 @@ def referer_program(user_id):
                 ],
                 [
                     InlineKeyboardButton(
+                        "👼🏻Мои рефералы👼🏾",
+                        callback_data="to_referals_list"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
                         button_to_home,
                         callback_data="to_home"
+                    )
+                ],
+            ]
+        )
+    }
+
+
+def referals_list(user_id):
+    referals = [user for user in users if users[user]['loyalty_program']['referer_id'] == user_id]
+
+    referals_cnt = len(referals)
+    if referals_cnt > 0:
+        text = f"**(прямых) рефералов:** {referals_cnt}\n\n**Их айдишники:**\n" + '\n'.join([f"`{obj}`" for obj in referals])
+    else:
+        text = "🙅🏻‍♀️ Пока никто не указал тебя своим реферером! Но ты всегда можешь это исправить:\n" + f"`http://t.me/{bot_username}?start=referer_id={user_id}`"
+
+    return {
+        "text": text,
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        button_back_to_referer_program,
+                        callback_data="to_referer_program"
                     )
                 ],
             ]
@@ -373,7 +404,7 @@ def set_referer_smth_wrong(text):
             [
                 [
                     InlineKeyboardButton(
-                        "◀️ к реферерной программе",
+                        button_back_to_referer_program,
                         callback_data="to_referer_program"
                     )
                 ],
@@ -421,7 +452,7 @@ def set_referer_not_number():
             [
                 [
                     InlineKeyboardButton(
-                        "◀️ к реферерной программе",
+                        button_back_to_referer_program,
                         callback_data="to_referer_program"
                     )
                 ]

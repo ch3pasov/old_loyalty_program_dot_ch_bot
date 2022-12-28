@@ -38,10 +38,10 @@ def start_moneydrop_scheduler(verbose=True):
     moneydrop_scheduler.add_job(
         drop_scheduler, "interval", minutes=server.server_vars.money_drop_period_minutes,
         kwargs={
-            "verbose": verbose,
             "dot_ch_chat_id": server.server_vars.dot_ch_chat_id,
             "money_drop_message_id": server.server_vars.money_drop_message_id,
-            "scheduler": moneydrop_scheduler
+            "moneydrop_scheduler": moneydrop_scheduler,
+            "verbose": verbose
         }, max_instances=1, next_run_time=datetime.now()
     )
 
