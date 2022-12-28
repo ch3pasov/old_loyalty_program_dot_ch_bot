@@ -11,7 +11,7 @@ pip3 install -U tgcrypto
 pip3 install apscheduler
 ```
 
-2. Получить Telegarm API key из https://my.telegram.org/apps. Вписать опции в server/secret.py:
+2. Получить Telegarm API key из https://my.telegram.org/apps. Вписать опции в server/server/secret.py:
    - Вписать App api_id в app_id
    - Вписать App api_hash в app_api_hash
 

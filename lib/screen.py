@@ -2,8 +2,8 @@ import global_vars
 import server.server_vars
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 # from pyrogram.enums import ParseMode
-from lib.useful_lib import seconds_from_timestamp, timestamp_to_datetime
-from global_vars import users
+from lib.useful_lib import seconds_from_timestamp, timestamp_to_datetime_text_long, timestamp_to_time_text
+from global_vars import users, queue_users
 
 
 bot_username = global_vars.bot_username
@@ -100,6 +100,7 @@ button_to_statistic = '''📊статистика📊'''
 button_to_profile = '''👤мой профиль👤'''
 button_to_profile_refresh = '''🔄мой профиль🔄'''
 button_to_referer_program = '''😳реферерная программа😳'''
+button_back_to_referer_program = '''◀️ к реферерной программе'''
 
 
 def home_new():
@@ -243,7 +244,7 @@ def register_successfully():
 def profile(user_id):
     user_level = users[user_id]["loyalty_program"]["level"]
     user_exp_days = seconds_from_timestamp(users[user_id]["loyalty_program"]["subscribed_since"])/86400
-    user_registration_time = timestamp_to_datetime(users[user_id]["registered_since"])
+    user_registration_time = timestamp_to_datetime_text_long(users[user_id]["registered_since"])
     user_money_won = users[user_id]["loyalty_program"]["money_won"]
     user_referer_id = users[user_id]["loyalty_program"]["referer_id"]
 
@@ -321,7 +322,7 @@ def referer_program(user_id):
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
-                    InlineKeyboardButton(  # Opens the inline interface in the current chat
+                    InlineKeyboardButton(
                         "💬пригласить друга💬",
                         switch_inline_query=referer_program_invite.format(
                             bot_username=bot_username,
@@ -330,15 +331,45 @@ def referer_program(user_id):
                     )
                 ],
                 [
-                    InlineKeyboardButton(  # Opens the inline interface in the current chat
+                    InlineKeyboardButton(
                         "🖇добавить реферера🖇",
                         switch_inline_query_current_chat="добавить реферера с ID: "
                     )
                 ],
                 [
                     InlineKeyboardButton(
+                        "👼🏻Мои рефералы👼🏾",
+                        callback_data="to_referals_list"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
                         button_to_home,
                         callback_data="to_home"
+                    )
+                ],
+            ]
+        )
+    }
+
+
+def referals_list(user_id):
+    referals = [user for user in users if users[user]['loyalty_program']['referer_id'] == user_id]
+
+    referals_cnt = len(referals)
+    if referals_cnt > 0:
+        text = f"**(прямых) рефералов:** {referals_cnt}\n\n**Их айдишники:**\n" + '\n'.join([f"`{obj}`" for obj in referals])
+    else:
+        text = "🙅🏻‍♀️ Пока никто не указал тебя своим реферером! Но ты всегда можешь это исправить:\n" + f"`http://t.me/{bot_username}?start=referer_id={user_id}`"
+
+    return {
+        "text": text,
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        button_back_to_referer_program,
+                        callback_data="to_referer_program"
                     )
                 ],
             ]
@@ -373,7 +404,7 @@ def set_referer_smth_wrong(text):
             [
                 [
                     InlineKeyboardButton(
-                        "◀️ к реферерной программе",
+                        button_back_to_referer_program,
                         callback_data="to_referer_program"
                     )
                 ],
@@ -421,7 +452,7 @@ def set_referer_not_number():
             [
                 [
                     InlineKeyboardButton(
-                        "◀️ к реферерной программе",
+                        button_back_to_referer_program,
                         callback_data="to_referer_program"
                     )
                 ]
@@ -503,16 +534,92 @@ def money(send_message, text=None, button_text=None, reply_to_message_id=None):
     }
 
 
+def queue_initial_post():
+    return {
+        "text": "очередь"
+    }
+
+
+def queue_first_comment(queue_id, chat_message_id):
+    return {
+        "text": '👥👥👥',
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "👥",
+                        callback_data=f"queue?id={queue_id}"
+                    )
+                ]
+            ]
+        ),
+        "reply_to_message_id": chat_message_id
+    }
+
+
+def queue_state(queue):
+    queue_id = queue["channel_message_id"]
+    comments_cnt = queue["comments"]["cnt"]
+    comments_fingerprint = queue["comments"]["fingerprint"]
+    chat_message_id = queue["chat_message_id"]
+    queue_order = queue["queue"]
+
+    if queue_order:
+        queue_text = "\n".join([f"{n+1}. {queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))])
+    else:
+        queue_text = "🫥"
+
+    last_n_events = queue["last_n_events"]
+    minutes_to_refresh = queue["minutes_to_refresh"]
+
+    post_text = "**Очередь:**"
+    post_text += "\n"+queue_text
+    post_text += f"\n\n**Минут для вылета:** **{minutes_to_refresh}**"
+    if queue["cabinet"]:
+        start = timestamp_to_time_text(queue['cabinet']['meta']['start'])
+        end = timestamp_to_time_text(queue['cabinet']['meta']['end'])
+        post_text += f"\n**Время раздачи:** {start}-{end}"
+    post_text += "\n\n**Последние 5 событий:**\n"
+    post_text += '\n'.join(last_n_events[::-1])
+
+    return {
+        "text": post_text,
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "👥",
+                        callback_data=f"queue?id={queue_id}"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        f"{comments_fingerprint} комменты ({comments_cnt})",
+                        url=f'https://t.me/c/{(-server.server_vars.dot_ch_chat_id)%10**10}/{chat_message_id}?thread={chat_message_id}'
+                    )
+                ]
+            ]
+        )
+    }
+
+
 def create(client, chat_id, screen):
-    client.send_message(
+    return client.send_message(
         chat_id,
         **screen
     )
 
 
 def update(client, chat_id, message_id, screen):
-    client.edit_message_text(
-        chat_id=chat_id,
-        message_id=message_id,
-        **screen
-    )
+    if "text" in screen:
+        return client.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            **screen
+        )
+    else:
+        return client.edit_message_reply_markup(
+            chat_id=chat_id,
+            message_id=message_id,
+            **screen
+        )

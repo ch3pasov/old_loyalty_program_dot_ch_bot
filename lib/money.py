@@ -1,5 +1,5 @@
 from lib import screen
-from lib.useful_lib import timestamp
+from lib.useful_lib import timestamp_now, now
 from lib.social_lib import check_if_banned_before_money
 import server.server_vars
 from global_vars import app, app_billing, users, print
@@ -13,7 +13,7 @@ def send_money(
 ):
 
     assert amount >= 0.0001, "wallet не позволяет отправлять меньше 0.0001 TON!"
-    non_collision_amount = amount + int(timestamp() * 10**6) % 10**3 * 10**(-7) + int(user_id) % 10**3 * 10**(-10)
+    non_collision_amount = amount + int(timestamp_now() * 10**6) % 10**3 * 10**(-7) + int(user_id) % 10**3 * 10**(-10)
     assert non_collision_amount < 1, "МНОГО ДЕНЕГ"
 
     r = app_billing.get_inline_bot_results('@wallet', str(non_collision_amount))
@@ -50,3 +50,15 @@ def send_money(
 
     else:
         raise ValueError("BTC! СЛЕВА НАПРАВО")
+
+
+def money_drop(dot_ch_chat_id, money_drop_message_id, amount):
+    print(f"MONEY DROP {now()}")
+    send_money(
+        amount, dot_ch_chat_id,
+        add_to_money_won=False,
+        reply_to_message_id=money_drop_message_id,
+        text='💸 **регулярный money drop.** 💸\nкто первый встал того и тапки!',
+        button_text=f'Получить {amount}+ε на @wallet',
+        debug_comment='money drop',
+    )
