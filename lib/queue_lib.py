@@ -60,7 +60,7 @@ def add_global_queue_event(queue_id, event, event_emoji=''):
     add_queue_event(queue_id, event, event_emoji=event_emoji)
     app.send_message(
         server.server_vars.dot_ch_chat_id,
-        event_emoji,
+        f"{event_emoji} {event}",
         reply_to_message_id=active_queues[queue_id]["chat_message_id"]
     )
 
@@ -82,6 +82,7 @@ def prerender_queue_user_and_update_name_and_get_queue_user(user):
         user_id,
         {
             "in_queue": None,
+            "in_cabinet": None,
             "last_clicked": None,
             "minutes_to_refresh": None,
             "name": None
@@ -106,14 +107,16 @@ def kick_user_from_queue(queue_user, user_id):
 
 
 def open_cabinet(queue_id, to_update_queue=False):
-    active_queues[queue_id]['cabinet']['state'] = "work"
+    active_queues[queue_id]['cabinet']['state']['cabinet_work'] = "work"
+    active_queues[queue_id]['cabinet']['state']['is_door_open'] = True
     add_global_queue_event(queue_id, "раздача началась!", event_emoji='🚩')
     if to_update_queue:
         update_queue(queue_id)
 
 
 def close_cabinet(queue_id, to_update_queue=False):
-    active_queues[queue_id]['cabinet']['state'] = "after_work"
+    active_queues[queue_id]['cabinet']['state']['cabinet_work'] = "after_work"
+    active_queues[queue_id]['cabinet']['state']['is_door_open'] = False
     add_global_queue_event(queue_id, "раздача закончилась!", event_emoji='🏁')
     if to_update_queue:
         update_queue(queue_id)

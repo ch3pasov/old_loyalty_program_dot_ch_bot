@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 def check_to_open(queue_id, timestamp_now_const, verbose=True):
     cabinet = active_queues[queue_id]['cabinet']
-    if cabinet['meta']['start'] < timestamp_now_const and cabinet['state'] == "before_work":
+    if cabinet['meta']['start'] < timestamp_now_const and cabinet['state']['cabinet_work'] == "before_work":
         if verbose:
             print(f"{queue_id} open cabinet!")
         open_cabinet(queue_id)
@@ -20,7 +20,7 @@ def check_to_open(queue_id, timestamp_now_const, verbose=True):
 
 def check_to_close(queue_id, timestamp_now_const, verbose=True):
     cabinet = active_queues[queue_id]['cabinet']
-    if cabinet['meta']['end'] < timestamp_now_const and cabinet['state'] == "work":
+    if cabinet['meta']['end'] < timestamp_now_const and cabinet['state']['cabinet_work'] == "work":
         if verbose:
             print(f"{queue_id} close cabinet!")
         close_cabinet(queue_id)
@@ -88,7 +88,7 @@ def update_queue_users(verbose=True):
         update_queue(queue_id)
 
 
-def initial_set_queue_state_scheduler_jobs(scheduler, verbose=True):
+def initial_set_cabinet_state_scheduler_jobs(scheduler, verbose=True):
     for queue_id in active_queues:
         cabinet = active_queues[queue_id]['cabinet']
         if cabinet:
@@ -124,7 +124,7 @@ def set_kick_user_scheduler_job(scheduler, user_id):
 
 
 def initial_set_kick_user_scheduler_jobs(scheduler, verbose=True):
-    print(1)
+    print("initial_set_kick_user_scheduler_jobs")
     for user_id in queue_users:
         if queue_users[user_id]["in_queue"]:
             set_kick_user_scheduler_job(scheduler, user_id)
@@ -134,7 +134,7 @@ def start_queue_scheduler(verbose=True):
     queue_scheduler = BackgroundScheduler()
     queue_scheduler.add_job(update_all_queues, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     queue_scheduler.add_job(update_queue_users, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
-    initial_set_queue_state_scheduler_jobs(queue_scheduler)
+    initial_set_cabinet_state_scheduler_jobs(queue_scheduler)
     initial_set_kick_user_scheduler_jobs(queue_scheduler)
     print(queue_scheduler.get_jobs())
     queue_scheduler.start()
