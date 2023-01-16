@@ -34,7 +34,7 @@ def start_queue_handlers():
 
         queue_or_cabinet = is_user_in_queue_or_cabinet(user_id)
         if queue_or_cabinet:
-            if queue_or_cabinet == "in cabinet":
+            if queue_or_cabinet == "cabinet":
                 callback_query.answer(
                     "👥🚪👤 Ты уже сидишь в кабинете!",
                     show_alert=False
@@ -48,7 +48,7 @@ def start_queue_handlers():
                 )
                 return
             else:
-                queue_user["last_clicked"] = timestamp_now()
+                queue_user["in"]["timestamp"] = timestamp_now()
                 click_deadline = now_plus_n_minutes(minutes_to_refresh)
                 click_deadline_text = datetime_to_text(click_deadline)
                 callback_query.answer(
@@ -57,9 +57,12 @@ def start_queue_handlers():
                 )
         else:
             queue.append(user_id)
-            queue_user["in_queue"] = queue_id
-            queue_user["last_clicked"] = timestamp_now()
-            queue_user["minutes_to_refresh"] = minutes_to_refresh
+            queue_user["in"] = {
+                "type": "queue",
+                "id": queue_id,
+                "timestamp": timestamp_now(),
+                "delay_minutes": minutes_to_refresh
+            }
 
             click_deadline = now_plus_n_minutes(minutes_to_refresh)
             click_deadline_text = datetime_to_text(click_deadline)

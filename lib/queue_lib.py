@@ -82,10 +82,7 @@ def prerender_queue_user_and_update_name_and_get_queue_user(user):
     queue_users.setdefault(
         user_id,
         {
-            "in_queue": None,
-            "in_cabinet": None,
-            "last_clicked": None,
-            "minutes_to_refresh": None,
+            "in": None,
             "name": None
         }
     )
@@ -96,14 +93,18 @@ def prerender_queue_user_and_update_name_and_get_queue_user(user):
 
 
 def clear_queue_user(user_id):
-    in_queue = queue_users[user_id]["in_queue"]
-    for key in ["in_queue", "last_clicked", "minutes_to_refresh"]:
-        queue_users[user_id][key] = None
-    active_queues[in_queue]['queue'].remove(user_id)
+    queue_user = queue_users[user_id]
+
+    assert queue_user["in"]["type"] == "queue", f'queue_user["in"]["type"] must be "queue", not {queue_user["in"]["type"]}'
+    queue_id = queue_user["in"]["id"]
+    queue_user["in"] = None
+    active_queues[queue_id]['queue'].remove(user_id)
 
 
 def kick_user_from_queue(queue_user, user_id, to_update_queue=False):
-    queue_id = queue_user["in_queue"]
+    assert queue_user["in"]["type"] == "queue", f'queue_user["in"]["type"] must be "queue", not {queue_user["in"]["type"]}'
+    queue_id = queue_user["in"]["id"]
+
     add_user_queue_event(queue_id, queue_user, "вылетает из очереди!", event_emoji='🥾')
     clear_queue_user(user_id)
     if to_update_queue:

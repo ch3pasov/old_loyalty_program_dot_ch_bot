@@ -30,12 +30,14 @@ def is_queue_user(user_id):
 
 
 def is_user_in_queue_or_cabinet(user_id):
-    if is_queue_user(user_id):
-        if queue_users[user_id]["in_queue"]:
-            return "in queue"
-        if queue_users[user_id]["in_cabinet"]:
-            return "in cabinet"
-    return False
+    if not is_queue_user(user_id):
+        return False
+
+    queue_user = queue_users[user_id]
+    if not queue_user["in"]:
+        return False
+
+    return queue_user["in"]["type"]
 
 
 def check_if_banned_before_money(user_id, text="💸"):

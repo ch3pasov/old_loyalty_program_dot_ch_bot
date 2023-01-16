@@ -42,12 +42,14 @@ def check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True):
 
 def check_to_kick(user_id, last_clicked, verbose=True):
     queue_user = queue_users[user_id]
-    queue_id = queue_user["in_queue"]
+
+    assert queue_user["in"]["type"] == "queue", f'queue_user["in"]["type"] must be "queue", not {queue_user["in"]["type"]}'
+    queue_id = queue_user["in"]["id"]
     if not queue_id:
         if verbose:
             print(f"{user_id} not in queue!")
         return
-    if last_clicked != queue_user["last_clicked"]:
+    if last_clicked != queue_user["in"]["timestamp"]:
         if verbose:
             print(f"{user_id} user clicked!")
         return
@@ -82,20 +84,20 @@ def update_queue_users(verbose=True):
     for user_id in queue_users:
         queue_user = queue_users[user_id]
 
-        # print(queue_user)
-        # print(seconds_between_timestamps(timestamp_now_const, queue_user["last_clicked"]), queue_user["minutes_to_refresh"]*60)
-
-        in_queue = queue_user["in_queue"]
-        if not in_queue:
-            # чел не в очереди
+        if not queue_user["in"]:
+            # чел ни в очереди, ни в кабинете
             continue
-        if seconds_between_timestamps(timestamp_now_const, queue_user["last_clicked"]) < queue_user["minutes_to_refresh"]*60:
+        if queue_user["in"]["type"] != "queue":
+            # чел в кабинете
+            continue
+        if seconds_between_timestamps(timestamp_now_const, queue_user["in"]["timestamp"]) < queue_user["delay_minutes"]*60:
             # чел недавно кликал
             continue
         # надо выгнать чела из очереди
 
+        queue_id = queue_user["in"]["id"]
         kick_user_from_queue(queue_user, user_id)
-        queues_to_update.add(in_queue)
+        queues_to_update.add(queue_id)
     for queue_id in queues_to_update:
         update_queue(queue_id)
 
@@ -117,8 +119,12 @@ def initial_set_cabinet_state_scheduler_jobs(scheduler, verbose=True):
 
 
 def set_kick_user_scheduler_job(scheduler, user_id):
-    last_clicked = queue_users[user_id]["last_clicked"]
-    minutes_to_refresh = queue_users[user_id]["minutes_to_refresh"]
+    queue_user = queue_users[user_id]
+    # print(queue_user)
+    assert queue_user["in"]["type"] == "queue", f'queue_user["in"]["type"] must be "queue", not {queue_user["in"]["type"]}'
+
+    last_clicked = queue_user['in']["timestamp"]
+    minutes_to_refresh = queue_user['in']["delay_minutes"]
 
     click_deadline = dt_plus_n_minutes(timestamp_to_datetime(last_clicked), minutes_to_refresh)
     if scheduler.get_job(user_id):
@@ -139,7 +145,10 @@ def set_kick_user_scheduler_job(scheduler, user_id):
 def initial_set_kick_user_scheduler_jobs(scheduler, verbose=True):
     print("initial_set_kick_user_scheduler_jobs")
     for user_id in queue_users:
-        if queue_users[user_id]["in_queue"]:
+        queue_user = queue_users[user_id]
+        if not queue_user["in"]:
+            continue
+        if queue_user["in"]["type"] == "queue":
             set_kick_user_scheduler_job(scheduler, user_id)
 
 

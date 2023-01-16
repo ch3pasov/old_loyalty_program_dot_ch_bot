@@ -51,16 +51,20 @@ def save_log_job(verbose=False):
 def restore_queue_users():
     for user_id in queue_users:
         queue_user = queue_users[user_id]
-        if queue_user["in_queue"]:
-            queue_id = queue_user["in_queue"]
+        if not queue_user["in"]:
+            continue
+
+        queue_id = queue_user["in"]["id"]
+        if queue_user["in"]["type"] == "queue":
             if user_id not in active_queues[queue_id]['queue']:
                 print(f"⁉️ {user_id} in_queue problem. Fixed it!")
-                queue_user["in_queue"] = None
-        if queue_user["in_cabinet"]:
-            queue_id = queue_user["in_cabinet"]
+                queue_user["in"] = None
+        elif queue_user["in"]["type"] == "cabinet":
             if user_id != active_queues[queue_id]['cabinet']['state']['inside']:
                 print(f"⁉️ {user_id} in_cabinet problem. Fixed it!")
-                queue_user["in_cabinet"] = None
+                queue_user["in"] = None
+        else:
+            raise ValueError(f'queue_user["in"]["type"] must be "queue" or "cabinet", not {queue_user["in"]["type"]}!')
 
 
 def start_saving_scheduler(verbose=True):
