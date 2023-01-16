@@ -11,11 +11,17 @@ from global_vars import print, active_queues, queue_users
 warnings.filterwarnings("ignore")
 
 
-def check_to_cabinet_pull(queue_id, verbose=True):
+def check_to_cabinet_pull(queue_id, to_update_queue=False):
     queue = active_queues[queue_id]
     cabinet = queue['cabinet']
     if cabinet['state']['is_door_open'] and cabinet['state']['inside'] is None and len(queue['queue']) > 0:
-        cabinet_pull(queue_id)
+        cabinet_pull(queue_id, to_update_queue=to_update_queue)
+
+
+def cabinet_start_and_pull(queue_id):
+    cabinet_start(queue_id)
+    check_to_cabinet_pull(queue_id)
+    update_queue(queue_id)
 
 
 def check_to_cabinet_start(queue_id, timestamp_now_const, verbose=True):
@@ -23,8 +29,7 @@ def check_to_cabinet_start(queue_id, timestamp_now_const, verbose=True):
     if cabinet['meta']['start'] < timestamp_now_const and cabinet['state']['cabinet_work'] == "before_work":
         if verbose:
             print(f"{queue_id} open cabinet!")
-        cabinet_start(queue_id)
-        check_to_cabinet_pull(queue_id)
+        cabinet_start_and_pull(queue_id)
 
 
 def check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True):
@@ -104,7 +109,7 @@ def initial_set_cabinet_state_scheduler_jobs(scheduler, verbose=True):
             end = cabinet['meta']['end']
             if timestamp_now_const < start:
                 open_date = timestamp_to_datetime(start)
-                scheduler.add_job(cabinet_start, "date", run_date=open_date, args=[queue_id, True])
+                scheduler.add_job(cabinet_start_and_pull, "date", run_date=open_date, args=[queue_id])
             if timestamp_now_const < end:
                 close_date = timestamp_to_datetime(end)
                 scheduler.add_job(cabinet_finish, "date", run_date=close_date, args=[queue_id, True])
