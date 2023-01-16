@@ -3,33 +3,42 @@ import warnings
 from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from lib.queue_lib import slow_update_comments_queue, update_queue, kick_user_from_queue, open_cabinet, close_cabinet
+from lib.queue_lib import slow_update_comments_queue, update_queue, kick_user_from_queue
+from lib.cabinet_lib import cabinet_start, cabinet_finish, cabinet_pull
 from lib.useful_lib import timestamp_now, seconds_between_timestamps, timestamp_to_datetime, dt_plus_n_minutes
 from global_vars import print, active_queues, queue_users
 
 warnings.filterwarnings("ignore")
 
 
-def check_to_open(queue_id, timestamp_now_const, verbose=True):
+def check_to_cabinet_pull(queue_id, verbose=True):
+    queue = active_queues[queue_id]
+    cabinet = queue['cabinet']
+    if cabinet['state']['is_door_open'] and cabinet['state']['inside'] is None and len(queue['queue']) > 0:
+        cabinet_pull(queue_id)
+
+
+def check_to_cabinet_start(queue_id, timestamp_now_const, verbose=True):
     cabinet = active_queues[queue_id]['cabinet']
     if cabinet['meta']['start'] < timestamp_now_const and cabinet['state']['cabinet_work'] == "before_work":
         if verbose:
             print(f"{queue_id} open cabinet!")
-        open_cabinet(queue_id)
+        cabinet_start(queue_id)
+        check_to_cabinet_pull(queue_id)
 
 
-def check_to_close(queue_id, timestamp_now_const, verbose=True):
+def check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True):
     cabinet = active_queues[queue_id]['cabinet']
     if cabinet['meta']['end'] < timestamp_now_const and cabinet['state']['cabinet_work'] == "work":
         if verbose:
             print(f"{queue_id} close cabinet!")
-        close_cabinet(queue_id)
+        cabinet_finish(queue_id)
 
 
 def check_to_kick(user_id, last_clicked, verbose=True):
     queue_user = queue_users[user_id]
-    in_queue = queue_user["in_queue"]
-    if not in_queue:
+    queue_id = queue_user["in_queue"]
+    if not queue_id:
         if verbose:
             print(f"{user_id} not in queue!")
         return
@@ -39,10 +48,8 @@ def check_to_kick(user_id, last_clicked, verbose=True):
         return
     # выгнать
     if verbose:
-        print(f"{user_id} kick user!")
-    kick_user_from_queue(queue_user, user_id)
-    print(in_queue)
-    update_queue(in_queue)
+        print(f"kick user {user_id}! queue {queue_id}.")
+    kick_user_from_queue(queue_user, user_id, to_update_queue=True)
 
 
 # Пересчитываю комменты в очередях
@@ -54,8 +61,8 @@ def update_all_queues(verbose=True):
     timestamp_now_const = timestamp_now()
     for queue_id in active_queues:
         if active_queues[queue_id]['cabinet']:
-            check_to_open(queue_id, timestamp_now_const, verbose=True)
-            check_to_close(queue_id, timestamp_now_const, verbose=True)
+            check_to_cabinet_start(queue_id, timestamp_now_const, verbose=True)
+            check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True)
 
         slow_update_comments_queue(queue_id)
         update_queue(queue_id)
@@ -97,10 +104,11 @@ def initial_set_cabinet_state_scheduler_jobs(scheduler, verbose=True):
             end = cabinet['meta']['end']
             if timestamp_now_const < start:
                 open_date = timestamp_to_datetime(start)
-                scheduler.add_job(open_cabinet, "date", run_date=open_date, args=[queue_id, True])
+                scheduler.add_job(cabinet_start, "date", run_date=open_date, args=[queue_id, True])
             if timestamp_now_const < end:
                 close_date = timestamp_to_datetime(end)
-                scheduler.add_job(close_cabinet, "date", run_date=close_date, args=[queue_id, True])
+                scheduler.add_job(cabinet_finish, "date", run_date=close_date, args=[queue_id, True])
+            check_to_cabinet_pull(queue_id)
 
 
 def set_kick_user_scheduler_job(scheduler, user_id):

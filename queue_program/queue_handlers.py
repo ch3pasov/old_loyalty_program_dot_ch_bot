@@ -9,8 +9,8 @@ from lib.queue_lib import (
     update_queue,
     prerender_queue_user_and_update_name_and_get_queue_user
 )
-from lib.social_lib import is_user_in_queue
-from queue_program.queue_schedule import set_kick_user_scheduler_job
+from lib.social_lib import is_user_in_queue_or_cabinet
+from queue_program.queue_schedule import set_kick_user_scheduler_job, check_to_cabinet_pull
 import re
 
 users = global_vars.users
@@ -32,7 +32,15 @@ def start_queue_handlers():
         queue = active_queues[queue_id]["queue"]
         minutes_to_refresh = active_queues[queue_id]["minutes_to_refresh"]
 
-        if is_user_in_queue(user_id):
+        queue_or_cabinet = is_user_in_queue_or_cabinet(user_id)
+        if queue_or_cabinet:
+            if queue_or_cabinet == "in cabinet":
+                callback_query.answer(
+                    "👥🚪👤 Ты уже сидишь в кабинете!",
+                    show_alert=False
+                )
+                return
+
             if user_id not in queue:
                 callback_query.answer(
                     "❌👥 Ты уже стоишь в другой очереди!",
@@ -64,6 +72,7 @@ def start_queue_handlers():
             event = "заходит в очередь!"
             add_user_queue_event(queue_id, queue_user, event, event_emoji='👥')
 
+            check_to_cabinet_pull(queue_id)
             update_queue(queue_id)
 
         set_kick_user_scheduler_job(queue_local_scheduler, user_id)

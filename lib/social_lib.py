@@ -29,10 +29,12 @@ def is_queue_user(user_id):
     return False
 
 
-def is_user_in_queue(user_id):
+def is_user_in_queue_or_cabinet(user_id):
     if is_queue_user(user_id):
         if queue_users[user_id]["in_queue"]:
-            return True
+            return "in queue"
+        if queue_users[user_id]["in_cabinet"]:
+            return "in cabinet"
     return False
 
 

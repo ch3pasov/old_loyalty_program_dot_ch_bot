@@ -48,8 +48,23 @@ def save_log_job(verbose=False):
         json.dump(queue_users, f, ensure_ascii=False, indent=4)
 
 
+def restore_queue_users():
+    for user_id in queue_users:
+        queue_user = queue_users[user_id]
+        if queue_user["in_queue"]:
+            queue_id = queue_user["in_queue"]
+            if user_id not in active_queues[queue_id]['queue']:
+                print(f"⁉️ {user_id} in_queue problem. Fixed it!")
+                queue_user["in_queue"] = None
+        if queue_user["in_cabinet"]:
+            queue_id = queue_user["in_cabinet"]
+            if user_id != active_queues[queue_id]['cabinet']['state']['inside']:
+                print(f"⁉️ {user_id} in_cabinet problem. Fixed it!")
+                queue_user["in_cabinet"] = None
+
+
 def start_saving_scheduler(verbose=True):
-    # global users
+    restore_queue_users()
     saving_scheduler = BackgroundScheduler()
 
     saving_scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())

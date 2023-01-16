@@ -579,6 +579,16 @@ def queue_state(queue):
         start = timestamp_to_time_text(queue['cabinet']['meta']['start'])
         end = timestamp_to_time_text(queue['cabinet']['meta']['end'])
         post_text += f"\n**Время раздачи:** {start}-{end}"
+
+        cabinet_state = queue["cabinet"]["state"]
+        if cabinet_state['inside']:
+            inside_name = queue_users[cabinet_state['inside']]['name']
+            post_text += f"\n**Статус:** в кабинете сидит {inside_name}"
+        elif cabinet_state['cabinet_work'] != 'work':
+            post_text += "\n**Статус:** кабинет закрыт"
+        else:
+            post_text += "\n**Статус:** кабинет открыт"
+
     post_text += "\n\n**Последние 5 событий:**\n"
     post_text += '\n'.join(last_n_events[::-1])
 

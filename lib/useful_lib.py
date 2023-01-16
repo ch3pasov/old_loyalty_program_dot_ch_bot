@@ -24,8 +24,12 @@ def now_text():
     return datetime_to_text(now())
 
 
+def datetime_to_timestamp(dt):
+    return dt.timestamp()
+
+
 def timestamp_now():
-    return now().timestamp()
+    return datetime_to_timestamp(now())
 
 
 def timestamp_to_datetime(timestamp):
@@ -62,26 +66,20 @@ def sanitize_comment_message(message):
     else:
         return ""
 
-    if message_text == "":
-        return ""
-
     # удаляем плохие символы, что могут сломать разметку
     message_text = ''.join((i if i not in r'\`/*_|~@.' else '') for i in message_text)
     # обрезаем коммент до приемлимых 30 символов
     message_text = message_text[:30]
+
+    if message_text == "":
+        return ""
+
     # наклоним италиком
     message_text = "__"+message_text+"__"
     return message_text
 
 
-def emoji_fingerprint():
-    from random import choice
-    emoji_list = [
-        '💟', '☮️', '✝️', '☪️', '🕉', '☸️', '✡️', '🔯', '🕎',
-        '☯️', '☦️', '🛐', '⛎', '♈️', '♉️', '♊️', '♋️',
-        '♌️', '♍️', '♎️', '♏️', '♐️', '♑️', '♒️', '♓️',
-        '🆔', '⚛️', '📴', '📳', '🈶', '🈚️', '🈸', '🈺',
-        '🈷️', '✴️', '🆚', '🈴', '🈵', '🈹', '🈲', '🅰️',
-        '🅱️', '🆎', '🆑', '🅾️', '🆘']
-
-    return choice(emoji_list)
+def emoji_fingerprint(cnt):
+    emoji_list = ['👀', '🤔', '🫣', '👃', '🙈', '🆘', '📳', '💟']
+    print(emoji_list[cnt % len(emoji_list)])
+    return emoji_list[cnt % len(emoji_list)]

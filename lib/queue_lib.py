@@ -47,6 +47,17 @@ def update_queue(queue_id):
         print(f'{queue_id} ничего не изменилось')
 
 
+def slow_update_comments_queue(queue_id):
+    comments_cnt = app_billing.get_discussion_replies_count(server.server_vars.dot_ch_chat_id, message_id=active_queues[queue_id]["chat_message_id"])
+
+    active_queues[queue_id]["comments"]["cnt"] = comments_cnt
+
+
+def fast_update_comments_queue(queue_id, change=1):
+    active_queues[queue_id]["comments"]["cnt"] += change
+    active_queues[queue_id]["comments"]["fingerprint"] = emoji_fingerprint(active_queues[queue_id]["comments"]["cnt"])
+
+
 def add_queue_event(queue_id, event, event_emoji=''):
     new_event = f"`{now_text()}` {event_emoji} {event}"
     active_queues[queue_id]["last_n_events"] = (active_queues[queue_id]["last_n_events"]+[new_event])[-5:]
@@ -63,17 +74,7 @@ def add_global_queue_event(queue_id, event, event_emoji=''):
         f"{event_emoji} {event}",
         reply_to_message_id=active_queues[queue_id]["chat_message_id"]
     )
-
-
-def slow_update_comments_queue(queue_id):
-    comments_cnt = app_billing.get_discussion_replies_count(server.server_vars.dot_ch_chat_id, message_id=active_queues[queue_id]["chat_message_id"])
-
-    active_queues[queue_id]["comments"]["cnt"] = comments_cnt
-
-
-def fast_update_comments_queue(queue_id, change=1):
-    active_queues[queue_id]["comments"]["cnt"] += change
-    active_queues[queue_id]["comments"]["dfingerprint"] = emoji_fingerprint()
+    fast_update_comments_queue(queue_id, change=1)
 
 
 def prerender_queue_user_and_update_name_and_get_queue_user(user):
@@ -101,22 +102,9 @@ def clear_queue_user(user_id):
     active_queues[in_queue]['queue'].remove(user_id)
 
 
-def kick_user_from_queue(queue_user, user_id):
-    add_user_queue_event(queue_user["in_queue"], queue_user, "вылетает из очереди!", event_emoji='🥾')
+def kick_user_from_queue(queue_user, user_id, to_update_queue=False):
+    queue_id = queue_user["in_queue"]
+    add_user_queue_event(queue_id, queue_user, "вылетает из очереди!", event_emoji='🥾')
     clear_queue_user(user_id)
-
-
-def open_cabinet(queue_id, to_update_queue=False):
-    active_queues[queue_id]['cabinet']['state']['cabinet_work'] = "work"
-    active_queues[queue_id]['cabinet']['state']['is_door_open'] = True
-    add_global_queue_event(queue_id, "раздача началась!", event_emoji='🚩')
-    if to_update_queue:
-        update_queue(queue_id)
-
-
-def close_cabinet(queue_id, to_update_queue=False):
-    active_queues[queue_id]['cabinet']['state']['cabinet_work'] = "after_work"
-    active_queues[queue_id]['cabinet']['state']['is_door_open'] = False
-    add_global_queue_event(queue_id, "раздача закончилась!", event_emoji='🏁')
     if to_update_queue:
         update_queue(queue_id)
