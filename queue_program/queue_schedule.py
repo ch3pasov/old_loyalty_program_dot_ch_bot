@@ -6,15 +6,58 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from lib.queue_lib import slow_update_comments_queue, update_queue, kick_user_from_queue
 from lib.cabinet_lib import cabinet_start, cabinet_finish, cabinet_pull
 from lib.useful_lib import timestamp_now, seconds_between_timestamps, timestamp_to_datetime, dt_plus_n_minutes
-from global_vars import print, active_queues, queue_users
+from global_vars import print, active_queues, queue_users, queue_local_scheduler
 
 warnings.filterwarnings("ignore")
+
+
+def erase_kick_user_scheduler_job(scheduler, user_id):
+    # print(f"Debug! {user_id}")
+    if scheduler.get_job(user_id):
+        # print("Debug! нашёл и удалил!")
+        scheduler.remove_job(user_id)
+
+
+def set_kick_user_scheduler_job(scheduler, user_id):
+    erase_kick_user_scheduler_job(scheduler, user_id)
+
+    queue_user = queue_users[user_id]
+    intype = queue_user["in"]["type"]
+    if intype != "queue":
+        return
+
+    last_clicked = queue_user['in']["timestamp"]
+    minutes_to_refresh = queue_user['in']["delay_minutes"]
+
+    click_deadline = dt_plus_n_minutes(timestamp_to_datetime(last_clicked), minutes_to_refresh)
+    scheduler.add_job(
+        check_to_kick,
+        "date",
+        run_date=click_deadline,
+        kwargs={
+            "user_id": user_id,
+            "last_clicked": last_clicked,
+            "verbose": True
+        },
+        id=user_id
+    )
+
+
+def initial_set_kick_user_scheduler_jobs(scheduler, verbose=True):
+    print("initial_set_kick_user_scheduler_jobs")
+    for user_id in queue_users:
+        queue_user = queue_users[user_id]
+        if not queue_user["in"]:
+            continue
+        if queue_user["in"]["type"] == "queue":
+            set_kick_user_scheduler_job(scheduler, user_id)
 
 
 def check_to_cabinet_pull(queue_id, to_update_queue=False):
     queue = active_queues[queue_id]
     cabinet = queue['cabinet']
     if cabinet['state']['cabinet_status'] == 0 and cabinet['state']['inside'] is None and len(queue['queue_order']) > 0:
+        erase_kick_user_scheduler_job(queue_local_scheduler, user_id=queue['queue_order'][0])
         cabinet_pull(queue_id, to_update_queue=to_update_queue)
 
 
@@ -117,45 +160,6 @@ def initial_set_cabinet_state_scheduler_jobs(scheduler, verbose=True):
                 close_date = timestamp_to_datetime(end)
                 scheduler.add_job(cabinet_finish, "date", run_date=close_date, args=[queue_id, True])
             check_to_cabinet_pull(queue_id)
-
-
-def del_kick_user_scheduler_job(scheduler, user_id):
-    scheduler.remove_job(user_id)
-
-
-def set_kick_user_scheduler_job(scheduler, user_id):
-    queue_user = queue_users[user_id]
-
-    intype = queue_user["in"]["type"]
-    assert intype == "queue", f'queue_user["in"]["type"] must be "queue", not {intype}'
-
-    last_clicked = queue_user['in']["timestamp"]
-    minutes_to_refresh = queue_user['in']["delay_minutes"]
-
-    click_deadline = dt_plus_n_minutes(timestamp_to_datetime(last_clicked), minutes_to_refresh)
-    if scheduler.get_job(user_id):
-        del_kick_user_scheduler_job(scheduler, user_id)
-    scheduler.add_job(
-        check_to_kick,
-        "date",
-        run_date=click_deadline,
-        kwargs={
-            "user_id": user_id,
-            "last_clicked": last_clicked,
-            "verbose": True
-        },
-        id=user_id
-    )
-
-
-def initial_set_kick_user_scheduler_jobs(scheduler, verbose=True):
-    print("initial_set_kick_user_scheduler_jobs")
-    for user_id in queue_users:
-        queue_user = queue_users[user_id]
-        if not queue_user["in"]:
-            continue
-        if queue_user["in"]["type"] == "queue":
-            set_kick_user_scheduler_job(scheduler, user_id)
 
 
 def start_queue_scheduler(verbose=True):
