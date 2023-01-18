@@ -81,5 +81,5 @@ def sanitize_comment_message(message):
 
 def emoji_fingerprint(cnt):
     emoji_list = ['👀', '🤔', '🫣', '👃', '🙈', '🆘', '📳', '💟']
-    print(emoji_list[cnt % len(emoji_list)])
+    # print(emoji_list[cnt % len(emoji_list)])
     return emoji_list[cnt % len(emoji_list)]

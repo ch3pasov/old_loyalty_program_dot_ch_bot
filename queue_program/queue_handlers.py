@@ -89,7 +89,7 @@ def start_queue_handlers():
 
         top_message_id = message.reply_to_top_message_id if message.reply_to_top_message_id else message.reply_to_message_id
 
-        queue_ids = [active_queue_id for active_queue_id in active_queues if int(active_queues[active_queue_id]["id"]["chat"]) == top_message_id]
+        queue_ids = [active_queue_id for active_queue_id in active_queues if active_queues[active_queue_id]["id"]["chat"] == top_message_id]
         if queue_ids:
             print('new comment!')
             queue_id = queue_ids[0]

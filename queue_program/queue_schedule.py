@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 def check_to_cabinet_pull(queue_id, to_update_queue=False):
     queue = active_queues[queue_id]
     cabinet = queue['cabinet']
-    if cabinet['state']['cabinet_status'] == 0 and cabinet['state']['inside'] is None and len(queue['queue']) > 0:
+    if cabinet['state']['cabinet_status'] == 0 and cabinet['state']['inside'] is None and len(queue['queue_order']) > 0:
         cabinet_pull(queue_id, to_update_queue=to_update_queue)
 
 
@@ -43,7 +43,8 @@ def check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True):
 def check_to_kick(user_id, last_clicked, verbose=True):
     queue_user = queue_users[user_id]
 
-    assert queue_user["in"]["type"] == "queue", f'queue_user["in"]["type"] must be "queue", not {queue_user["in"]["type"]}'
+    intype = queue_user["in"]["type"]
+    assert intype == "queue", f'queue_user["in"]["type"] must be "queue", not {intype}'
     queue_id = queue_user["in"]["id"]
     if not queue_id:
         if verbose:
@@ -118,17 +119,22 @@ def initial_set_cabinet_state_scheduler_jobs(scheduler, verbose=True):
             check_to_cabinet_pull(queue_id)
 
 
+def del_kick_user_scheduler_job(scheduler, user_id):
+    scheduler.remove_job(user_id)
+
+
 def set_kick_user_scheduler_job(scheduler, user_id):
     queue_user = queue_users[user_id]
-    # print(queue_user)
-    assert queue_user["in"]["type"] == "queue", f'queue_user["in"]["type"] must be "queue", not {queue_user["in"]["type"]}'
+
+    intype = queue_user["in"]["type"]
+    assert intype == "queue", f'queue_user["in"]["type"] must be "queue", not {intype}'
 
     last_clicked = queue_user['in']["timestamp"]
     minutes_to_refresh = queue_user['in']["delay_minutes"]
 
     click_deadline = dt_plus_n_minutes(timestamp_to_datetime(last_clicked), minutes_to_refresh)
     if scheduler.get_job(user_id):
-        scheduler.remove_job(user_id)
+        del_kick_user_scheduler_job(scheduler, user_id)
     scheduler.add_job(
         check_to_kick,
         "date",

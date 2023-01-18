@@ -67,7 +67,7 @@ def cabinet_push(queue_id, to_update_queue=False):
 
 def cabinet_pull(queue_id, to_update_queue=False):
     queue = active_queues[queue_id]
-    user_id = queue['queue'].pop(0)
+    user_id = queue['queue_order'].pop(0)
     queue_user = queue_users[user_id]
 
     add_user_queue_event(queue_id, queue_user, "заходит в кабинет!", event_emoji="➡️🚪")

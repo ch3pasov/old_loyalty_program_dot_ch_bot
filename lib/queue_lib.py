@@ -11,8 +11,6 @@ def create_queue():
     channel_message_id = (screen.create(app, server.server_vars.dot_ch_id, screen.queue_initial_post())).id
     # print(channel_message_id)
 
-    queue_id = str(channel_message_id)
-
     chat_message_id = app_billing.get_discussion_message(
         chat_id=server.server_vars.dot_ch_id,
         message_id=channel_message_id
@@ -37,15 +35,15 @@ def create_queue():
         "cabinet": None
     }
 
+    queue_id = str(channel_message_id)
     screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id))
     screen.create(app, server.server_vars.dot_ch_chat_id, screen.queue_first_comment(queue_id, chat_message_id))
-
     active_queues[queue_id] = queue
     print(f"Очередь {queue_id} создана!")
 
 
 def update_queue(queue_id):
-    channel_message_id = int(active_queues[queue_id]["id"]["channel"])
+    channel_message_id = active_queues[queue_id]["id"]["channel"]
     try:
         screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id))
     except errors.exceptions.bad_request_400.MessageNotModified:
@@ -55,7 +53,7 @@ def update_queue(queue_id):
 def slow_update_comments_queue(queue_id):
     comments_cnt = app_billing.get_discussion_replies_count(
         server.server_vars.dot_ch_chat_id,
-        message_id=int(active_queues[queue_id]["id"]["chat"])
+        message_id=active_queues[queue_id]["id"]["chat"]
     )
 
     active_queues[queue_id]["show"]["comments"]["cnt"] = comments_cnt
