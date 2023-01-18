@@ -14,49 +14,39 @@ def create_cabinet(
     queue = active_queues[queue_id]
 
     queue['cabinet'] = {
-        "meta": {
-            "start": start,
-            "end": end,
-            "reward": 0.0001,
-            "reward_delay_min": 5
-        },
-        "stats": {
-            "winners": [],
-            "money_won": 0
+        "rules": {
+            "work": {
+                "start": start,
+                "finish": end,
+                "delay_minutes": 5
+            },
+            "reward": {
+                "per_one": 0.0001,
+                "max_sum": 0.01
+            }
         },
         "state": {
-            "cabinet_work": "before_work",
-            "is_door_open": False,
-            "inside": None
+            "cabinet_status": -1,
+            "inside": None,
+            "winners": {
+                "players": [],
+                "sum": 0
+            }
         }
     }
 
     update_queue(queue_id)
 
 
-def cabinet_door_open(queue_id, to_update_queue=False):
-    active_queues[queue_id]['cabinet']['state']['is_door_open'] = True
-    if to_update_queue:
-        update_queue(queue_id)
-
-
-def cabinet_door_close(queue_id, to_update_queue=False):
-    active_queues[queue_id]['cabinet']['state']['is_door_open'] = False
-    if to_update_queue:
-        update_queue(queue_id)
-
-
 def cabinet_start(queue_id, to_update_queue=False):
-    active_queues[queue_id]['cabinet']['state']['cabinet_work'] = "work"
-    cabinet_door_open(queue_id)
+    active_queues[queue_id]['cabinet']['state']['cabinet_status'] = 0
     add_global_queue_event(queue_id, "раздача началась!", event_emoji='🚩')
     if to_update_queue:
         update_queue(queue_id)
 
 
 def cabinet_finish(queue_id, to_update_queue=False):
-    active_queues[queue_id]['cabinet']['state']['cabinet_work'] = "after_work"
-    cabinet_door_close(queue_id)
+    active_queues[queue_id]['cabinet']['state']['cabinet_status'] = 1
     add_global_queue_event(queue_id, "раздача закончилась!", event_emoji='🏁')
     if to_update_queue:
         update_queue(queue_id)
@@ -85,7 +75,7 @@ def cabinet_pull(queue_id, to_update_queue=False):
         "type": "cabinet",
         "id": queue_id,
         "timestamp": timestamp_now(),
-        "delay_minutes": queue['cabinet']['meta']['reward_delay_min']
+        "delay_minutes": queue['cabinet']['rules']['work']['delay_minutes']
     }
     queue['cabinet']['state']['inside'] = user_id
     if to_update_queue:

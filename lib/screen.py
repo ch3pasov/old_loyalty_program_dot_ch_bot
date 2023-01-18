@@ -3,7 +3,7 @@ import server.server_vars
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 # from pyrogram.enums import ParseMode
 from lib.useful_lib import seconds_from_timestamp, timestamp_to_datetime_text_long, timestamp_to_time_text
-from global_vars import users, queue_users
+from global_vars import users, queue_users, active_queues
 
 
 bot_username = global_vars.bot_username
@@ -557,39 +557,38 @@ def queue_first_comment(queue_id, chat_message_id):
     }
 
 
-def queue_state(queue):
-    queue_id = queue["channel_message_id"]
-    comments_cnt = queue["comments"]["cnt"]
-    comments_fingerprint = queue["comments"]["fingerprint"]
-    chat_message_id = queue["chat_message_id"]
-    queue_order = queue["queue"]
+def queue_state(queue_id):
+    comments_cnt = active_queues[queue_id]["show"]["comments"]["cnt"]
+    comments_fingerprint = active_queues[queue_id]["show"]["comments"]["fingerprint"]
+    chat_message_id = active_queues[queue_id]["id"]["chat"]
+    queue_order = active_queues[queue_id]["queue_order"]
 
     if queue_order:
         queue_text = "\n".join([f"{n+1}. {queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))])
     else:
         queue_text = "🫥"
 
-    last_n_events = queue["last_n_events"]
-    minutes_to_refresh = queue["minutes_to_refresh"]
+    last_n_events = active_queues[queue_id]["show"]["last_n_events"]
+    minutes_to_refresh = active_queues[queue_id]["rules"]["delay_minutes"]
 
     post_text = "**Очередь:**"
     post_text += "\n"+queue_text
     post_text += f"\n\n**Минут для вылета:** **{minutes_to_refresh}**"
-    if queue["cabinet"]:
-        start = timestamp_to_time_text(queue['cabinet']['meta']['start'])
-        end = timestamp_to_time_text(queue['cabinet']['meta']['end'])
+    if active_queues[queue_id]["cabinet"]:
+        start = timestamp_to_time_text(active_queues[queue_id]['cabinet']['rules']['work']['start'])
+        end = timestamp_to_time_text(active_queues[queue_id]['cabinet']['rules']['work']['finish'])
         post_text += f"\n**Время раздачи:** {start}-{end}"
 
-        cabinet_state = queue["cabinet"]["state"]
+        cabinet_state = active_queues[queue_id]["cabinet"]["state"]
         if cabinet_state['inside']:
             inside_name = queue_users[cabinet_state['inside']]['name']
             post_text += f"\n**Статус:** в кабинете сидит {inside_name}"
-        elif cabinet_state['cabinet_work'] != 'work':
+        elif cabinet_state['cabinet_status'] != 0:
             post_text += "\n**Статус:** кабинет закрыт"
         else:
             post_text += "\n**Статус:** кабинет открыт"
 
-    post_text += "\n\n**Последние 5 событий:**\n"
+    post_text += "\n\n**Последние 10 событий:**\n"
     post_text += '\n'.join(last_n_events[::-1])
 
     return {
@@ -621,15 +620,16 @@ def create(client, chat_id, screen):
 
 
 def update(client, chat_id, message_id, screen):
+    assert type(message_id) == int, f"message_id должен быть int, не {type(message_id)}"
     if "text" in screen:
         return client.edit_message_text(
             chat_id=chat_id,
-            message_id=message_id,
+            message_id=int(message_id),
             **screen
         )
     else:
         return client.edit_message_reply_markup(
             chat_id=chat_id,
-            message_id=message_id,
+            message_id=int(message_id),
             **screen
         )

@@ -21,6 +21,8 @@ app = global_vars.app
 
 
 def start_queue_handlers():
+    print("start_queue_handlers")
+
     @app.on_callback_query(filters.regex(r"queue\?id=(\d+)"))
     def queue_click(client, callback_query, **kwargs):
 
@@ -29,8 +31,8 @@ def start_queue_handlers():
 
         queue_user = prerender_queue_user_and_update_name_and_get_queue_user(callback_query.from_user)
 
-        queue = active_queues[queue_id]["queue"]
-        minutes_to_refresh = active_queues[queue_id]["minutes_to_refresh"]
+        queue = active_queues[queue_id]["queue_order"]
+        minutes_to_refresh = active_queues[queue_id]["rules"]["delay_minutes"]
 
         queue_or_cabinet = is_user_in_queue_or_cabinet(user_id)
         if queue_or_cabinet:
@@ -87,7 +89,7 @@ def start_queue_handlers():
 
         top_message_id = message.reply_to_top_message_id if message.reply_to_top_message_id else message.reply_to_message_id
 
-        queue_ids = [active_queue_id for active_queue_id in active_queues if active_queues[active_queue_id]["chat_message_id"] == top_message_id]
+        queue_ids = [active_queue_id for active_queue_id in active_queues if int(active_queues[active_queue_id]["id"]["chat"]) == top_message_id]
         if queue_ids:
             print('new comment!')
             queue_id = queue_ids[0]

@@ -19,19 +19,25 @@ def create_queue():
     ).id
 
     queue = {
-        "channel_message_id": channel_message_id,
-        "chat_message_id": chat_message_id,
-        "queue": [],
-        "last_n_events": [],
-        "comments": {
-            "cnt": 0,
-            "fingerprint": "👀"
+        "id": {
+            "channel": channel_message_id,
+            "chat": chat_message_id
         },
-        "cabinet": None,
-        "minutes_to_refresh": 15
+        "queue_order": [],
+        "rules": {
+            "delay_minutes": 15
+        },
+        "show": {
+            "last_n_events": [],
+            "comments": {
+                "cnt": 0,
+                "fingerprint": "👀"
+            }
+        },
+        "cabinet": None
     }
 
-    screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue))
+    screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id))
     screen.create(app, server.server_vars.dot_ch_chat_id, screen.queue_first_comment(queue_id, chat_message_id))
 
     active_queues[queue_id] = queue
@@ -39,28 +45,30 @@ def create_queue():
 
 
 def update_queue(queue_id):
-    queue = active_queues[queue_id]
-    channel_message_id = queue["channel_message_id"]
+    channel_message_id = int(active_queues[queue_id]["id"]["channel"])
     try:
-        screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue))
+        screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id))
     except errors.exceptions.bad_request_400.MessageNotModified:
         print(f'{queue_id} ничего не изменилось')
 
 
 def slow_update_comments_queue(queue_id):
-    comments_cnt = app_billing.get_discussion_replies_count(server.server_vars.dot_ch_chat_id, message_id=active_queues[queue_id]["chat_message_id"])
+    comments_cnt = app_billing.get_discussion_replies_count(
+        server.server_vars.dot_ch_chat_id,
+        message_id=int(active_queues[queue_id]["id"]["chat"])
+    )
 
-    active_queues[queue_id]["comments"]["cnt"] = comments_cnt
+    active_queues[queue_id]["show"]["comments"]["cnt"] = comments_cnt
 
 
 def fast_update_comments_queue(queue_id, change=1):
-    active_queues[queue_id]["comments"]["cnt"] += change
-    active_queues[queue_id]["comments"]["fingerprint"] = emoji_fingerprint(active_queues[queue_id]["comments"]["cnt"])
+    active_queues[queue_id]["show"]["comments"]["cnt"] += change
+    active_queues[queue_id]["show"]["comments"]["fingerprint"] = emoji_fingerprint(active_queues[queue_id]["show"]["comments"]["cnt"])
 
 
 def add_queue_event(queue_id, event, event_emoji=''):
     new_event = f"`{now_text()}` {event_emoji} {event}"
-    active_queues[queue_id]["last_n_events"] = (active_queues[queue_id]["last_n_events"]+[new_event])[-5:]
+    active_queues[queue_id]["show"]["last_n_events"] = (active_queues[queue_id]["show"]["last_n_events"]+[new_event])[-10:]
 
 
 def add_user_queue_event(queue_id, queue_user, event, event_emoji=''):
@@ -72,7 +80,7 @@ def add_global_queue_event(queue_id, event, event_emoji=''):
     app.send_message(
         server.server_vars.dot_ch_chat_id,
         f"{event_emoji} {event}",
-        reply_to_message_id=active_queues[queue_id]["chat_message_id"]
+        reply_to_message_id=active_queues[queue_id]["id"]["chat"]
     )
     fast_update_comments_queue(queue_id, change=1)
 
@@ -98,7 +106,7 @@ def clear_queue_user(user_id):
     assert queue_user["in"]["type"] == "queue", f'queue_user["in"]["type"] must be "queue", not {queue_user["in"]["type"]}'
     queue_id = queue_user["in"]["id"]
     queue_user["in"] = None
-    active_queues[queue_id]['queue'].remove(user_id)
+    active_queues[queue_id]['queue_order'].remove(user_id)
 
 
 def kick_user_from_queue(queue_user, user_id, to_update_queue=False):
