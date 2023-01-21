@@ -2,7 +2,7 @@ import server.server_vars
 from global_vars import active_queues, queue_users, app, app_billing, print
 from pyrogram import errors
 import lib.screen as screen
-from lib.useful_lib import emoji_fingerprint, now_text
+from lib.useful_lib import emoji_fingerprint, now_text, timestamp_now
 from lib.social_lib import get_user_name
 
 
@@ -98,10 +98,37 @@ def prerender_queue_user_and_update_name_and_get_queue_user(user):
     return queue_user
 
 
+def update_queue_user_click(user_id):
+    queue_user = queue_users[user_id]
+
+    queue_id = queue_user["in"]["id"]
+    queue_delay_minutes = active_queues[queue_id]["rules"]["delay_minutes"]
+    queue_user["in"] = {
+        "type": "queue",
+        "id": queue_id,
+        "timestamp": timestamp_now(),
+        "delay_minutes": queue_delay_minutes
+    }
+
+
+def add_user_to_queue(queue_user, user_id, queue_id):
+    add_user_queue_event(queue_id, queue_user, "заходит в очередь!", event_emoji='👥')
+
+    active_queues[queue_id]['queue_order'].append(user_id)
+    queue_delay_minutes = active_queues[queue_id]["rules"]["delay_minutes"]
+    queue_user["in"] = {
+        "type": "queue",
+        "id": queue_id,
+        "timestamp": timestamp_now(),
+        "delay_minutes": queue_delay_minutes
+    }
+
+
 def clear_queue_user(user_id):
     queue_user = queue_users[user_id]
 
-    assert queue_user["in"]["type"] == "queue", f'queue_user["in"]["type"] must be "queue", not {queue_user["in"]["type"]}'
+    intype = queue_user["in"]["type"]
+    assert intype == "queue", f'queue_user["in"]["type"] must be "queue", not {intype}'
     queue_id = queue_user["in"]["id"]
     queue_user["in"] = None
     active_queues[queue_id]['queue_order'].remove(user_id)

@@ -2,15 +2,17 @@ import global_vars
 from global_vars import print, active_queues, queue_local_scheduler
 import server.server_vars
 from pyrogram import filters
-from lib.useful_lib import sanitize_comment_message, datetime_to_text, now_plus_n_minutes, timestamp_now
+from lib.useful_lib import sanitize_comment_message, datetime_to_text, now_plus_n_minutes
 from lib.queue_lib import (
     fast_update_comments_queue,
     add_user_queue_event,
     update_queue,
-    prerender_queue_user_and_update_name_and_get_queue_user
+    prerender_queue_user_and_update_name_and_get_queue_user,
+    add_user_to_queue,
+    update_queue_user_click
 )
 from lib.social_lib import is_user_in_queue_or_cabinet
-from queue_program.queue_schedule import set_kick_user_scheduler_job, check_to_cabinet_pull
+from queue_program.queue_schedule import set_check_user_scheduler_job, check_to_cabinet_pull
 import re
 
 users = global_vars.users
@@ -32,7 +34,7 @@ def start_queue_handlers():
         queue_user = prerender_queue_user_and_update_name_and_get_queue_user(callback_query.from_user)
 
         queue = active_queues[queue_id]["queue_order"]
-        minutes_to_refresh = active_queues[queue_id]["rules"]["delay_minutes"]
+        queue_delay_minutes = active_queues[queue_id]["rules"]["delay_minutes"]
 
         queue_or_cabinet = is_user_in_queue_or_cabinet(user_id)
         if queue_or_cabinet:
@@ -50,37 +52,35 @@ def start_queue_handlers():
                 )
                 return
             else:
-                queue_user["in"]["timestamp"] = timestamp_now()
-                click_deadline = now_plus_n_minutes(minutes_to_refresh)
+                update_queue_user_click(user_id)
+                click_deadline = now_plus_n_minutes(queue_delay_minutes)
                 click_deadline_text = datetime_to_text(click_deadline)
                 callback_query.answer(
-                    f"👤👥 Кликни снова до {click_deadline_text} ({minutes_to_refresh} мин)",
+                    f"👤👥 Кликни снова до {click_deadline_text} ({queue_delay_minutes} мин)",
                     show_alert=False
                 )
         else:
-            queue.append(user_id)
-            queue_user["in"] = {
-                "type": "queue",
-                "id": queue_id,
-                "timestamp": timestamp_now(),
-                "delay_minutes": minutes_to_refresh
-            }
-
-            click_deadline = now_plus_n_minutes(minutes_to_refresh)
-            click_deadline_text = datetime_to_text(click_deadline)
-            callback_query.answer(
-                f"🆕👥 Кликни снова до {click_deadline_text} ({minutes_to_refresh} мин)",
-                show_alert=False
-            )
-
+            add_user_to_queue(queue_user, user_id, queue_id)
             print(f'new in queue {queue_id}')
-            event = "заходит в очередь!"
-            add_user_queue_event(queue_id, queue_user, event, event_emoji='👥')
-
             check_to_cabinet_pull(queue_id)
+
+            click_deadline = now_plus_n_minutes(queue_delay_minutes)
+            click_deadline_text = datetime_to_text(click_deadline)
+
+            if queue_user["in"]["type"] == "queue":
+                callback_query.answer(
+                    f"🆕👥 Кликни снова до {click_deadline_text} ({queue_delay_minutes} мин)",
+                    show_alert=False
+                )
+            else:
+                callback_query.answer(
+                    "🆕🚪 Добро пожаловать в кабинет!",
+                    show_alert=False
+                )
+
             update_queue(queue_id)
 
-        set_kick_user_scheduler_job(queue_local_scheduler, user_id)
+        set_check_user_scheduler_job(queue_local_scheduler, user_id)
         # print(queue_local_scheduler.get_job(user_id))
 
     @app.on_message(filters.chat(server.server_vars.dot_ch_chat_id) & filters.reply)

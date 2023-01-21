@@ -569,11 +569,11 @@ def queue_state(queue_id):
         queue_text = "🫥"
 
     last_n_events = active_queues[queue_id]["show"]["last_n_events"]
-    minutes_to_refresh = active_queues[queue_id]["rules"]["delay_minutes"]
+    queue_delay_minutes = active_queues[queue_id]["rules"]["delay_minutes"]
 
     post_text = "**Очередь:**"
     post_text += "\n"+queue_text
-    post_text += f"\n\n**Минут для вылета:** **{minutes_to_refresh}**"
+    post_text += f"\n\n**Минут для вылета:** **{queue_delay_minutes}**"
     if active_queues[queue_id]["cabinet"]:
         start = timestamp_to_time_text(active_queues[queue_id]['cabinet']['rules']['work']['start'])
         end = timestamp_to_time_text(active_queues[queue_id]['cabinet']['rules']['work']['finish'])
