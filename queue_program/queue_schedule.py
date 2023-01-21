@@ -119,31 +119,32 @@ def update_all_queues(verbose=True):
         update_queue(queue_id)
 
 
-def update_queue_users(verbose=True):
-    if verbose:
-        print('update_queue_users!')
+# # Кикает всех юзеров, которых почему-то не кикнуло раньше
+# def update_queue_users(verbose=True):
+#     if verbose:
+#         print('update_queue_users!')
 
-    timestamp_now_const = timestamp_now()
-    queues_to_update = set()
-    for user_id in queue_users:
-        queue_user = queue_users[user_id]
+#     timestamp_now_const = timestamp_now()
+#     queues_to_update = set()
+#     for user_id in queue_users:
+#         queue_user = queue_users[user_id]
 
-        if not queue_user["in"]:
-            # чел ни в очереди, ни в кабинете
-            continue
-        if queue_user["in"]["type"] != "queue":
-            # чел в кабинете
-            continue
-        if seconds_between_timestamps(timestamp_now_const, queue_user["in"]["timestamp"]) < queue_user["in"]["delay_minutes"]*60:
-            # чел недавно кликал
-            continue
-        # надо выгнать чела из очереди
+#         if not queue_user["in"]:
+#             # чел ни в очереди, ни в кабинете
+#             continue
+#         if queue_user["in"]["type"] != "queue":
+#             # чел в кабинете
+#             continue
+#         if seconds_between_timestamps(timestamp_now_const, queue_user["in"]["timestamp"]) < queue_user["in"]["delay_minutes"]*60:
+#             # чел недавно кликал
+#             continue
+#         # надо выгнать чела из очереди
 
-        queue_id = queue_user["in"]["id"]
-        kick_user_from_queue(queue_user, user_id)
-        queues_to_update.add(queue_id)
-    for queue_id in queues_to_update:
-        update_queue(queue_id)
+#         queue_id = queue_user["in"]["id"]
+#         kick_user_from_queue(queue_user, user_id)
+#         queues_to_update.add(queue_id)
+#     for queue_id in queues_to_update:
+#         update_queue(queue_id)
 
 
 def initial_set_cabinet_state_scheduler_jobs(scheduler, verbose=True):
@@ -165,7 +166,7 @@ def initial_set_cabinet_state_scheduler_jobs(scheduler, verbose=True):
 def start_queue_scheduler(verbose=True):
     queue_scheduler = BackgroundScheduler()
     queue_scheduler.add_job(update_all_queues, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
-    queue_scheduler.add_job(update_queue_users, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    # queue_scheduler.add_job(update_queue_users, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     initial_set_cabinet_state_scheduler_jobs(queue_scheduler)
     initial_set_kick_user_scheduler_jobs(queue_scheduler)
     print(queue_scheduler.get_jobs())
