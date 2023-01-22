@@ -558,35 +558,54 @@ def queue_first_comment(queue_id, chat_message_id):
 
 
 def queue_state(queue_id):
-    comments_cnt = active_queues[queue_id]["show"]["comments"]["cnt"]
-    comments_fingerprint = active_queues[queue_id]["show"]["comments"]["fingerprint"]
-    chat_message_id = active_queues[queue_id]["id"]["chat"]
-    queue_order = active_queues[queue_id]["queue_order"]
+    queue = active_queues[queue_id]
+    comments = queue["show"]["comments"]
+
+    comments_cnt = comments["cnt"]
+    comments_fingerprint = comments["fingerprint"]
+    chat_message_id = queue["id"]["chat"]
+    queue_order = queue["queue_order"]
 
     if queue_order:
-        queue_text = "\n".join([f"{n+1}. {queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))])
+        queue_text = "\n" + "\n".join([f"{n+1}. {queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))])
     else:
         queue_text = "🫥"
 
-    last_n_events = active_queues[queue_id]["show"]["last_n_events"]
-    queue_delay_minutes = active_queues[queue_id]["rules"]["delay_minutes"]
+    post_text = "**Очередь:** "
+    post_text += queue_text
 
-    post_text = "**Очередь:**"
-    post_text += "\n"+queue_text
-    post_text += f"\n\n**Минут для вылета:** **{queue_delay_minutes}**"
-    if active_queues[queue_id]["cabinet"]:
-        start = timestamp_to_time_text(active_queues[queue_id]['cabinet']['rules']['work']['start'])
-        end = timestamp_to_time_text(active_queues[queue_id]['cabinet']['rules']['work']['finish'])
-        post_text += f"\n**Время раздачи:** {start}-{end}"
+    last_n_events = queue["show"]["last_n_events"]
+    queue_delay_minutes = queue["rules"]["delay_minutes"]
 
-        cabinet_state = active_queues[queue_id]["cabinet"]["state"]
-        if cabinet_state['inside']:
-            inside_name = queue_users[cabinet_state['inside']]['name']
-            post_text += f"\n**Статус:** в кабинете сидит {inside_name}"
-        elif cabinet_state['cabinet_status'] != 0:
-            post_text += "\n**Статус:** кабинет закрыт"
+    cabinet = queue["cabinet"]
+    if cabinet:
+        cabinet_state = cabinet["state"]
+
+        inside_user = cabinet_state['inside']
+        if inside_user:
+            inside_name = queue_users[inside_user]['name']
+            post_text += f"\n**Кабинет:** {inside_name}"
+        elif cabinet_state['cabinet_status'] == -1:
+            post_text += "\n**Кабинет:** 🔒ещё не открыт"
+        elif cabinet_state['cabinet_status'] == 1:
+            post_text += "\n**Кабинет:** 🔒уже закрыт"
         else:
-            post_text += "\n**Статус:** кабинет открыт"
+            post_text += "\n**Кабинет:** 🫥"
+
+        rules = cabinet['rules']
+        rules_work = rules['work']
+        start = timestamp_to_time_text(rules_work['start'])
+        end = timestamp_to_time_text(rules_work['finish'])
+        post_text += f"\n\n**Время раздачи:** {start}-{end}"
+
+        rules_reward = rules['reward']
+        post_text += f"\n**👷Награда за прохождение:** {rules_reward['per_one']}"
+        post_text += f"\n**👷Общий банк:** {rules_reward['max_sum']}"
+
+    post_text += "\n"
+    if cabinet:
+        post_text += f"\n**Минут в кабинете:** {rules_work['delay_minutes']}"
+    post_text += f"\n**Афк-минут в очереди:** **{queue_delay_minutes}**"
 
     post_text += "\n\n**Последние 10 событий:**\n"
     post_text += '\n'.join(last_n_events[::-1])
