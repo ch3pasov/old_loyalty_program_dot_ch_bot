@@ -3,16 +3,20 @@ import warnings
 from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from lib.queue_lib import slow_update_comments_queue, update_queue, kick_user_from_queue, add_user_queue_event
-from lib.cabinet_lib import cabinet_start, cabinet_finish
+from lib.queue_lib import slow_update_comments_queue, update_queue, kick_user_from_queue, add_user_queue_event, add_global_user_queue_event
+from lib.cabinet_lib import cabinet_start, cabinet_finish, get_user_cabinet_status_before_reward
 from lib.useful_lib import timestamp_now, timestamp_to_datetime, dt_plus_n_minutes, datetime_to_timestamp
+from lib.money import send_money
 # from lib.useful_lib import seconds_between_timestamps
-from global_vars import print, active_queues, queue_users, queue_local_scheduler
+from global_vars import print, active_queues, queue_users, queue_local_scheduler, bot_username
 
 warnings.filterwarnings("ignore")
 
 
 def check_user(user_id, verbose=True, to_update_queue=False):
+    if verbose:
+        print(f"check user! {user_id}")
+
     queue_user = queue_users[user_id]
 
     timestamp = queue_user['in']["timestamp"]
@@ -29,7 +33,7 @@ def check_user(user_id, verbose=True, to_update_queue=False):
         # кикнуть из очереди
         if verbose:
             print(f"kick user {user_id} from queue! queue {queue_id}.")
-        kick_user_from_queue(queue_user, user_id, to_update_queue=to_update_queue)
+        kick_user_from_queue(user_id, to_update_queue=to_update_queue)
     elif intype == "cabinet":
         # Подсчитать награду и кикнуть из очереди
         if verbose:
@@ -55,11 +59,11 @@ def set_check_user_scheduler_job(scheduler, user_id):
     timestamp = queue_user['in']["timestamp"]
     delay_minutes = queue_user['in']["delay_minutes"]
 
-    click_deadline = dt_plus_n_minutes(timestamp_to_datetime(timestamp), delay_minutes)
+    job_dt = dt_plus_n_minutes(timestamp_to_datetime(timestamp), delay_minutes)
     scheduler.add_job(
         check_user,
         "date",
-        run_date=click_deadline,
+        run_date=job_dt,
         kwargs={
             "user_id": user_id,
             "verbose": True,
@@ -77,7 +81,7 @@ def initial_set_check_user_scheduler_jobs(scheduler, verbose=True):
             continue
 
         # Это может быть и очередь, и кабинет
-        set_check_user_scheduler_job(scheduler, user_id)
+        set_check_user_scheduler_job(queue_local_scheduler, user_id)
 
 
 def cabinet_pull(queue_id, to_update_queue=False):
@@ -85,7 +89,7 @@ def cabinet_pull(queue_id, to_update_queue=False):
     user_id = queue['queue_order'].pop(0)
     queue_user = queue_users[user_id]
 
-    add_user_queue_event(queue_id, queue_user, "заходит в кабинет!", event_emoji="➡️🚪")
+    add_user_queue_event(queue_id, user_id, "заходит в кабинет!", event_emoji="➡️🚪")
     queue_user['in'] = {
         "type": "cabinet",
         "id": queue_id,
@@ -112,11 +116,53 @@ def cabinet_push(queue_id, to_update_queue=False):
     queue = active_queues[queue_id]
 
     user_id = queue['cabinet']['state']['inside']
-    queue_user = queue_users[user_id]
+    user_cabinet_status = get_user_cabinet_status_before_reward(user_id, queue_id)
+    print(user_cabinet_status)
 
-    add_user_queue_event(queue_id, queue_user, "выходит из кабинета!", event_emoji="🚪➡️")
+    gap = ' '
+    if user_cabinet_status == "stranger":
+        event_emoji = '😶'
+        event_short = "странник! Выходит без выигрыша!"
+        gap = ', '
+        event_long = f"вижу, что ты не являешься участником программы лояльности. Зарегистрируйся в программе лояльности: @{bot_username}, и попробуй встать в очередь снова."
+        to_summon = True
+    elif user_cabinet_status == "unsubscriber":
+        event_emoji = '🐀'
+        event_short = "отписчик! Выходит без выигрыша!"
+        gap = ', '
+        event_long = f"вижу, что сейчас ты не являешься участником программы лояльности. Зарегистрируйся в программе лояльности заново: @{bot_username}, и попробуй встать в очередь снова."
+        to_summon = True
+    elif user_cabinet_status == "repeater":
+        event_emoji = '🐷'
+        event_short = "повторюшка! Выходит без выигрыша!"
+        event_long = "проходит кабиент повторно! Повторюшка дядя хрюшка, или ход гения? 🧠"
+        to_summon = False
+    elif user_cabinet_status == "pauper":
+        event_emoji = '🐢'
+        event_short = "опозданец! Выходит без выигрыша!"
+        gap = ', '
+        event_long = "весь банк уже разобрали! Но спасибо за участие! ❤️"
+        to_summon = False
+    elif user_cabinet_status == "winner":
+        reward = queue['cabinet']['rules']['reward']
+        winners = queue['cabinet']['state']['winners']
+        per_one = reward['per_one']
+        event_emoji = '🏆'
+        event_short = f"выигрывает {per_one}!"
+        event_long = event_short
+        to_summon = False
+        # самое волнительное!
+        send_money(per_one, user_id, referer_enable=True)
+        winners["sum"] += per_one
+        winners["players"].setdefault(user_id, 0)
+        winners["players"][user_id] += per_one
+    else:
+        raise ValueError(f"Unknown user_cabinet_status! '{user_cabinet_status}'")
 
-    queue_user['in'] = None
+    add_global_user_queue_event(queue_id, user_id, event_short, event_long, event_emoji=event_emoji, gap=gap, to_summon=to_summon)
+    add_user_queue_event(queue_id, user_id, "выходит из кабинета!", event_emoji="🚪➡️")
+
+    queue_users[user_id]['in'] = None
     queue['cabinet']['state']['inside'] = None
 
     check_to_cabinet_pull(queue_id)
@@ -218,8 +264,8 @@ def start_queue_scheduler(verbose=True):
     queue_scheduler = BackgroundScheduler()
 
     initial_check_users()
-    initial_set_cabinet_state_scheduler_jobs(queue_scheduler)
     initial_set_check_user_scheduler_jobs(queue_scheduler)
+    initial_set_cabinet_state_scheduler_jobs(queue_scheduler)
 
     queue_scheduler.add_job(update_all_queues, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     # queue_scheduler.add_job(update_queue_users, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())

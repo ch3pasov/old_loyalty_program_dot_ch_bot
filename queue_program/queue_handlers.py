@@ -60,7 +60,7 @@ def start_queue_handlers():
                     show_alert=False
                 )
         else:
-            add_user_to_queue(queue_user, user_id, queue_id)
+            add_user_to_queue(user_id, queue_id)
             print(f'new in queue {queue_id}')
             check_to_cabinet_pull(queue_id)
 
@@ -94,13 +94,14 @@ def start_queue_handlers():
             print('new comment!')
             queue_id = queue_ids[0]
 
-            queue_user = prerender_queue_user_and_update_name_and_get_queue_user(message.from_user)
+            user_id = str(message.from_user.id)
+            prerender_queue_user_and_update_name_and_get_queue_user(message.from_user)
 
             message_text_sanitized = sanitize_comment_message(message)
 
             comment_url = f"https://t.me/c/{(-server.server_vars.dot_ch_chat_id)%10**10}/{message.id}?thread={top_message_id}"
-            event = f"[пишет]({comment_url}): {message_text_sanitized}"
-            add_user_queue_event(queue_id, queue_user, event, event_emoji='🗣')
+            event = f"[пишет]({comment_url}):\n{message_text_sanitized}"
+            add_user_queue_event(queue_id, user_id, event, event_emoji='🗣')
 
             fast_update_comments_queue(queue_id, change=1)
             update_queue(queue_id)

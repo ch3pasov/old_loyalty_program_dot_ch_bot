@@ -567,7 +567,7 @@ def queue_state(queue_id):
     queue_order = queue["queue_order"]
 
     if queue_order:
-        queue_text = "\n" + "\n".join([f"{n+1}. {queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))])
+        queue_text = "\n" + "\n".join([f"`{n+1}.`{queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))][::-1])
     else:
         queue_text = "🫥"
 
@@ -599,8 +599,9 @@ def queue_state(queue_id):
         post_text += f"\n\n**Время раздачи:** {start}-{end}"
 
         rules_reward = rules['reward']
-        post_text += f"\n**👷Награда за прохождение:** {rules_reward['per_one']}"
-        post_text += f"\n**👷Общий банк:** {rules_reward['max_sum']}"
+        # winners = cabinet_state['winners']
+        post_text += f"\n**Награда за прохождение:** {rules_reward['per_one']}"
+        post_text += f"\n**Общий банк:** {rules_reward['max_sum']}"
 
     post_text += "\n"
     if cabinet:
@@ -608,7 +609,7 @@ def queue_state(queue_id):
     post_text += f"\n**Афк-минут в очереди:** **{queue_delay_minutes}**"
 
     post_text += "\n\n**Последние 10 событий:**\n"
-    post_text += '\n'.join(last_n_events[::-1])
+    post_text += '\n'.join(last_n_events[:-11:-1])
 
     return {
         "text": post_text,

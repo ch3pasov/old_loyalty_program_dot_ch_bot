@@ -5,6 +5,11 @@ import lib.screen as screen
 
 
 def is_member(chat_id, user_id):
+    # print('🔥')
+    # print(chat_id, user_id)
+    # print(type(chat_id), type(user_id))
+    # print('🔥')
+
     try:
         is_member = app.get_chat_member(chat_id, user_id).is_member
         if is_member is None:
@@ -98,8 +103,9 @@ def get_emoji_avatar(user_id):
 def get_user_name(user):
     emoji_avatar = get_emoji_avatar(user.id)
     if user.username:
-        return emoji_avatar+user.username
+        out = user.username
     elif user.first_name:
-        return emoji_avatar+user.first_name
+        out = user.first_name
     else:
-        return emoji_avatar+str(user.id)
+        out = str(user.id)
+    return emoji_avatar + out[:16]
