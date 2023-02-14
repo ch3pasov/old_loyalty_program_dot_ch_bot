@@ -64,8 +64,11 @@ def fast_update_comments_queue(queue_id, change=1):
     active_queues[queue_id]["show"]["comments"]["fingerprint"] = emoji_fingerprint(active_queues[queue_id]["show"]["comments"]["cnt"])
 
 
-def add_queue_event(queue_id, event, event_emoji=''):
-    new_event = f"`{now_text()}` {event_emoji} {event}"
+def add_queue_event(queue_id, event, event_emoji='', ignore_time=False):
+    if ignore_time:
+        new_event = f"{event_emoji} {event}"
+    else:
+        new_event = f"`{now_text()}` {event_emoji} {event}"
     active_queues[queue_id]["show"]["last_n_events"].append(new_event)
 
 
@@ -78,9 +81,9 @@ def add_event_comment(queue_id, event, event_emoji):
     fast_update_comments_queue(queue_id, change=1)
 
 
-def add_user_queue_event(queue_id, user_id, event, event_emoji=''):
+def add_user_queue_event(queue_id, user_id, event, event_emoji='', gap='\n', ignore_time=False):
     queue_user = queue_users[user_id]
-    add_queue_event(queue_id, f"{queue_user['name']} {event}", event_emoji=event_emoji)
+    add_queue_event(queue_id, f"{queue_user['name']}{gap}{event}", event_emoji=event_emoji, ignore_time=ignore_time)
 
 
 def add_global_user_queue_event(queue_id, user_id, event_short, event_long, event_emoji='', gap=' ', to_summon=False):

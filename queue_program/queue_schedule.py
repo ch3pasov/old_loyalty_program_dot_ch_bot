@@ -89,7 +89,7 @@ def cabinet_pull(queue_id, to_update_queue=False):
     user_id = queue['queue_order'].pop(0)
     queue_user = queue_users[user_id]
 
-    add_user_queue_event(queue_id, user_id, "заходит в кабинет!", event_emoji="➡️🚪")
+    add_user_queue_event(queue_id, user_id, "заходит в кабинет!", event_emoji="⬆️")
     queue_user['in'] = {
         "type": "cabinet",
         "id": queue_id,
@@ -122,24 +122,24 @@ def cabinet_push(queue_id, to_update_queue=False):
     gap = ' '
     if user_cabinet_status == "stranger":
         event_emoji = '😶'
-        event_short = "странник! Выходит без выигрыша!"
+        event_short = "странник! Выходит ни с чем!"
         gap = ', '
         event_long = f"вижу, что ты не являешься участником программы лояльности. Зарегистрируйся в программе лояльности: @{bot_username}, и попробуй встать в очередь снова."
         to_summon = True
     elif user_cabinet_status == "unsubscriber":
         event_emoji = '🐀'
-        event_short = "отписчик! Выходит без выигрыша!"
+        event_short = "отписчик! Выходит ни с чем!"
         gap = ', '
         event_long = f"вижу, что сейчас ты не являешься участником программы лояльности. Зарегистрируйся в программе лояльности заново: @{bot_username}, и попробуй встать в очередь снова."
         to_summon = True
     elif user_cabinet_status == "repeater":
         event_emoji = '🐷'
-        event_short = "повторюшка! Выходит без выигрыша!"
+        event_short = "повторюшка! Выходит ни с чем!"
         event_long = "проходит кабиент повторно! Повторюшка дядя хрюшка, или ход гения? 🧠"
         to_summon = False
     elif user_cabinet_status == "pauper":
         event_emoji = '🐢'
-        event_short = "опозданец! Выходит без выигрыша!"
+        event_short = "опозданец! Выходит ни с чем!"
         gap = ', '
         event_long = "весь банк уже разобрали! Но спасибо за участие! ❤️"
         to_summon = False
@@ -148,7 +148,7 @@ def cabinet_push(queue_id, to_update_queue=False):
         winners = queue['cabinet']['state']['winners']
         per_one = reward['per_one']
         event_emoji = '🏆'
-        event_short = f"выигрывает {per_one}!"
+        event_short = f"выигрывает {per_one}💎!"
         event_long = event_short
         to_summon = False
         # самое волнительное!
@@ -160,7 +160,7 @@ def cabinet_push(queue_id, to_update_queue=False):
         raise ValueError(f"Unknown user_cabinet_status! '{user_cabinet_status}'")
 
     add_global_user_queue_event(queue_id, user_id, event_short, event_long, event_emoji=event_emoji, gap=gap, to_summon=to_summon)
-    add_user_queue_event(queue_id, user_id, "выходит из кабинета!", event_emoji="🚪➡️")
+    add_user_queue_event(queue_id, user_id, "выходит из кабинета!", event_emoji="⬇️")
 
     queue_users[user_id]['in'] = None
     queue['cabinet']['state']['inside'] = None

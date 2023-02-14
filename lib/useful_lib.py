@@ -1,6 +1,6 @@
 # import server.server_vars
 from datetime import datetime, timezone, timedelta
-
+from pyrogram.enums import MessageMediaType
 # import lib.screen as screen
 
 
@@ -64,15 +64,35 @@ def sanitize_comment_message(message):
     elif message.caption:
         message_text = message.caption
     else:
-        return ""
+        return None
+
+    if message.media:
+        media_emoji_dict = {
+            MessageMediaType.AUDIO: "🎵",
+            MessageMediaType.DOCUMENT: "📄",
+            MessageMediaType.PHOTO: "🖼",
+            MessageMediaType.STICKER: "🟡",
+            MessageMediaType.VIDEO: "🎥",
+            MessageMediaType.ANIMATION: "🎞",
+            MessageMediaType.VOICE: "🎤",
+            MessageMediaType.VIDEO_NOTE: "📹",
+            MessageMediaType.CONTACT: "👤",
+            MessageMediaType.LOCATION: "📍",
+            MessageMediaType.VENUE: "📍",
+            MessageMediaType.POLL: "🗳",
+            MessageMediaType.WEB_PAGE: "🔗",
+            MessageMediaType.DICE: "🎲",
+            MessageMediaType.GAME: "🕹"
+        }
+        message_text = f"{media_emoji_dict[message.media]} {message_text}"
 
     # удаляем плохие символы, что могут сломать разметку
-    message_text = ''.join((i if i not in r'\`/*_|~@.' else '') for i in message_text)
+    message_text = ''.join((i if i not in '\\`\n/*_|~@.' else ' ') for i in message_text)
     # обрезаем коммент до приемлимых 30 символов
-    message_text = message_text[:30]
+    message_text = message_text[:19]
 
     if message_text == "":
-        return ""
+        return None
 
     # наклоним италиком
     message_text = "__"+message_text+"__"

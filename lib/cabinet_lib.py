@@ -41,14 +41,14 @@ def create_cabinet(
 
 def cabinet_start(queue_id, to_update_queue=False):
     active_queues[queue_id]['cabinet']['state']['cabinet_status'] = 0
-    add_global_queue_event(queue_id, "раздача началась!", event_emoji='🚩')
+    add_global_queue_event(queue_id, "кабинет открывается!\nПроходим в порядке очереди!", event_emoji='🚩')
     if to_update_queue:
         update_queue(queue_id)
 
 
 def cabinet_finish(queue_id, to_update_queue=False):
     active_queues[queue_id]['cabinet']['state']['cabinet_status'] = 1
-    add_global_queue_event(queue_id, "раздача закончилась!", event_emoji='🏁')
+    add_global_queue_event(queue_id, "кабинет закрывается!\nВсем спасибо за участие ❤️", event_emoji='🏁')
     if to_update_queue:
         update_queue(queue_id)
 
