@@ -94,14 +94,20 @@ def start_queue_handlers():
             print('new comment!')
             queue_id = queue_ids[0]
 
+            fast_update_comments_queue(queue_id, change=1)
+
+            if message.sender_chat:
+                update_queue(queue_id)
+                # комменты от каналов — игнорируем
+                return
+
             user_id = str(message.from_user.id)
             prerender_queue_user_and_update_name_and_get_queue_user(message.from_user)
 
             message_text_sanitized = sanitize_comment_message(message)
+            if message_text_sanitized:
+                comment_url = f"https://t.me/c/{(-server.server_vars.dot_ch_chat_id)%10**10}/{message.id}?thread={top_message_id}"
+                event = f"[пишет]({comment_url}):\n{message_text_sanitized}"
+                add_user_queue_event(queue_id, user_id, event, event_emoji='🗣', gap=' ', ignore_time=True)
 
-            comment_url = f"https://t.me/c/{(-server.server_vars.dot_ch_chat_id)%10**10}/{message.id}?thread={top_message_id}"
-            event = f"[пишет]({comment_url}):\n{message_text_sanitized}"
-            add_user_queue_event(queue_id, user_id, event, event_emoji='🗣')
-
-            fast_update_comments_queue(queue_id, change=1)
             update_queue(queue_id)
