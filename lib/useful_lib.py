@@ -1,6 +1,7 @@
 # import server.server_vars
 from datetime import datetime, timezone, timedelta
 from pyrogram.enums import MessageMediaType
+from emoji import emoji_list
 # import lib.screen as screen
 
 
@@ -58,6 +59,40 @@ def random_datetime(up_timedelta):
     return datetime.now(timezone.utc)+up_timedelta*random()
 
 
+def count_emoji_len(string):
+    string_emoji_list = emoji_list(string)
+    # считаю кол-во эмодзи символов, чтобы не учитывать их в длине строки
+    string_emoji_len = sum([obj['match_end']-obj['match_start'] for obj in string_emoji_list])
+    return len(string) - string_emoji_len + len(string_emoji_list)*(23/9)
+
+
+def telegram_comment_strip(string, string_len):
+    string_emoji_list = emoji_list(string)
+
+    answer_text = ''
+    answer_weight = 0
+    for i in range(len(string)):
+        symbol, weight = string[i], 1
+
+        if string_emoji_list != []:
+            string_emoji = string_emoji_list[0]
+            match_start, match_end, emoji = string_emoji['match_start'], string_emoji['match_end'], string_emoji['emoji']
+            if i == match_end - 1:
+                string_emoji_list.pop(0)
+            if match_start < i < match_end:
+                continue
+            if i == match_start:
+                symbol, weight = emoji, 23/9
+
+        # print(i, symbol, weight, string_emoji)
+        if answer_weight + weight > string_len:
+            break
+        answer_text += symbol
+        answer_weight += weight
+
+    return answer_text
+
+
 def sanitize_comment_message(message):
     if message.text:
         message_text = message.text
@@ -88,14 +123,14 @@ def sanitize_comment_message(message):
 
     # удаляем плохие символы, что могут сломать разметку
     message_text = ''.join((i if i not in '\\`\n/*_|~@.' else ' ') for i in message_text)
-    # обрезаем коммент до приемлимых 19 символов
-    message_text = message_text[:19]
+    # обрезаем коммент до приемлимых N символов с учётом эмодзи
+    message_text = telegram_comment_strip(message_text, 29)
 
     if message_text == "":
         return None
 
-    # наклоним италиком
-    message_text = "__"+message_text+"__"
+    # накинем моноспейса
+    message_text = "`"+message_text+"`"
     return message_text
 
 
