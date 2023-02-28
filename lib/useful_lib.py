@@ -94,32 +94,57 @@ def telegram_comment_strip(string, string_len):
 
 
 def sanitize_comment_message(message):
+    if message.media:
+        if message.media == MessageMediaType.STICKER:
+            media_emoji = message.sticker.emoji
+            media_text = f"{media_emoji} Стикер"
+        elif message.media == MessageMediaType.DICE:
+            media_emoji = message.dice.emoji
+            media_text = f"Ролл — {message.dice.value}!"
+        else:
+            media_emoji = {
+                MessageMediaType.AUDIO: "🎵",
+                MessageMediaType.DOCUMENT: "📄",
+                MessageMediaType.PHOTO: "🖼",
+                MessageMediaType.VIDEO: "🎥",
+                MessageMediaType.ANIMATION: "📹",
+                MessageMediaType.VOICE: "🎤",
+                MessageMediaType.VIDEO_NOTE: "📺",
+                MessageMediaType.CONTACT: "👤",
+                MessageMediaType.LOCATION: "📍",
+                MessageMediaType.VENUE: "📍",
+                MessageMediaType.POLL: "🗳",
+                MessageMediaType.WEB_PAGE: "🔗",
+                MessageMediaType.GAME: "🕹"
+            }[message.media]
+
+            media_text = {
+                MessageMediaType.AUDIO: "Аудио 🎵",
+                MessageMediaType.DOCUMENT: "Документ 📄",
+                MessageMediaType.PHOTO: "Фото 🖼",
+                MessageMediaType.VIDEO: "Видео 🎥",
+                MessageMediaType.ANIMATION: "Анимация 🐭",
+                MessageMediaType.VOICE: "Войс 🤡",
+                MessageMediaType.VIDEO_NOTE: "Блинчик 🥞",
+                MessageMediaType.CONTACT: "Контакт 🤔",
+                MessageMediaType.LOCATION: "Локация 😤",
+                MessageMediaType.VENUE: "Рандеву́ 🎩",
+                MessageMediaType.POLL: "Г О Л О С О В А Н И Е",
+                MessageMediaType.WEB_PAGE: "Веб-страничка 🧚🏻‍♀️🧚🏼‍♀️🧚🏽‍♀️🧚🏾‍♀️🧚🏿‍♀️",
+                MessageMediaType.GAME: "Игра 🍸"
+            }[message.media]
+
     if message.text:
         message_text = message.text
     elif message.caption:
         message_text = message.caption
+    elif message.media and not message.media_group_id:
+        message_text = media_text
     else:
         return None
 
     if message.media:
-        media_emoji_dict = {
-            MessageMediaType.AUDIO: "🎵",
-            MessageMediaType.DOCUMENT: "📄",
-            MessageMediaType.PHOTO: "🖼",
-            MessageMediaType.STICKER: "🟡",
-            MessageMediaType.VIDEO: "🎥",
-            MessageMediaType.ANIMATION: "🎞",
-            MessageMediaType.VOICE: "🎤",
-            MessageMediaType.VIDEO_NOTE: "📹",
-            MessageMediaType.CONTACT: "👤",
-            MessageMediaType.LOCATION: "📍",
-            MessageMediaType.VENUE: "📍",
-            MessageMediaType.POLL: "🗳",
-            MessageMediaType.WEB_PAGE: "🔗",
-            MessageMediaType.DICE: "🎲",
-            MessageMediaType.GAME: "🕹"
-        }
-        message_text = f"{media_emoji_dict[message.media]} {message_text}"
+        message_text = f"{media_emoji} {message_text}"
 
     # удаляем плохие символы, что могут сломать разметку
     message_text = ''.join((i if i not in '\\`\n/*_|~@.' else ' ') for i in message_text)
