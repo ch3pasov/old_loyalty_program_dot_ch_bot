@@ -38,6 +38,6 @@ if __name__ == '__main__':
 
         # app.send_message(
         #     chat_id=server.server_vars.dot_ch_chat_id,
-        #     text='Я выключился! @yandex_links, обрати внимание, если это незапланированное выключение.',
+        #     text=f'Я выключился! @{server.server_vars.creator_username_alarm}, обрати внимание, если это незапланированное выключение.',
         #     reply_to_message_id=server.server_vars.bot_debug_message_id
         # )
