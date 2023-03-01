@@ -97,7 +97,7 @@ def sanitize_comment_message(message):
     if message.media:
         if message.media == MessageMediaType.STICKER:
             media_emoji = message.sticker.emoji
-            media_text = f"Стикер"
+            media_text = "Стикер"
         elif message.media == MessageMediaType.DICE:
             media_emoji = message.dice.emoji
             media_text = f"Ролл — {message.dice.value}!"
