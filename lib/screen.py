@@ -534,6 +534,22 @@ def money(send_message, text=None, button_text=None, reply_to_message_id=None):
     }
 
 
+def queue_admin_help(commands):
+    out = "Добро пожаловать в админку!\nКоманды:"
+    for command in commands:
+        out += f"\n`{command}` — {commands[command]['description']}"
+
+    return {
+        "text": out
+    }
+
+
+def queue_admin_run(command_output):
+    return {
+        "text": f"Команда запущена! Вывод:\n`{command_output}`"
+    }
+
+
 def queue_initial_post():
     return {
         "text": "очередь"

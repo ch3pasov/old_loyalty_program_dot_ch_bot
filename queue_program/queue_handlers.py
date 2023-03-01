@@ -4,6 +4,7 @@ import server.server_vars
 from pyrogram import filters
 from lib.useful_lib import sanitize_comment_message, datetime_to_text, now_plus_n_minutes
 from lib.queue_lib import (
+    create_queue,
     fast_update_comments_queue,
     add_user_queue_event,
     update_queue,
@@ -12,6 +13,7 @@ from lib.queue_lib import (
     update_queue_user_click
 )
 from lib.social_lib import is_user_in_queue_or_cabinet
+import lib.screen as screen
 from queue_program.queue_schedule import set_check_user_scheduler_job, check_to_cabinet_pull
 import re
 
@@ -62,7 +64,9 @@ def start_queue_handlers():
         else:
             add_user_to_queue(user_id, queue_id)
             print(f'new in queue {queue_id}')
-            check_to_cabinet_pull(queue_id)
+            cabinet = active_queues[queue_id]['cabinet']
+            if cabinet:
+                check_to_cabinet_pull(queue_id)
 
             click_deadline = now_plus_n_minutes(queue_delay_minutes)
             click_deadline_text = datetime_to_text(click_deadline)
@@ -111,3 +115,22 @@ def start_queue_handlers():
                 add_user_queue_event(queue_id, user_id, event, event_emoji='🗣', gap=' ', ignore_time=True)
 
             update_queue(queue_id)
+
+    @app.on_message(filters.command(["admin"]) & filters.chat(server.server_vars.creator_id))
+    # @app.on_message()
+    def answer_video_notes(client, message):
+        commands = {
+            "create_queue": {
+                "description": "создать очередь",
+                "function": create_queue
+            }
+        }
+        print(message.command)
+        if len(message.command) > 1:
+            command = message.command[1]
+            if command in commands:
+                command_output = commands[command]["function"]()
+                screen.create(client, message.chat.id, screen.queue_admin_run(command_output))
+                return
+
+        return screen.create(client, message.chat.id, screen.queue_admin_help(commands))

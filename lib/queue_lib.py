@@ -36,9 +36,10 @@ def create_queue():
     }
 
     queue_id = str(channel_message_id)
+    active_queues[queue_id] = queue
+
     screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id))
     screen.create(app, server.server_vars.dot_ch_chat_id, screen.queue_first_comment(queue_id, chat_message_id))
-    active_queues[queue_id] = queue
     print(f"Очередь {queue_id} создана!")
 
 
