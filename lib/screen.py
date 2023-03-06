@@ -535,9 +535,13 @@ def money(send_message, text=None, button_text=None, reply_to_message_id=None):
 
 
 def queue_admin_help(commands):
+    from inspect import signature
     out = "Добро пожаловать в админку!\nКоманды:"
-    for command in commands:
-        out += f"\n`{command}` — {commands[command]['description']}"
+    for command_name in commands:
+        command = commands[command_name]
+        signature_command = signature(command)
+        out += f"\n{command_name} — {command.__doc__}\n{signature_command}"
+        out += f"\n`/admin {command_name} {' '.join([obj for obj in signature_command.parameters])}`"
 
     return {
         "text": out
@@ -546,7 +550,7 @@ def queue_admin_help(commands):
 
 def queue_admin_run(command_output):
     return {
-        "text": f"Команда запущена! Вывод:\n`{command_output}`"
+        "text": f"Команда запущена! Вывод:\n{command_output}"
     }
 
 

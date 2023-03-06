@@ -33,10 +33,17 @@ def start_queue_handlers():
         queue_id = re.search(r"queue\?id=(\d+)", callback_query.data).group(1)
         user_id = str(callback_query.from_user.id)
 
-        queue_user = prerender_queue_user_and_update_name_and_get_queue_user(callback_query.from_user)
+        if queue_id not in active_queues:
+            callback_query.answer(
+                r"🫥 Очередь не найдена ¯\_(ツ)_/¯",
+                show_alert=False
+            )
+            return
 
         queue = active_queues[queue_id]["queue_order"]
         queue_delay_minutes = active_queues[queue_id]["rules"]["delay_minutes"]
+
+        queue_user = prerender_queue_user_and_update_name_and_get_queue_user(callback_query.from_user)
 
         queue_or_cabinet = is_user_in_queue_or_cabinet(user_id)
         if queue_or_cabinet:
@@ -116,20 +123,23 @@ def start_queue_handlers():
 
             update_queue(queue_id)
 
+    def test_sum(param1: int, param2: int = 123) -> int:
+        """Тестовая функция, даёт сумму"""
+        return param1+param2
+    commands = {
+        test_sum.__name__: test_sum,
+        create_queue.__name__: create_queue
+    }
+
     @app.on_message(filters.command(["admin"]) & filters.chat(server.server_vars.creator_id))
-    # @app.on_message()
-    def answer_video_notes(client, message):
-        commands = {
-            "create_queue": {
-                "description": "создать очередь",
-                "function": create_queue
-            }
-        }
+    def answer_admin_command(client, message):
         print(message.command)
         if len(message.command) > 1:
-            command = message.command[1]
-            if command in commands:
-                command_output = commands[command]["function"]()
+            command_name = message.command[1]
+            args = map(int, message.command[2:])
+            if command_name in commands:
+                command = commands[command_name]
+                command_output = command(*args)
                 screen.create(client, message.chat.id, screen.queue_admin_run(command_output))
                 return
 

@@ -7,6 +7,7 @@ from lib.social_lib import get_user_name
 
 
 def create_queue():
+    """Создать очередь"""
     # создаю пост
     channel_message_id = (screen.create(app, server.server_vars.dot_ch_id, screen.queue_initial_post())).id
     # print(channel_message_id)
@@ -41,6 +42,7 @@ def create_queue():
     screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id))
     screen.create(app, server.server_vars.dot_ch_chat_id, screen.queue_first_comment(queue_id, chat_message_id))
     print(f"Очередь {queue_id} создана!")
+    return f"Очередь https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id} создана!"
 
 
 def update_queue(queue_id):
