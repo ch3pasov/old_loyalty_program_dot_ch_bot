@@ -548,9 +548,13 @@ def queue_admin_help(commands):
     }
 
 
-def queue_admin_run(command_output):
+def queue_admin_run(command_output=None, is_success=True, errors=None):
+    if is_success:
+        text = f"Команда запущена успешно! Вывод:\n{command_output}"
+    else:
+        text = f"Ошибка! Вывод:\n{errors}"
     return {
-        "text": f"Команда запущена! Вывод:\n{command_output}"
+        "text": text
     }
 
 
@@ -577,7 +581,7 @@ def queue_first_comment(queue_id, chat_message_id):
     }
 
 
-def queue_state(queue_id):
+def queue_state(queue_id, archive=False):
     queue = active_queues[queue_id]
     comments = queue["show"]["comments"]
 
@@ -591,7 +595,10 @@ def queue_state(queue_id):
     else:
         queue_text = "🫥"
 
-    post_text = "**Очередь:** "
+    post_text = ''
+    if archive:
+        post_text += "[АРХИВ]\n"
+    post_text += "**Очередь:** "
     post_text += queue_text
 
     last_n_events = queue["show"]["last_n_events"]

@@ -10,7 +10,8 @@ from lib.queue_lib import (
     update_queue,
     prerender_queue_user_and_update_name_and_get_queue_user,
     add_user_to_queue,
-    update_queue_user_click
+    update_queue_user_click,
+    delete_queue
 )
 from lib.social_lib import is_user_in_queue_or_cabinet
 import lib.screen as screen
@@ -128,7 +129,8 @@ def start_queue_handlers():
         return param1+param2
     commands = {
         test_sum.__name__: test_sum,
-        create_queue.__name__: create_queue
+        create_queue.__name__: create_queue,
+        delete_queue.__name__: delete_queue
     }
 
     @app.on_message(filters.command(["admin"]) & filters.chat(server.server_vars.creator_id))
@@ -139,8 +141,24 @@ def start_queue_handlers():
             args = map(int, message.command[2:])
             if command_name in commands:
                 command = commands[command_name]
-                command_output = command(*args)
-                screen.create(client, message.chat.id, screen.queue_admin_run(command_output))
+
+                command_output = None
+                errors = None
+                try:
+                    command_output = command(*args)
+                    is_success = True
+                except Exception as e:
+                    errors = e
+                    is_success = False
+                screen.create(
+                    client,
+                    message.chat.id,
+                    screen.queue_admin_run(
+                        command_output=command_output,
+                        is_success=is_success,
+                        errors=errors
+                    )
+                )
                 return
 
         return screen.create(client, message.chat.id, screen.queue_admin_help(commands))

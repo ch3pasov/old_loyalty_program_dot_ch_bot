@@ -6,7 +6,7 @@ from lib.useful_lib import emoji_fingerprint, now_text, timestamp_now
 from lib.social_lib import get_user_name
 
 
-def create_queue():
+def create_queue(delay_minutes=15):
     """Создать очередь"""
     # создаю пост
     channel_message_id = (screen.create(app, server.server_vars.dot_ch_id, screen.queue_initial_post())).id
@@ -24,7 +24,7 @@ def create_queue():
         },
         "queue_order": [],
         "rules": {
-            "delay_minutes": 15
+            "delay_minutes": delay_minutes
         },
         "show": {
             "last_n_events": [],
@@ -45,10 +45,10 @@ def create_queue():
     return f"Очередь https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id} создана!"
 
 
-def update_queue(queue_id):
+def update_queue(queue_id, archive=False):
     channel_message_id = active_queues[queue_id]["id"]["channel"]
     try:
-        screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id))
+        screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id, archive=archive))
     except errors.exceptions.bad_request_400.MessageNotModified:
         print(f'{queue_id} ничего не изменилось')
 
@@ -167,3 +167,20 @@ def kick_user_from_queue(user_id, to_update_queue=False):
     clear_queue_user(user_id)
     if to_update_queue:
         update_queue(queue_id)
+
+
+def delete_queue(channel_message_id):
+    """Удалить очередь — пост останется в архиве, но просчитываться не будет."""
+    # kick all users
+    queue_id = str(channel_message_id)
+    queue = active_queues[queue_id]
+    for user_id in queue['queue_order']:
+        kick_user_from_queue(user_id)
+    # update queue
+    queue_comments = queue['show']['comments']
+    queue_comments['cnt'] = str(queue_comments['cnt'])+'?'
+    queue_comments['fingerprint'] = '❓'
+    update_queue(queue_id, archive=True)
+    # del queue
+    active_queues.pop(queue_id)
+    return f"Очередь https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id} удалена!"
