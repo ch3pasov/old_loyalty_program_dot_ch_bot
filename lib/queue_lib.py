@@ -6,7 +6,7 @@ from lib.useful_lib import emoji_fingerprint, now_text, timestamp_now
 from lib.social_lib import get_user_name
 
 
-def create_queue(delay_minutes=15):
+def create_queue(queue_delay_minutes=15):
     """Создать очередь"""
     # создаю пост
     channel_message_id = (screen.create(app, server.server_vars.dot_ch_id, screen.queue_initial_post())).id
@@ -24,7 +24,7 @@ def create_queue(delay_minutes=15):
         },
         "queue_order": [],
         "rules": {
-            "delay_minutes": delay_minutes
+            "delay_minutes": queue_delay_minutes
         },
         "show": {
             "last_n_events": [],

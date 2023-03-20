@@ -10,7 +10,10 @@ from lib.social_lib import check_if_banned_before_money
 def create_cabinet(
     queue_id,
     start=datetime_to_timestamp(now_plus_n_minutes(3)),
-    end=datetime_to_timestamp(now_plus_n_minutes(30))
+    end=datetime_to_timestamp(now_plus_n_minutes(30)),
+    reward_per_one=0.0001,
+    reward_max_sum=0.01,
+    cabinet_delay_minutes=5
 ):
     queue = active_queues[queue_id]
 
@@ -19,11 +22,11 @@ def create_cabinet(
             "work": {
                 "start": start,
                 "finish": end,
-                "delay_minutes": 5
+                "delay_minutes": cabinet_delay_minutes
             },
             "reward": {
-                "per_one": 0.0001,
-                "max_sum": 0.01
+                "per_one": reward_per_one,
+                "max_sum": reward_max_sum
             }
         },
         "state": {
