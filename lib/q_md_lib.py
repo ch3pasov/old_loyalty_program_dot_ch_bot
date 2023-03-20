@@ -1,5 +1,6 @@
 # from lib.queue_lib import create_queue
 from random import choice, random, randrange
+from queue_lib import create_queue
 from server.server_vars import queue_md
 
 
@@ -50,4 +51,6 @@ def generate_queue_params(queue_md=queue_md):
     return generate_queue_params_by_type(choice_queue_md_type(queue_md), queue_md)
 
 
-print(generate_queue_params())
+def queue_money_drop(dot_ch_chat_id, money_drop_message_id, amount):
+    print("QUEUE MONEY DROP")
+    q_md_params = generate_queue_params(queue_md)
