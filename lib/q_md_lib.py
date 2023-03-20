@@ -1,7 +1,7 @@
 # from lib.queue_lib import create_queue
 from random import choice, random, randrange
-from queue_lib import create_queue
 from server.server_vars import queue_md
+from lib.queue_cabinet_generate_lib import create_queue_and_cabinet_delta
 
 
 def choice_queue_md_type(queue_md=queue_md):
@@ -18,9 +18,8 @@ def trim_to_ten_thousandths(number):
 
 
 def generate_queue_params_by_type(queue_md_type, queue_md=queue_md):
-    period_minutes = queue_md['period_minutes']
     cabinet_work_start_delay_minutes = queue_md['cabinet_work_start_delay_minutes']
-    cabinet_reward_max_sum = queue_md['cabinet_reward_max_sum']
+    reward_max_sum = queue_md['cabinet_reward_max_sum']
 
     queue_md_type_params = queue_md['types'][queue_md_type]
 
@@ -37,9 +36,8 @@ def generate_queue_params_by_type(queue_md_type, queue_md=queue_md):
     reward_per_one_range = cabinet_params['reward_per_one']
     reward_per_one = trim_to_ten_thousandths(tricky_random_range(reward_per_one_range, 4))
     return {
-        'period_minutes': period_minutes,
         'cabinet_work_start_delay_minutes': cabinet_work_start_delay_minutes,
-        'cabinet_reward_max_sum': cabinet_reward_max_sum,
+        'reward_max_sum': reward_max_sum,
         'queue_delay_minutes': queue_delay_minutes,
         'cabinet_delay_minutes': cabinet_delay_minutes,
         'work_delta_minutes': work_delta_minutes,
@@ -51,6 +49,7 @@ def generate_queue_params(queue_md=queue_md):
     return generate_queue_params_by_type(choice_queue_md_type(queue_md), queue_md)
 
 
-def queue_money_drop(dot_ch_chat_id, money_drop_message_id, amount):
+def queue_money_drop():
     print("QUEUE MONEY DROP")
     q_md_params = generate_queue_params(queue_md)
+    create_queue_and_cabinet_delta(**q_md_params)
