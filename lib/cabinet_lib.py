@@ -1,7 +1,7 @@
 # import server.server_vars
 from global_vars import users, active_queues
 from lib.queue_lib import add_global_queue_event, update_queue
-from lib.useful_lib import datetime_to_timestamp, now_plus_n_minutes
+# from lib.useful_lib import datetime_to_timestamp, now_plus_n_minutes
 from lib.social_lib import check_if_banned_before_money
 # import lib.screen as screen
 # from queue_program.queue_schedule import check_to_cabinet_start, check_to_cabinet_finish
@@ -9,8 +9,8 @@ from lib.social_lib import check_if_banned_before_money
 
 def create_cabinet(
     queue_id,
-    start=datetime_to_timestamp(now_plus_n_minutes(3)),
-    end=datetime_to_timestamp(now_plus_n_minutes(30)),
+    start,  # timestamp начала работы кабинета
+    end,  # timestamp конца работы кабинета
     reward_per_one=0.0001,
     reward_max_sum=0.01,
     cabinet_delay_minutes=5
