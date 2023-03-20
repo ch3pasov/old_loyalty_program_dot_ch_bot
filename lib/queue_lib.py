@@ -41,8 +41,8 @@ def create_queue(delay_minutes=15):
 
     screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id))
     screen.create(app, server.server_vars.dot_ch_chat_id, screen.queue_first_comment(queue_id, chat_message_id))
-    print(f"Очередь {queue_id} создана!")
-    return f"Очередь https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id} создана!"
+    print(f"Очередь {queue_id} создана! https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id}")
+    return queue_id
 
 
 def update_queue(queue_id, archive=False):
