@@ -1,11 +1,16 @@
 from pyrogram import idle
 from global_vars import print
-from loyalty_program.bot_handlers import start_handlers
 
-from loyalty_program.loyalty_schedule import start_loyalty_scheduler
 from saving_schedule import backup_log_job, save_log_job, start_saving_scheduler
-from queue_program.queue_handlers import start_queue_handlers
+
+# from loyalty_program.moneydrop.moneydrop_schedule import start_moneydrop_scheduler
+from queue_program.queue_money_drop.q_md_schedule import start_q_moneydrop_scheduler
+
 from queue_program.queue_schedule import start_queue_scheduler
+from loyalty_program.loyalty_schedule import start_loyalty_scheduler
+
+from queue_program.queue_handlers import start_queue_handlers
+from loyalty_program.bot_handlers import start_handlers
 
 import server.server_vars
 chat_id = server.server_vars.dot_ch_chat_id
@@ -15,8 +20,8 @@ if __name__ == '__main__':
     try:
         start_saving_scheduler(verbose=False)
 
-        # from loyalty_program.moneydrop.moneydrop_schedule import start_moneydrop_scheduler
         # start_moneydrop_scheduler(verbose=True)
+        start_q_moneydrop_scheduler(verbose=True)
 
         start_queue_scheduler(verbose=True)
         start_loyalty_scheduler(verbose=False)
