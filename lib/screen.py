@@ -560,7 +560,7 @@ def queue_admin_run(command_output=None, is_success=True, errors=None):
 
 def queue_initial_post():
     return {
-        "text": "очередь"
+        "text": "Генерация поста-очереди. Подождите.."
     }
 
 
