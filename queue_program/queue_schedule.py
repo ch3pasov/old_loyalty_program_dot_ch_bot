@@ -216,32 +216,14 @@ def initial_check_users(verbose=True):
             check_user(user_id, verbose=True, to_update_queue=False)
 
 
-# # Кикает всех юзеров, которых почему-то не кикнуло раньше
-# def update_queue_users(verbose=True):
-#     if verbose:
-#         print('update_queue_users!')
+def add_cabinet_start_and_pull_job(scheduler, start_timestamp, queue_id):
+    open_date = timestamp_to_datetime(start_timestamp)
+    scheduler.add_job(cabinet_start_and_pull, "date", run_date=open_date, args=[queue_id])
 
-#     timestamp_now_const = timestamp_now()
-#     queues_to_update = set()
-#     for user_id in queue_users:
-#         queue_user = queue_users[user_id]
 
-#         if not queue_user["in"]:
-#             # чел ни в очереди, ни в кабинете
-#             continue
-#         if queue_user["in"]["type"] != "queue":
-#             # чел в кабинете
-#             continue
-#         if seconds_between_timestamps(timestamp_now_const, queue_user["in"]["timestamp"]) < queue_user["in"]["delay_minutes"]*60:
-#             # чел недавно кликал
-#             continue
-#         # надо выгнать чела из очереди
-
-#         queue_id = queue_user["in"]["id"]
-#         kick_user_from_queue(queue_user, user_id)
-#         queues_to_update.add(queue_id)
-#     for queue_id in queues_to_update:
-#         update_queue(queue_id)
+def add_cabinet_finish_job(scheduler, end_timestamp, queue_id):
+    close_date = timestamp_to_datetime(end_timestamp)
+    scheduler.add_job(cabinet_finish, "date", run_date=close_date, args=[queue_id, True])
 
 
 def initial_set_cabinet_state_scheduler_jobs(scheduler, verbose=True):
@@ -252,11 +234,9 @@ def initial_set_cabinet_state_scheduler_jobs(scheduler, verbose=True):
             start = cabinet['rules']['work']['start']
             end = cabinet['rules']['work']['finish']
             if timestamp_now_const < start:
-                open_date = timestamp_to_datetime(start)
-                scheduler.add_job(cabinet_start_and_pull, "date", run_date=open_date, args=[queue_id])
+                add_cabinet_start_and_pull_job(scheduler, start, queue_id)
             if timestamp_now_const < end:
-                close_date = timestamp_to_datetime(end)
-                scheduler.add_job(cabinet_finish, "date", run_date=close_date, args=[queue_id, True])
+                add_cabinet_finish_job(scheduler, end, queue_id)
             check_to_cabinet_pull(queue_id)
 
 

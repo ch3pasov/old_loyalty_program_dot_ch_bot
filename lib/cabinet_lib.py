@@ -39,6 +39,8 @@ def create_cabinet(
         }
     }
 
+    # ТУТ НАДО ДОБАВИТЬ ШЕДУЛЕР НА ОТКРЫТИЕ КАБИНЕТА
+
     update_queue(queue_id)
 
 
