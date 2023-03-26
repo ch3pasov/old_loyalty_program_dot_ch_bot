@@ -13,7 +13,7 @@ def create_queue(queue_delay_minutes=15):
     channel_message_id = (screen.create(app, server.server_vars.dot_ch_id, screen.queue_initial_post())).id
     # print(channel_message_id)
 
-    asyncio_sleep(5)
+    asyncio_sleep(10)
 
     chat_message_id = app_billing.get_discussion_message(
         chat_id=server.server_vars.dot_ch_id,

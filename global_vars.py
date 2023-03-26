@@ -34,8 +34,8 @@ with open('server/queue_users.json') as f:
 api_id = secret.api_id
 api_hash = secret.api_hash
 
-queue_local_scheduler = BackgroundScheduler()
-queue_local_scheduler.start()
+queue_common_scheduler = BackgroundScheduler()
+queue_common_scheduler.start()
 
 app_billing = Client("server/secret/account_billing", api_id, api_hash)
 app = Client("server/secret/account_robot", api_id, api_hash)
