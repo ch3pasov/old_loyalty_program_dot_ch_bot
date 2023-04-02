@@ -30,7 +30,7 @@ def start_q_moneydrop_scheduler(verbose=True):
     q_moneydrop_scheduler = BackgroundScheduler()
 
     q_moneydrop_scheduler.add_job(
-        q_drop_scheduler, "interval", minutes=server.server_vars.money_drop_period_minutes,
+        q_drop_scheduler, "interval", minutes=server.server_vars.queue_md["period_minutes"],
         kwargs={
             "q_moneydrop_scheduler": q_moneydrop_scheduler,
             "verbose": verbose
