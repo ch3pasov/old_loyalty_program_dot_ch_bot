@@ -318,7 +318,7 @@ def referer_program(user_id):
         referer_status = "Здесь ты можешь поучаствовать в реферерной программе ПРОГРАММЫ ЛОЯЛЬНОСТИ телеграм-канала Анатолия @ch_an."
 
     return {
-        "text": referer_program_text.format(referer_status=referer_status, referer_link=f"http://t.me/{bot_username}?start=referer_id={user_id}"),
+        "text": referer_program_text.format(referer_status=referer_status, referer_link=f"https://t.me/{bot_username}?start=referer_id={user_id}"),
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
@@ -360,7 +360,7 @@ def referals_list(user_id):
     if referals_cnt > 0:
         text = f"**(прямых) рефералов:** {referals_cnt}\n\n**Их айдишники:**\n" + '\n'.join([f"`{obj}`" for obj in referals])
     else:
-        text = "🙅🏻‍♀️ Пока никто не указал тебя своим реферером! Но ты всегда можешь это исправить:\n" + f"`http://t.me/{bot_username}?start=referer_id={user_id}`"
+        text = "🙅🏻‍♀️ Пока никто не указал тебя своим реферером! Но ты всегда можешь это исправить:\n" + f"`https://t.me/{bot_username}?start=referer_id={user_id}`"
 
     return {
         "text": text,
