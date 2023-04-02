@@ -36,6 +36,9 @@ def create_queue(queue_delay_minutes=15):
                 "fingerprint": "👀"
             }
         },
+        "state": {
+            "is_locked": False
+        },
         "cabinet": None
     }
 
@@ -172,10 +175,20 @@ def kick_user_from_queue(user_id, to_update_queue=False):
         update_queue(queue_id)
 
 
-def delete_queue(channel_message_id):
+def queue_lock(queue_id, to_update_queue=False):
+    """Залочить очередь — запретить входить в очередь (нужно для плавного удаления)"""
+    queue = active_queues[queue_id]
+    # update queue
+    queue['state']['is_locked'] = True
+    if to_update_queue:
+        update_queue(queue_id)
+    # del queue
+    return f"Очередь https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id} залочена!"
+
+
+def queue_delete(queue_id):
     """Удалить очередь — пост останется в архиве, но просчитываться не будет."""
     # kick all users
-    queue_id = str(channel_message_id)
     queue = active_queues[queue_id]
     for user_id in queue['queue_order']:
         kick_user_from_queue(user_id)
@@ -187,3 +200,9 @@ def delete_queue(channel_message_id):
     # del queue
     active_queues.pop(queue_id)
     return f"Очередь https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id} удалена!"
+
+
+def queue_delete_int(channel_message_id):
+    """Удалить очередь — пост останется в архиве, но просчитываться не будет."""
+    queue_id = str(channel_message_id)
+    return queue_delete(queue_id)

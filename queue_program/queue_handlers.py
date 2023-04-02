@@ -11,7 +11,7 @@ from lib.queue_lib import (
     prerender_queue_user_and_update_name_and_get_queue_user,
     add_user_to_queue,
     update_queue_user_click,
-    # delete_queue
+    # queue_delete_int
 )
 from lib.q_md_lib import queue_money_drop
 from lib.social_lib import is_user_in_queue_or_cabinet
@@ -42,8 +42,16 @@ def start_queue_handlers():
             )
             return
 
-        queue = active_queues[queue_id]["queue_order"]
-        queue_delay_minutes = active_queues[queue_id]["rules"]["delay_minutes"]
+        queue = active_queues[queue_id]
+        if queue['state']['is_locked']:
+            callback_query.answer(
+                r"🔒 Очередь закрыта! ¯\_(ツ)_/¯",
+                show_alert=False
+            )
+            return
+
+        queue_order = queue["queue_order"]
+        queue_delay_minutes = queue["rules"]["delay_minutes"]
 
         queue_user = prerender_queue_user_and_update_name_and_get_queue_user(callback_query.from_user)
 
@@ -56,7 +64,7 @@ def start_queue_handlers():
                 )
                 return
 
-            if user_id not in queue:
+            if user_id not in queue_order:
                 callback_query.answer(
                     "❌👥 Ты уже стоишь в другой очереди!",
                     show_alert=False
@@ -73,7 +81,7 @@ def start_queue_handlers():
         else:
             add_user_to_queue(user_id, queue_id)
             print(f'new in queue {queue_id}')
-            cabinet = active_queues[queue_id]['cabinet']
+            cabinet = queue['cabinet']
             if cabinet:
                 check_to_cabinet_pull(queue_id)
 
@@ -130,7 +138,7 @@ def start_queue_handlers():
     commands = {
         test_sum.__name__: test_sum,
         # create_queue.__name__: create_queue,
-        # delete_queue.__name__: delete_queue,
+        # queue_delete_int.__name__: queue_delete_int,
         queue_money_drop.__name__: queue_money_drop
     }
 

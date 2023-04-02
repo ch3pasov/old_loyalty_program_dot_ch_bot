@@ -598,6 +598,8 @@ def queue_state(queue_id, archive=False):
     post_text = ''
     if archive:
         post_text += "[АРХИВ]\n"
+    elif queue["state"]["is_locked"]:
+        post_text += "🔒\n"
     post_text += "**Очередь:** "
     post_text += queue_text
 

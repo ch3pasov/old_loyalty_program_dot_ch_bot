@@ -3,8 +3,20 @@ import warnings
 from datetime import datetime
 
 # from apscheduler.schedulers.background import BackgroundScheduler
-from lib.queue_lib import slow_update_comments_queue, update_queue, kick_user_from_queue, add_user_queue_event, add_global_user_queue_event
-from lib.cabinet_actions_lib import cabinet_start, cabinet_finish, get_user_cabinet_status_before_reward
+from lib.queue_lib import (
+    slow_update_comments_queue,
+    update_queue,
+    kick_user_from_queue,
+    add_user_queue_event,
+    add_global_user_queue_event,
+    queue_delete,
+    queue_lock
+)
+from lib.cabinet_actions_lib import (
+    cabinet_start,
+    cabinet_finish,
+    get_user_cabinet_status_before_reward
+)
 from lib.useful_lib import timestamp_now, timestamp_to_datetime, dt_plus_n_minutes, datetime_to_timestamp
 from lib.money import send_money
 # from lib.useful_lib import seconds_between_timestamps
@@ -14,6 +26,7 @@ warnings.filterwarnings("ignore")
 
 
 def check_user(user_id, verbose=True, to_update_queue=False):
+    '''Проверяет и кикает игрока из очереди/кабинета, если надо'''
     if verbose:
         print(f"check user! {user_id}")
 
@@ -170,18 +183,19 @@ def cabinet_push(queue_id, to_update_queue=False):
         update_queue(queue_id)
 
 
-def cabinet_start_and_pull(queue_id):
+def cabinet_start_and_pull(queue_id, to_update_queue=True):
     cabinet_start(queue_id)
     check_to_cabinet_pull(queue_id)
-    update_queue(queue_id)
+    if to_update_queue:
+        update_queue(queue_id)
 
 
-def check_to_cabinet_start(queue_id, timestamp_now_const, verbose=True):
+def check_to_cabinet_start(queue_id, timestamp_now_const, verbose=True, to_update_queue=False):
     cabinet = active_queues[queue_id]['cabinet']
     if cabinet['rules']['work']['start'] < timestamp_now_const and cabinet['state']['cabinet_status'] == -1:
         if verbose:
             print(f"{queue_id} open cabinet!")
-        cabinet_start_and_pull(queue_id)
+        cabinet_start_and_pull(queue_id, to_update_queue=to_update_queue)
 
 
 def check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True):
@@ -192,20 +206,52 @@ def check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True):
         cabinet_finish(queue_id)
 
 
+def check_to_queue_lock(queue_id, timestamp_now_const, verbose=True, to_update_queue=False):
+    queue = active_queues[queue_id]
+    cabinet = active_queues[queue_id]['cabinet']
+    end = cabinet['rules']['work']['finish']
+    lock = end + 60*60*24
+    if lock < timestamp_now_const and not queue['state']['is_locked']:
+        if verbose:
+            print(f"{queue_id} lock queue!")
+        queue_lock(queue_id, to_update_queue=to_update_queue)
+
+
+def check_to_queue_delete(queue_id, timestamp_now_const, verbose=True):
+    # queue = active_queues[queue_id]
+    cabinet = active_queues[queue_id]['cabinet']
+    end = cabinet['rules']['work']['finish']
+    lock = end + 60*60*24
+    delete = lock + 60*60*24
+    if delete < timestamp_now_const:
+        if verbose:
+            print(f"{queue_id} delete queue!")
+        queue_delete(queue_id)
+        return True
+    return False
+
+
 # Пересчитываю комменты в очередях
 # Проверяю, а не открылся ли кабинет
 # Проверяю, а не закрылся ли кабинет
+# Проверяю, не залочить ли очередь
+# Проверяю, не удалить ли очередь
 def update_all_queues(verbose=True):
     if verbose:
         print("update_all_queues!")
     timestamp_now_const = timestamp_now()
-    for queue_id in active_queues:
+    # это единственное место, где я могу удалять очереди, поэтому итерируюсь по неизменяемому объекту
+    for queue_id in list(active_queues):
+        slow_update_comments_queue(queue_id)
+
+        queue_deleted = False
         if active_queues[queue_id]['cabinet']:
             check_to_cabinet_start(queue_id, timestamp_now_const, verbose=True)
             check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True)
-
-        slow_update_comments_queue(queue_id)
-        update_queue(queue_id)
+            check_to_queue_lock(queue_id, timestamp_now_const, verbose=True)
+            queue_deleted = check_to_queue_delete(queue_id, timestamp_now_const, verbose=True)
+        if not queue_deleted:
+            update_queue(queue_id)
 
 
 def initial_check_users(verbose=True):
@@ -226,14 +272,30 @@ def add_cabinet_finish_job(end_timestamp, queue_id):
     queue_common_scheduler.add_job(cabinet_finish, "date", run_date=close_date, args=[queue_id, True])
 
 
+def add_queue_lock_job(lock_timestamp, queue_id):
+    lock_date = timestamp_to_datetime(lock_timestamp)
+    queue_common_scheduler.add_job(queue_lock, "date", run_date=lock_date, args=[queue_id, True])
+
+
+def add_queue_delete_job(delete_timestamp, queue_id):
+    delete_date = timestamp_to_datetime(delete_timestamp)
+    queue_common_scheduler.add_job(queue_delete, "date", run_date=delete_date, args=[queue_id])
+
+
 def set_cabinet_state_scheduler_job(queue_id, cabinet, verbose=True):
     timestamp_now_const = timestamp_now()
     start = cabinet['rules']['work']['start']
     end = cabinet['rules']['work']['finish']
+    lock = end + 60*60*24  # спустя день после закрытия
+    delete = lock + 60*60*24  # спустя день после залочивания
     if timestamp_now_const < start:
         add_cabinet_start_and_pull_job(start, queue_id)
     if timestamp_now_const < end:
         add_cabinet_finish_job(end, queue_id)
+    if timestamp_now_const < lock:
+        add_queue_lock_job(lock, queue_id)
+    if timestamp_now_const < delete:
+        add_queue_delete_job(delete, queue_id)
     check_to_cabinet_pull(queue_id)
 
 
@@ -249,10 +311,9 @@ def start_queue_scheduler(verbose=True):
 
     initial_check_users()
     initial_set_check_user_scheduler_jobs()
-    initial_set_cabinet_state_scheduler_jobs()
 
+    initial_set_cabinet_state_scheduler_jobs()
     queue_common_scheduler.add_job(update_all_queues, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
-    # queue_scheduler.add_job(update_queue_users, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
 
     print(queue_common_scheduler.get_jobs())
     # queue_common_scheduler.start()
