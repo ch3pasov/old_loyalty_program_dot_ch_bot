@@ -22,6 +22,9 @@ def generate_queue_params_by_type(queue_md_type, queue_md=queue_md):
     cabinet_work_start_delay_minutes = queue_md['cabinet_work_start_delay_minutes']
     reward_max_sum = queue_md['cabinet_reward_max_sum']
 
+    queue_lock_delta_minutes = queue_md['queue_lock_delta_minutes']
+    queue_delete_delta_minutes = queue_md['queue_delete_delta_minutes']
+
     queue_md_type_params = queue_md['types'][queue_md_type]
 
     queue_delay_minutes_range = queue_md_type_params['queue']['delay_minutes']
@@ -42,6 +45,8 @@ def generate_queue_params_by_type(queue_md_type, queue_md=queue_md):
         'queue_delay_minutes': queue_delay_minutes,
         'cabinet_delay_minutes': cabinet_delay_minutes,
         'work_delta_minutes': work_delta_minutes,
+        'queue_lock_delta_minutes': queue_lock_delta_minutes,
+        'queue_delete_delta_minutes': queue_delete_delta_minutes,
         'reward_per_one': reward_per_one
     }
 
@@ -53,4 +58,4 @@ def generate_queue_params(queue_md=queue_md):
 def queue_money_drop():
     print("QUEUE MONEY DROP")
     q_md_params = generate_queue_params(queue_md)
-    create_queue_and_cabinet_delta(**q_md_params)
+    return create_queue_and_cabinet_delta(**q_md_params)

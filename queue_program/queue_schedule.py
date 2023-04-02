@@ -209,8 +209,7 @@ def check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True):
 def check_to_queue_lock(queue_id, timestamp_now_const, verbose=True, to_update_queue=False):
     queue = active_queues[queue_id]
     cabinet = active_queues[queue_id]['cabinet']
-    end = cabinet['rules']['work']['finish']
-    lock = end + 60*60*24
+    lock = cabinet['rules']['work']['lock']
     if lock < timestamp_now_const and not queue['state']['is_locked']:
         if verbose:
             print(f"{queue_id} lock queue!")
@@ -220,9 +219,7 @@ def check_to_queue_lock(queue_id, timestamp_now_const, verbose=True, to_update_q
 def check_to_queue_delete(queue_id, timestamp_now_const, verbose=True):
     # queue = active_queues[queue_id]
     cabinet = active_queues[queue_id]['cabinet']
-    end = cabinet['rules']['work']['finish']
-    lock = end + 60*60*24
-    delete = lock + 60*60*24
+    delete = cabinet['rules']['work']['delete']
     if delete < timestamp_now_const:
         if verbose:
             print(f"{queue_id} delete queue!")
@@ -286,8 +283,8 @@ def set_cabinet_state_scheduler_job(queue_id, cabinet, verbose=True):
     timestamp_now_const = timestamp_now()
     start = cabinet['rules']['work']['start']
     end = cabinet['rules']['work']['finish']
-    lock = end + 60*60*24  # спустя день после закрытия
-    delete = lock + 60*60*24  # спустя день после залочивания
+    lock = cabinet['rules']['work']['lock']
+    delete = cabinet['rules']['work']['delete']
     if timestamp_now_const < start:
         add_cabinet_start_and_pull_job(start, queue_id)
     if timestamp_now_const < end:

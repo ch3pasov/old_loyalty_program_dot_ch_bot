@@ -43,9 +43,11 @@ money_drop_drops = 0  # выпилены в угодну queue-версии
 money_drop_amount = 0.00777
 
 queue_md = {
-    "period_minutes": 10080,  # раз в неделю
-    "cabinet_work_start_delay_minutes": 720,
+    "period_minutes": 60*24*7,  # раз в неделю
+    "cabinet_work_start_delay_minutes": 60*12,
     "cabinet_reward_max_sum": 0.2,
+    "queue_lock_delta_minutes": 60*24,
+    "queue_delete_delta_minutes": 60*24,
     "types": {
         "blitz": {
             "freq": 1,
