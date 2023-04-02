@@ -14,17 +14,18 @@ def backup_log_job(verbose=False):
         print('backup!')
 
     now = datetime.now(timezone.utc)
+    foldername = f"server/backups/{now.strftime('%Y/%m/%d')}/{now.strftime('%H/%M')}"
 
-    filename = f"server/logs/{now.strftime('%Y-%m-%d')}/{now.strftime('%H_%M')}/users.json"
+    filename = f"{foldername}/users.json"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(users, f, ensure_ascii=False, indent=4)
 
-    filename = f"server/logs/{now.strftime('%Y-%m-%d')}/{now.strftime('%H_%M')}/active_queues.json"
+    filename = f"{foldername}/active_queues.json"
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(active_queues, f, ensure_ascii=False, indent=4)
 
-    filename = f"server/logs/{now.strftime('%Y-%m-%d')}/{now.strftime('%H_%M')}/queue_users.json"
+    filename = f"{foldername}/queue_users.json"
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(queue_users, f, ensure_ascii=False, indent=4)
 
