@@ -4,6 +4,7 @@ from pyrogram import errors
 import lib.screen as screen
 from lib.useful_lib import emoji_fingerprint, now_text, timestamp_now
 from lib.social_lib import get_user_name
+from time import sleep
 
 
 # надеюсь, это единственная функция, где надо прописать async
@@ -14,7 +15,7 @@ def create_queue(queue_delay_minutes=15):
     # print(channel_message_id)
 
     print("DEBUG SLEEP BEFORE")
-    # meh
+    sleep(10)  # я еблан
     print("DEBUG SLEEP AFTER")
     chat_message_id = app_billing.get_discussion_message(
         chat_id=server.server_vars.dot_ch_id,
