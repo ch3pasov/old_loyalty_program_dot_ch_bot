@@ -2,6 +2,7 @@
 from random import choice, random, randrange
 from server.server_vars import queue_md
 from lib.queue_cabinet_generate_lib import create_queue_and_cabinet_delta
+from global_vars import print
 
 
 def choice_queue_md_type(queue_md=queue_md):
