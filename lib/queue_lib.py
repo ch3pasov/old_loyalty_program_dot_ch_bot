@@ -1,20 +1,13 @@
 import server.server_vars
-from global_vars import active_queues, queue_users, app, app_billing, print
+from global_vars import active_queues, queue_users, app, app_billing, print, queue_common_scheduler
 from pyrogram import errors
 import lib.screen as screen
-from lib.useful_lib import emoji_fingerprint, now_text, timestamp_now
+from lib.useful_lib import emoji_fingerprint, now_text, timestamp_now, timestamp_to_datetime
 from lib.social_lib import get_user_name
 
 
-def create_queue(queue_delay_minutes=15):
-    """Создать очередь"""
-    from asyncio import sleep as asyncio_sleep
-    # создаю пост
-    channel_message_id = (screen.create(app, server.server_vars.dot_ch_id, screen.queue_initial_post())).id
-    # print(channel_message_id)
-
-    asyncio_sleep(10)
-
+def create_queue_part_two(channel_message_id, queue_delay_minutes):
+    print("DEBUG SLEEP AFTER")
     chat_message_id = app_billing.get_discussion_message(
         chat_id=server.server_vars.dot_ch_id,
         message_id=channel_message_id
@@ -49,6 +42,24 @@ def create_queue(queue_delay_minutes=15):
     screen.create(app, server.server_vars.dot_ch_chat_id, screen.queue_first_comment(queue_id, chat_message_id))
     print(f"Очередь {queue_id} создана! https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id}")
     return queue_id
+
+
+# надеюсь, это единственная функция, где надо прописать async
+def create_queue(queue_delay_minutes=15):
+    """Создать очередь"""
+    # создаю пост
+    channel_message_id = (screen.create(app, server.server_vars.dot_ch_id, screen.queue_initial_post())).id
+    # print(channel_message_id)
+
+    print("DEBUG SLEEP BEFORE")
+
+    run_date = timestamp_to_datetime(timestamp_now()+10)  # спустя 10 секунд
+    queue_common_scheduler.add_job(
+        create_queue_part_two, "date", run_date=run_date,
+        args=[channel_message_id, queue_delay_minutes]
+    )
+
+    return str(channel_message_id)
 
 
 def update_queue(queue_id, archive=False):
