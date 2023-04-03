@@ -7,7 +7,6 @@ from lib.social_lib import get_user_name
 from time import sleep
 
 
-# надеюсь, это единственная функция, где надо прописать async
 def create_queue(queue_delay_minutes=15):
     """Создать очередь"""
     # создаю пост
@@ -15,7 +14,7 @@ def create_queue(queue_delay_minutes=15):
     # print(channel_message_id)
 
     print("DEBUG SLEEP BEFORE")
-    sleep(10)  # я еблан
+    sleep(10)  # внезапно, оно работает как надо и не стопит параллельные процессы
     print("DEBUG SLEEP AFTER")
     chat_message_id = app_billing.get_discussion_message(
         chat_id=server.server_vars.dot_ch_id,
