@@ -9,13 +9,14 @@ from lib.queue_lib import (
     kick_user_from_queue,
     add_user_queue_event,
     add_global_user_queue_event,
-    queue_delete,
     queue_lock
 )
+from lib.queue_actions_lib import queue_delete
 from lib.cabinet_actions_lib import (
     cabinet_start,
     cabinet_finish,
-    get_user_cabinet_status_before_reward
+    get_user_cabinet_status_before_reward,
+    kick_user_from_cabinet
 )
 from lib.useful_lib import timestamp_now, timestamp_to_datetime, dt_plus_n_minutes, datetime_to_timestamp
 from lib.money import send_money
@@ -175,8 +176,7 @@ def cabinet_push(queue_id, to_update_queue=False):
     add_global_user_queue_event(queue_id, user_id, event_short, event_long, event_emoji=event_emoji, gap=gap, to_summon=to_summon)
     add_user_queue_event(queue_id, user_id, "выходит из кабинета!", event_emoji="⬇️")
 
-    queue_users[user_id]['in'] = None
-    queue['cabinet']['state']['inside'] = None
+    kick_user_from_cabinet(user_id, queue_id)
 
     check_to_cabinet_pull(queue_id)
     if to_update_queue:

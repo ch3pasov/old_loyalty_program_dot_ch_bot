@@ -11,7 +11,6 @@ from lib.queue_lib import (
     prerender_queue_user_and_update_name_and_get_queue_user,
     add_user_to_queue,
     update_queue_user_click,
-    # queue_delete_int
 )
 from lib.q_md_lib import queue_money_drop
 from lib.social_lib import is_user_in_queue_or_cabinet

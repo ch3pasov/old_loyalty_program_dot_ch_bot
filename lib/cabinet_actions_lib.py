@@ -1,4 +1,4 @@
-from global_vars import users, active_queues
+from global_vars import users, active_queues, queue_users
 from lib.queue_lib import add_global_queue_event, update_queue
 from lib.social_lib import check_if_banned_before_money
 
@@ -39,3 +39,9 @@ def get_user_cabinet_status_before_reward(user_id, queue_id, verbose=True):
     if verbose:
         print(user_cabinet_status)
     return user_cabinet_status
+
+
+def kick_user_from_cabinet(user_id, queue_id):
+    '''Выкинуть юзера из кабинета. Без дополнительных комментариев'''
+    queue_users[user_id]['in'] = None
+    active_queues[queue_id]['cabinet']['state']['inside'] = None
