@@ -590,16 +590,16 @@ def queue_state(queue_id, archive=False):
     chat_message_id = queue["id"]["chat"]
     queue_order = queue["queue_order"]
 
+    is_locked = queue["state"]["is_locked"]
+
     if queue_order:
-        queue_text = "\n" + "\n".join([f"`{n+1}.`{queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))][::-1])
+        queue_text = f"{'🔒' if is_locked else ''}\n" + "\n".join([f"`{n+1}.`{queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))][::-1])
     else:
-        queue_text = "🫥"
+        queue_text = f"{'🔒' if is_locked else '🫥'}"
 
     post_text = ''
     if archive:
         post_text += "[АРХИВ]\n"
-    elif queue["state"]["is_locked"]:
-        post_text += "🔒\n"
     post_text += "**Очередь:** "
     post_text += queue_text
 
