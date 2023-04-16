@@ -631,7 +631,7 @@ def queue_state(queue_id, archive=False):
         rules_reward = rules['reward']
         winners_sum = cabinet_state['winners']['sum']
         post_text += f"\n\n🏆 **Награда в тонах:** {rules_reward['per_one']}"
-        post_text += f"\n🏦 **Банк очереди:** {rules_reward['max_sum']-winners_sum:.4f}/{rules_reward['max_sum']}"
+        post_text += f"\n🏦 **Банк очереди:** {rules_reward['max_sum']-winners_sum:.4f}/{rules_reward['max_sum']:.4f}"
 
     post_text += "\n"
     if cabinet:
