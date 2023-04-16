@@ -6,6 +6,7 @@ from lib.useful_lib import sanitize_comment_message, datetime_to_text, now_plus_
 from lib.queue_lib import (
     create_queue,
     fast_update_comments_queue,
+    add_queue_event,
     add_user_queue_event,
     update_queue,
     prerender_queue_user_and_update_name_and_get_queue_user,
@@ -115,6 +116,7 @@ def start_queue_handlers():
             fast_update_comments_queue(queue_id, change=1)
 
             if message.sender_chat:
+                add_queue_event(queue_id, "кто-то\nпишет от лица канала 🤮", event_emoji='🐖💨', ignore_time=False)
                 update_queue(queue_id)
                 # комменты от каналов — игнорируем
                 return
