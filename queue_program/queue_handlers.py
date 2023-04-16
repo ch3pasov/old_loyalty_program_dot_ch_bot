@@ -13,7 +13,7 @@ from lib.queue_lib import (
     add_user_to_queue,
     update_queue_user_click,
 )
-from lib.q_md_lib import queue_money_drop
+from lib.q_md_lib import queue_money_drop, generate_queue_params
 from lib.social_lib import is_user_in_queue_or_cabinet
 import lib.screen as screen
 from queue_program.queue_schedule import set_check_user_scheduler_job, check_to_cabinet_pull
@@ -139,7 +139,8 @@ def start_queue_handlers():
         test_sum.__name__: test_sum,
         create_queue.__name__: create_queue,
         # queue_delete_int.__name__: queue_delete_int,
-        queue_money_drop.__name__: queue_money_drop
+        queue_money_drop.__name__: queue_money_drop,
+        generate_queue_params.__name__: generate_queue_params
     }
 
     @app.on_message(filters.command(["admin"]) & filters.chat(server.server_vars.creator_id))
