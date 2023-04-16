@@ -600,7 +600,7 @@ def queue_state(queue_id, archive=False):
     post_text = ''
     if archive:
         post_text += "[АРХИВ]\n"
-    post_text += "**Очередь:** "
+    post_text += "👥 **Очередь:** "
     post_text += queue_text
 
     last_n_events = queue["show"]["last_n_events"]
@@ -611,31 +611,32 @@ def queue_state(queue_id, archive=False):
         cabinet_state = cabinet["state"]
 
         inside_user = cabinet_state['inside']
+        post_text += "\n🚪 **Кабинет:** "
         if inside_user:
             inside_name = queue_users[inside_user]['name']
-            post_text += f"\n**Кабинет:** {inside_name}"
+            post_text += f"{inside_name}"
         elif cabinet_state['cabinet_status'] == -1:
-            post_text += "\n**Кабинет:** 🔒ещё не открыт"
+            post_text += "🔒ещё не открыт"
         elif cabinet_state['cabinet_status'] == 1:
-            post_text += "\n**Кабинет:** 🔒уже закрыт"
+            post_text += "🔒уже закрыт"
         else:
-            post_text += "\n**Кабинет:** 🫥"
+            post_text += "🫥"
 
         rules = cabinet['rules']
         rules_work = rules['work']
         start = timestamp_to_time_text(rules_work['start'])
         end = timestamp_to_time_text(rules_work['finish'])
-        post_text += f"\n\n**Время раздачи:** {start}-{end}"
+        post_text += f"\n\n⌚️ **Время раздачи:**\n{start}–{end} UTC"
 
         rules_reward = rules['reward']
-        # winners = cabinet_state['winners']
-        post_text += f"\n**Награда за прохождение:** {rules_reward['per_one']}"
-        post_text += f"\n**Общий банк:** {rules_reward['max_sum']}"
+        winners_sum = cabinet_state['winners']['sum']
+        post_text += f"\n\n🏆 **Награда в тонах:** {rules_reward['per_one']}"
+        post_text += f"\n🏦 **Банк очереди:** {rules_reward['max_sum']-winners_sum:.4f}/{rules_reward['max_sum']}"
 
     post_text += "\n"
     if cabinet:
-        post_text += f"\n**Минут в кабинете:** {rules_work['delay_minutes']}"
-    post_text += f"\n**Афк-минут в очереди:** **{queue_delay_minutes}**"
+        post_text += f"\n⌚️🚪 **Минут в кабинете:** {rules_work['delay_minutes']}"
+    post_text += f"\n⌚️👥 **Афк-минут в очереди:** {queue_delay_minutes}"
 
     post_text += "\n\n**Последние 10 событий:**\n"
     post_text += '\n'.join(last_n_events[:-11:-1])
