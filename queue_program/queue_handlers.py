@@ -4,7 +4,6 @@ import server.server_vars
 from pyrogram import filters
 from lib.useful_lib import sanitize_comment_message, datetime_to_text, now_plus_n_minutes
 from lib.queue_lib import (
-    create_queue,
     fast_update_comments_queue,
     add_queue_event,
     add_user_queue_event,
@@ -13,9 +12,7 @@ from lib.queue_lib import (
     add_user_to_queue,
     update_queue_user_click,
 )
-from lib.q_md_lib import queue_money_drop, generate_queue_params
 from lib.social_lib import is_user_in_queue_or_cabinet
-import lib.screen as screen
 from queue_program.queue_schedule import set_check_user_scheduler_job, check_to_cabinet_pull
 import re
 
@@ -130,58 +127,3 @@ def start_queue_handlers():
                 add_user_queue_event(queue_id, user_id, event, event_emoji='🗣', gap=' ', ignore_time=True)
 
             update_queue(queue_id)
-
-    def test_sum(param1: int, param2: int = 123) -> int:
-        """Тестовая функция, даёт сумму"""
-        return param1+param2
-    commands = {
-        test_sum.__name__: test_sum,
-        create_queue.__name__: create_queue,
-        # queue_delete_int.__name__: queue_delete_int,
-        queue_money_drop.__name__: queue_money_drop,
-        generate_queue_params.__name__: generate_queue_params
-    }
-
-    @app.on_message(filters.command(["admin"]) & filters.chat(server.server_vars.creator_id))
-    def answer_admin_command(client, message):
-        print(message.command)
-        if len(message.command) > 1:
-            command_name = message.command[1]
-            args = map(int, message.command[2:])
-            if command_name in commands:
-                command = commands[command_name]
-
-                command_output = None
-                errors = None
-                excpetion_except_pyrogram = (
-                    AttributeError,
-                    ArithmeticError,
-                    EOFError,
-                    NameError,
-                    LookupError,
-                    StopIteration,
-                    OSError,
-                    TypeError,
-                    ValueError
-                )
-                try:
-                    print('try!')
-                    command_output = command(*args)
-                    is_success = True
-                except excpetion_except_pyrogram as e:
-                    print('except!')
-                    errors = e
-                    is_success = False
-                # command_output = command(*args)
-                # is_success = True
-                screen.create(
-                    client,
-                    message.chat.id,
-                    screen.queue_admin_run(
-                        command_output=command_output,
-                        is_success=is_success,
-                        errors=errors
-                    )
-                )
-                return
-        return screen.create(client, message.chat.id, screen.queue_admin_help(commands))
