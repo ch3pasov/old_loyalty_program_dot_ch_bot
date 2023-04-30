@@ -52,7 +52,11 @@ def send_money(
         raise ValueError("BTC! СЛЕВА НАПРАВО")
 
 
-def money_drop(dot_ch_chat_id, money_drop_message_id, amount):
+def money_drop(
+    dot_ch_chat_id=server.server_vars.dot_ch_chat_id,
+    money_drop_message_id=server.server_vars.money_drop_message_id,
+    amount=server.server_vars.money_drop_amount
+):
     print(f"MONEY DROP {now()}")
     send_money(
         amount, dot_ch_chat_id,

@@ -7,6 +7,7 @@ from lib.queue_lib import (
 )
 from lib.q_md_lib import queue_money_drop, generate_queue_params
 import lib.screen as screen
+from lib.money import money_drop
 
 users = global_vars.users
 
@@ -23,7 +24,8 @@ commands = {
     create_queue.__name__: create_queue,
     # queue_delete_int.__name__: queue_delete_int,
     queue_money_drop.__name__: queue_money_drop,
-    generate_queue_params.__name__: generate_queue_params
+    generate_queue_params.__name__: generate_queue_params,
+    money_drop.__name__: money_drop
 }
 
 
