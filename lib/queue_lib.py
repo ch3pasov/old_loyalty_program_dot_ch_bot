@@ -32,7 +32,7 @@ def create_queue(queue_delay_minutes=15):
         "show": {
             "last_n_events": [],
             "comments": {
-                "cnt": 0,
+                "cnt": 1,
                 "fingerprint": "👀"
             }
         },
