@@ -108,4 +108,4 @@ def get_user_name(user):
         out = user.first_name
     else:
         out = str(user.id)
-    return emoji_avatar + out[:10]
+    return emoji_avatar + "`" + out[:10] + "`"
