@@ -20,7 +20,6 @@ from queue_program.queue_schedule import set_check_user_scheduler_job, check_to_
 import re
 
 users = global_vars.users
-user_referers = global_vars.user_referers
 
 app_billing = global_vars.app_billing
 app = global_vars.app
