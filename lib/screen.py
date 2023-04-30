@@ -588,29 +588,42 @@ def queue_state(queue_id, archive=False):
     comments_cnt = comments["cnt"]
     comments_fingerprint = comments["fingerprint"]
     chat_message_id = queue["id"]["chat"]
-    queue_order = queue["queue_order"]
 
     is_locked = queue["state"]["is_locked"]
 
-    if queue_order:
-        queue_text = f"{'🔒' if is_locked else ''}\n" + "\n".join([f"`{n+1}.`{queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))][::-1])
-    else:
-        queue_text = f"{'🔒' if is_locked else '🫥'}"
-
     post_text = ''
+
+    # Плашка с архивом (при наличии)
     if archive:
         post_text += "[АРХИВ]\n"
-    post_text += "👥 **Очередь:** "
-    post_text += queue_text
 
+    # Лог очереди
     last_n_events = queue["show"]["last_n_events"]
+    post_text += "📖 **Последние 10 событий:**\n"
+    post_text += '\n'.join(last_n_events[-10::1])
+
     queue_delay_minutes = queue["rules"]["delay_minutes"]
 
     cabinet = queue["cabinet"]
     if cabinet:
-        cabinet_state = cabinet["state"]
+        # Время работы кабинета (при кабинете)
+        rules = cabinet['rules']
+        rules_work = rules['work']
+        start = timestamp_to_time_text(rules_work['start'])
+        end = timestamp_to_time_text(rules_work['finish'])
+        post_text += f"\n\n⌚️ **Время раздачи:**\n{start}–{end} UTC"
 
+        # Размер наград (при кабинете)
+        cabinet_state = cabinet["state"]
+        rules_reward = rules['reward']
+        winners_sum = cabinet_state['winners']['sum']
+        post_text += f"\n\n🏆 **Награда в тонах:** {rules_reward['per_one']}"
+        post_text += f"\n🏦 **Банк очереди:** {rules_reward['max_sum']-winners_sum:.4f}/{rules_reward['max_sum']:.4f}"
+
+        # Минуты в кабинете (при кабинете)
+        post_text += f"\n\n⌚️🚪 **Минут в кабинете:** {rules_work['delay_minutes']}"
         inside_user = cabinet_state['inside']
+        # Содержимое кабинета (при кабинете)
         post_text += "\n🚪 **Кабинет:** "
         if inside_user:
             inside_name = queue_users[inside_user]['name']
@@ -622,24 +635,16 @@ def queue_state(queue_id, archive=False):
         else:
             post_text += "🫥"
 
-        rules = cabinet['rules']
-        rules_work = rules['work']
-        start = timestamp_to_time_text(rules_work['start'])
-        end = timestamp_to_time_text(rules_work['finish'])
-        post_text += f"\n\n⌚️ **Время раздачи:**\n{start}–{end} UTC"
-
-        rules_reward = rules['reward']
-        winners_sum = cabinet_state['winners']['sum']
-        post_text += f"\n\n🏆 **Награда в тонах:** {rules_reward['per_one']}"
-        post_text += f"\n🏦 **Банк очереди:** {rules_reward['max_sum']-winners_sum:.4f}/{rules_reward['max_sum']:.4f}"
-
-    post_text += "\n"
-    if cabinet:
-        post_text += f"\n⌚️🚪 **Минут в кабинете:** {rules_work['delay_minutes']}"
-    post_text += f"\n⌚️👥 **Афк-минут в очереди:** {queue_delay_minutes}"
-
-    post_text += "\n\n**Последние 10 событий:**\n"
-    post_text += '\n'.join(last_n_events[:-11:-1])
+    # Правила очереди
+    post_text += f"\n\n⌚️👥 **Афк-минут в очереди:** {queue_delay_minutes}"
+    # Порядок очереди
+    queue_order = queue["queue_order"]
+    if queue_order:
+        queue_text = f"{'🔒' if is_locked else ''}\n" + "\n".join([f"`{n+1}.`{queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))])
+    else:
+        queue_text = f"{'🔒' if is_locked else '🫥'}"
+    post_text += "\n👥 **Очередь:** "
+    post_text += queue_text
 
     return {
         "text": post_text,
