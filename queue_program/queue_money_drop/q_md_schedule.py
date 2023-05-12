@@ -17,13 +17,14 @@ def q_drop_scheduler(q_moneydrop_scheduler, verbose=True):
     if verbose:
         print("Start q_drop_scheduler!")
     from datetime import timedelta
-    run_date = random_datetime(timedelta(minutes=server.server_vars.queue_md["period_minutes"]))
-    print(run_date)
-    q_moneydrop_scheduler.add_job(
-        queue_money_drop,
-        'date',
-        run_date=run_date
-    )
+    for i in range(server.server_vars.queue_md["drops"]):
+        run_date = random_datetime(timedelta(minutes=server.server_vars.queue_md["period_minutes"]))
+        print(run_date)
+        q_moneydrop_scheduler.add_job(
+            queue_money_drop,
+            'date',
+            run_date=run_date
+        )
 
 
 def start_q_moneydrop_scheduler(verbose=True):
