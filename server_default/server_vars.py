@@ -4,7 +4,8 @@ money_chat_id = -0  # id чата, куда Человек будет кидат
 dot_ch_id = -0  # id канала, на который нужно быть подписанным
 dot_ch_chat_id = -0  # id чата канала
 
-creator_username = "a"  # юзернейм меня, чтобы призывать в случае экстренного выключения
+creator_id = 0  # ID меня, чтобы создавать очереди в админке очередей
+creator_username_alarm = "a"  # юзернейм меня, чтобы призывать в случае экстренного выключения
 bot_debug_message_id = 0  # id сообщения, куда робот пишет, что начал\закончил свою работу
 money_drop_message_id = 0  # id сообщения для манидропов. Это id внутри чата канала
 # то есть # t.me/c/{dot_ch_chat_id}/{chat_message_id}
@@ -36,6 +37,86 @@ loyalty_program = [
     LoyaltyLevel(level=21, days=3285, reward=0.8192, congrats_text='🏆😹🍀', congrats_link='https://youtu.be/qHtrjuw0hqY?t=18')
 ]
 
+# старые "классические" манидропы
 money_drop_period_minutes = 1440
-money_drop_drops = 5
+money_drop_drops = 0  # выпилены в угодну queue-версии
 money_drop_amount = 0.00777
+
+queue_md = {
+    "period_minutes": 60*24*7,  # раз в неделю
+    "cabinet_work_start_delay_minutes": 60*12,
+    "cabinet_reward_max_sum": 0.2,
+    "queue_lock_delta_minutes": 60*24,
+    "queue_delete_delta_minutes": 60*24,
+    "types": {
+        "blitz": {
+            "freq": 1,
+            "queue": {
+                "delay_minutes": {
+                    "min": 2,
+                    "max": 5
+                },
+            },
+            "cabinet": {
+                "delay_minutes": {
+                    "min": 4,
+                    "max": 8
+                },
+                "work_delta_minutes": {
+                    "min": 16,
+                    "max": 40
+                },
+                "reward_per_one": {
+                    "min": 0.02,
+                    "max": 0.1
+                }
+            }
+        },
+        "normal": {
+            "freq": 2,
+            "queue": {
+                "delay_minutes": {
+                    "min": 8,
+                    "max": 15
+                },
+            },
+            "cabinet": {
+                "delay_minutes": {
+                    "min": 8,
+                    "max": 15
+                },
+                "work_delta_minutes": {
+                    "min": 60,
+                    "max": 120
+                },
+                "reward_per_one": {
+                    "min": 0.01,
+                    "max": 0.1
+                }
+            }
+        },
+        "marathon": {
+            "freq": 1,
+            "queue": {
+                "delay_minutes": {
+                    "min": 30,
+                    "max": 120
+                },
+            },
+            "cabinet": {
+                "delay_minutes": {
+                    "min": 36,
+                    "max": 60
+                },
+                "work_delta_minutes": {
+                    "min": 120,
+                    "max": 360
+                },
+                "reward_per_one": {
+                    "min": 0.02,
+                    "max": 0.1
+                }
+            }
+        }
+    }
+}

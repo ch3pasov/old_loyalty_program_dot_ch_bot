@@ -9,6 +9,7 @@
 pip3 install pyrogram
 pip3 install -U tgcrypto
 pip3 install apscheduler
+pip3 install emoji
 ```
 
 2. Получить Telegarm API key из https://my.telegram.org/apps. Вписать опции в server/server/secret.py:

@@ -3,7 +3,7 @@ import server.server_vars
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 # from pyrogram.enums import ParseMode
 from lib.useful_lib import seconds_from_timestamp, timestamp_to_datetime_text_long, timestamp_to_time_text
-from global_vars import users, queue_users
+from global_vars import users, queue_users, active_queues
 
 
 bot_username = global_vars.bot_username
@@ -318,7 +318,7 @@ def referer_program(user_id):
         referer_status = "Здесь ты можешь поучаствовать в реферерной программе ПРОГРАММЫ ЛОЯЛЬНОСТИ телеграм-канала Анатолия @ch_an."
 
     return {
-        "text": referer_program_text.format(referer_status=referer_status, referer_link=f"http://t.me/{bot_username}?start=referer_id={user_id}"),
+        "text": referer_program_text.format(referer_status=referer_status, referer_link=f"https://t.me/{bot_username}?start=referer_id={user_id}"),
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
@@ -360,7 +360,7 @@ def referals_list(user_id):
     if referals_cnt > 0:
         text = f"**(прямых) рефералов:** {referals_cnt}\n\n**Их айдишники:**\n" + '\n'.join([f"`{obj}`" for obj in referals])
     else:
-        text = "🙅🏻‍♀️ Пока никто не указал тебя своим реферером! Но ты всегда можешь это исправить:\n" + f"`http://t.me/{bot_username}?start=referer_id={user_id}`"
+        text = "🙅🏻‍♀️ Пока никто не указал тебя своим реферером! Но ты всегда можешь это исправить:\n" + f"`https://t.me/{bot_username}?start=referer_id={user_id}`"
 
     return {
         "text": text,
@@ -534,9 +534,33 @@ def money(send_message, text=None, button_text=None, reply_to_message_id=None):
     }
 
 
+def queue_admin_help(commands):
+    from inspect import signature
+    out = "Добро пожаловать в админку!\nКоманды:"
+    for command_name in commands:
+        command = commands[command_name]
+        signature_command = signature(command)
+        out += f"\n{command_name} — {command.__doc__}\n{signature_command}"
+        out += f"\n`/admin {command_name} {' '.join([obj for obj in signature_command.parameters])}`"
+
+    return {
+        "text": out
+    }
+
+
+def queue_admin_run(command_output=None, is_success=True, errors=None):
+    if is_success:
+        text = f"Команда запущена успешно! Вывод:\n{command_output}"
+    else:
+        text = f"Ошибка! Вывод:\n{errors}"
+    return {
+        "text": text
+    }
+
+
 def queue_initial_post():
     return {
-        "text": "очередь"
+        "text": "Генерация поста-очереди. Подождите 10с.."
     }
 
 
@@ -557,30 +581,70 @@ def queue_first_comment(queue_id, chat_message_id):
     }
 
 
-def queue_state(queue):
-    queue_id = queue["channel_message_id"]
-    comments_cnt = queue["comments"]["cnt"]
-    comments_fingerprint = queue["comments"]["fingerprint"]
-    chat_message_id = queue["chat_message_id"]
-    queue_order = queue["queue"]
+def queue_state(queue_id, archive=False):
+    queue = active_queues[queue_id]
+    comments = queue["show"]["comments"]
 
+    comments_cnt = comments["cnt"]
+    comments_fingerprint = comments["fingerprint"]
+    chat_message_id = queue["id"]["chat"]
+
+    is_locked = queue["state"]["is_locked"]
+
+    post_text = ''
+
+    # Плашка с архивом (при наличии)
+    if archive:
+        post_text += "[АРХИВ]\n"
+
+    # Лог очереди
+    last_n_events = queue["show"]["last_n_events"]
+    post_text += "📖 **Последние 10 событий:**\n"
+    post_text += '\n'.join(last_n_events[-10::1])
+
+    queue_delay_minutes = queue["rules"]["delay_minutes"]
+
+    cabinet = queue["cabinet"]
+    if cabinet:
+        # Время работы кабинета (при кабинете)
+        rules = cabinet['rules']
+        rules_work = rules['work']
+        start = timestamp_to_time_text(rules_work['start'])
+        end = timestamp_to_time_text(rules_work['finish'])
+        post_text += f"\n\n⌚️ **Время раздачи:**\n{start}–{end} UTC"
+
+        # Размер наград (при кабинете)
+        cabinet_state = cabinet["state"]
+        rules_reward = rules['reward']
+        winners_sum = cabinet_state['winners']['sum']
+        post_text += f"\n\n🏆 **Награда в тонах:** {rules_reward['per_one']}"
+        post_text += f"\n🏦 **Банк очереди:** {rules_reward['max_sum']-winners_sum:.4f}/{rules_reward['max_sum']:.4f}"
+
+        # Минуты в кабинете (при кабинете)
+        post_text += f"\n\n⌚️🚪 **Минут в кабинете:** {rules_work['delay_minutes']}"
+        inside_user = cabinet_state['inside']
+        # Содержимое кабинета (при кабинете)
+        post_text += "\n🚪 **Кабинет:** "
+        if inside_user:
+            inside_name = queue_users[inside_user]['name']
+            post_text += f"{inside_name}"
+        elif cabinet_state['cabinet_status'] == -1:
+            post_text += "🔒ещё не открыт"
+        elif cabinet_state['cabinet_status'] == 1:
+            post_text += "🔒уже закрыт"
+        else:
+            post_text += "🫥"
+
+    # Правила очереди
+    post_text += f"\n\n⌚️👥 **Афк-минут в очереди:** {queue_delay_minutes}"
+    # Порядок очереди
+    queue_order = queue["queue_order"]
     if queue_order:
-        queue_text = "\n".join([f"{n+1}. {queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))])
+        queue_text = f"{'🔒' if is_locked else ''}\n" + "\n".join([f"`{n+1}.`{queue_users[queue_order[n]]['name']}" for n in range(len(queue_order))])
     else:
-        queue_text = "🫥"
-
-    last_n_events = queue["last_n_events"]
-    minutes_to_refresh = queue["minutes_to_refresh"]
-
-    post_text = "**Очередь:**"
-    post_text += "\n"+queue_text
-    post_text += f"\n\n**Минут для вылета:** **{minutes_to_refresh}**"
-    if queue["cabinet"]:
-        start = timestamp_to_time_text(queue['cabinet']['meta']['start'])
-        end = timestamp_to_time_text(queue['cabinet']['meta']['end'])
-        post_text += f"\n**Время раздачи:** {start}-{end}"
-    post_text += "\n\n**Последние 5 событий:**\n"
-    post_text += '\n'.join(last_n_events[::-1])
+        queue_text = f"{'🔒' if is_locked else '🫥'}"
+    post_text += "\n👥 **Очередь:** "
+    post_text += queue_text
 
     return {
         "text": post_text,
@@ -611,15 +675,16 @@ def create(client, chat_id, screen):
 
 
 def update(client, chat_id, message_id, screen):
+    assert type(message_id) == int, f"message_id должен быть int, не {type(message_id)}"
     if "text" in screen:
         return client.edit_message_text(
             chat_id=chat_id,
-            message_id=message_id,
+            message_id=int(message_id),
             **screen
         )
     else:
         return client.edit_message_reply_markup(
             chat_id=chat_id,
-            message_id=message_id,
+            message_id=int(message_id),
             **screen
         )

@@ -5,6 +5,11 @@ import lib.screen as screen
 
 
 def is_member(chat_id, user_id):
+    # print('🔥')
+    # print(chat_id, user_id)
+    # print(type(chat_id), type(user_id))
+    # print('🔥')
+
     try:
         is_member = app.get_chat_member(chat_id, user_id).is_member
         if is_member is None:
@@ -29,11 +34,15 @@ def is_queue_user(user_id):
     return False
 
 
-def is_user_in_queue(user_id):
-    if is_queue_user(user_id):
-        if queue_users[user_id]["in_queue"]:
-            return True
-    return False
+def is_user_in_queue_or_cabinet(user_id):
+    if not is_queue_user(user_id):
+        return False
+
+    queue_user = queue_users[user_id]
+    if not queue_user["in"]:
+        return False
+
+    return queue_user["in"]["type"]
 
 
 def check_if_banned_before_money(user_id, text="💸"):
@@ -94,8 +103,9 @@ def get_emoji_avatar(user_id):
 def get_user_name(user):
     emoji_avatar = get_emoji_avatar(user.id)
     if user.username:
-        return emoji_avatar+user.username
+        out = user.username
     elif user.first_name:
-        return emoji_avatar+user.first_name
+        out = user.first_name
     else:
-        return emoji_avatar+str(user.id)
+        out = str(user.id)
+    return emoji_avatar + "`" + out[:10] + "`"

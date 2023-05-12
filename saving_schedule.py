@@ -14,17 +14,18 @@ def backup_log_job(verbose=False):
         print('backup!')
 
     now = datetime.now(timezone.utc)
+    foldername = f"server/backups/{now.strftime('%Y/%m/%d')}/{now.strftime('%H/%M')}"
 
-    filename = f"server/logs/{now.strftime('%Y-%m-%d')}/{now.strftime('%H_%M')}/users.json"
+    filename = f"{foldername}/users.json"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(users, f, ensure_ascii=False, indent=4)
 
-    filename = f"server/logs/{now.strftime('%Y-%m-%d')}/{now.strftime('%H_%M')}/active_queues.json"
+    filename = f"{foldername}/active_queues.json"
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(active_queues, f, ensure_ascii=False, indent=4)
 
-    filename = f"server/logs/{now.strftime('%Y-%m-%d')}/{now.strftime('%H_%M')}/queue_users.json"
+    filename = f"{foldername}/queue_users.json"
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(queue_users, f, ensure_ascii=False, indent=4)
 
@@ -48,8 +49,42 @@ def save_log_job(verbose=False):
         json.dump(queue_users, f, ensure_ascii=False, indent=4)
 
 
+def restore_queue_users():
+    # пользователи
+    for user_id in queue_users:
+        queue_user = queue_users[user_id]
+        if not queue_user["in"]:
+            continue
+
+        queue_id = queue_user["in"]["id"]
+        if queue_user["in"]["type"] == "queue":
+            if user_id not in active_queues[queue_id]['queue_order']:
+                print(f"⁉️ {user_id} in_queue problem (not in queue, but non-empty). Fixed it!")
+                queue_user["in"] = None
+        elif queue_user["in"]["type"] == "cabinet":
+            if user_id != active_queues[queue_id]['cabinet']['state']['inside']:
+                print(f"⁉️ {user_id} in_cabinet problem. Fixed it!")
+                queue_user["in"] = None
+        else:
+            raise ValueError(f'queue_user["in"]["type"] must be "queue" or "cabinet", not {queue_user["in"]["type"]}!')
+
+    # очереди и кабинеты
+    for queue_id in active_queues:
+        queue = active_queues[queue_id]
+        queue_order = queue["queue_order"]
+        for queue_user_id in queue_order:
+            if not queue_users[queue_user_id]["in"]:
+                raise ValueError(f'⁉️ {user_id} in_queue problem (in queue {queue_id}, but empty). Crush!')
+        cabinet = queue["cabinet"]
+        if cabinet:
+            cabinet_user_id = cabinet["state"]["inside"]
+            if cabinet_user_id:
+                if not queue_users[cabinet_user_id]["in"]:
+                    raise ValueError(f'⁉️ {user_id} in_cabinet problem (in cabinet {queue_id}, but empty). Crush!')
+
+
 def start_saving_scheduler(verbose=True):
-    # global users
+    restore_queue_users()
     saving_scheduler = BackgroundScheduler()
 
     saving_scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())

@@ -1,21 +1,48 @@
-# import server.server_vars
-# from global_vars import active_queues, app, app_billing, print, queue_local_scheduler
-# import lib.screen as screen
-# from queue_program.queue_schedule import check_to_open, check_to_close
+from global_vars import active_queues
+from lib.queue_lib import update_queue
+import server.server_vars
+from queue_program.queue_schedule import set_cabinet_state_scheduler_job
 
 
-def create_cabinet(queue_id):
+def create_cabinet(
+    queue_id,
+    start,  # timestamp начала работы кабинета
+    end,  # timestamp конца работы кабинета
+    lock,  # timestamp лока очереди (нельзя зайти)
+    delete,  # timestamp удаления очереди (архив)
+    reward_per_one=0.0001,
+    reward_max_sum=0.01,
+    cabinet_delay_minutes=5
+):
+    queue = active_queues[queue_id]
 
-    # queue_local_scheduler.add_job(
-    #     check_to_open,
-    #     "date",
-    #     run_date=click_deadline,
-    #     kwargs={
-    #         "user_id": user_id,
-    #         "last_clicked": queue_user["last_clicked"],
-    #         "verbose": True
-    #     },
-    #     id=user_id
-    # )
+    queue['cabinet'] = {
+        "rules": {
+            "work": {
+                "start": start,
+                "finish": end,
+                "lock": lock,
+                "delete": delete,
+                "delay_minutes": cabinet_delay_minutes
+            },
+            "reward": {
+                "per_one": reward_per_one,
+                "max_sum": reward_max_sum
+            }
+        },
+        "state": {
+            "cabinet_status": -1,
+            "inside": None,
+            "winners": {
+                "players": {},
+                "sum": 0
+            }
+        }
+    }
 
-    pass
+    cabinet = queue['cabinet']
+    set_cabinet_state_scheduler_job(queue_id, cabinet, verbose=True)
+
+    update_queue(queue_id)
+
+    return f"Очередь {queue_id} создана! https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id}"

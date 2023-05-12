@@ -2,78 +2,114 @@ import server.server_vars
 from global_vars import active_queues, queue_users, app, app_billing, print
 from pyrogram import errors
 import lib.screen as screen
-from lib.useful_lib import emoji_fingerprint, now_text
+from lib.useful_lib import emoji_fingerprint, now_text, timestamp_now
 from lib.social_lib import get_user_name
+from time import sleep
 
 
-def create_queue():
+def create_queue(queue_delay_minutes=15):
+    """Создать очередь"""
     # создаю пост
     channel_message_id = (screen.create(app, server.server_vars.dot_ch_id, screen.queue_initial_post())).id
     # print(channel_message_id)
 
-    queue_id = str(channel_message_id)
-
+    print("DEBUG SLEEP BEFORE")
+    sleep(10)  # внезапно, оно работает как надо и не стопит параллельные процессы
+    print("DEBUG SLEEP AFTER")
     chat_message_id = app_billing.get_discussion_message(
         chat_id=server.server_vars.dot_ch_id,
         message_id=channel_message_id
     ).id
-
     queue = {
-        "channel_message_id": channel_message_id,
-        "chat_message_id": chat_message_id,
-        "queue": [],
-        "last_n_events": [],
-        "comments": {
-            "cnt": 0,
-            "fingerprint": "👀"
+        "id": {
+            "channel": channel_message_id,
+            "chat": chat_message_id
         },
-        "cabinet": None,
-        "minutes_to_refresh": 15
+        "queue_order": [],
+        "rules": {
+            "delay_minutes": queue_delay_minutes
+        },
+        "show": {
+            "last_n_events": [],
+            "comments": {
+                "cnt": 1,
+                "fingerprint": "👀"
+            }
+        },
+        "state": {
+            "is_locked": False
+        },
+        "cabinet": None
     }
 
-    screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue))
-    screen.create(app, server.server_vars.dot_ch_chat_id, screen.queue_first_comment(queue_id, chat_message_id))
-
+    queue_id = str(channel_message_id)
     active_queues[queue_id] = queue
-    print(f"Очередь {queue_id} создана!")
+
+    screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id))
+    screen.create(app, server.server_vars.dot_ch_chat_id, screen.queue_first_comment(queue_id, chat_message_id))
+    print(f"Очередь {queue_id} создана! https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id}")
+    return queue_id
 
 
-def update_queue(queue_id):
-    queue = active_queues[queue_id]
-    channel_message_id = queue["channel_message_id"]
+def update_queue(queue_id, archive=False):
+    channel_message_id = active_queues[queue_id]["id"]["channel"]
     try:
-        screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue))
+        screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id, archive=archive))
     except errors.exceptions.bad_request_400.MessageNotModified:
         print(f'{queue_id} ничего не изменилось')
 
 
-def add_queue_event(queue_id, event, event_emoji=''):
-    new_event = f"`{now_text()}` {event_emoji} {event}"
-    active_queues[queue_id]["last_n_events"] = (active_queues[queue_id]["last_n_events"]+[new_event])[-5:]
+def slow_update_comments_queue(queue_id):
+    comments_cnt = app_billing.get_discussion_replies_count(
+        server.server_vars.dot_ch_chat_id,
+        message_id=active_queues[queue_id]["id"]["chat"]
+    )
+
+    active_queues[queue_id]["show"]["comments"]["cnt"] = comments_cnt
 
 
-def add_user_queue_event(queue_id, queue_user, event, event_emoji=''):
-    add_queue_event(queue_id, f"{queue_user['name']} {event}", event_emoji=event_emoji)
+def fast_update_comments_queue(queue_id, change=1):
+    active_queues[queue_id]["show"]["comments"]["cnt"] += change
+    active_queues[queue_id]["show"]["comments"]["fingerprint"] = emoji_fingerprint(active_queues[queue_id]["show"]["comments"]["cnt"])
+
+
+def add_queue_event(queue_id, event, event_emoji='', ignore_time=False):
+    if ignore_time:
+        new_event = f"{event_emoji} {event}"
+    else:
+        new_event = f"`{now_text()}` {event_emoji} {event}"
+    active_queues[queue_id]["show"]["last_n_events"].append(new_event)
+
+
+def add_event_comment(queue_id, event, event_emoji):
+    app.send_message(
+        server.server_vars.dot_ch_chat_id,
+        f"{event_emoji} {event}",
+        reply_to_message_id=active_queues[queue_id]["id"]["chat"]
+    )
+    fast_update_comments_queue(queue_id, change=1)
+
+
+def add_user_queue_event(queue_id, user_id, event, event_emoji='', gap='\n', ignore_time=False):
+    queue_user = queue_users[user_id]
+    add_queue_event(queue_id, f"{queue_user['name']}{gap}{event}", event_emoji=event_emoji, ignore_time=ignore_time)
+
+
+def add_global_user_queue_event(queue_id, user_id, event_short, event_long, event_emoji='', gap=' ', to_summon=False):
+    add_user_queue_event(queue_id, user_id, event_short, event_emoji=event_emoji)
+    queue_user = queue_users[user_id]
+
+    if to_summon:
+        event = f"[{queue_user['name']}](tg://user?id={user_id}){gap}{event_long}"
+    else:
+        event = f"{queue_user['name']}{gap}{event_long}"
+
+    add_event_comment(queue_id, event, event_emoji)
 
 
 def add_global_queue_event(queue_id, event, event_emoji=''):
     add_queue_event(queue_id, event, event_emoji=event_emoji)
-    app.send_message(
-        server.server_vars.dot_ch_chat_id,
-        event_emoji,
-        reply_to_message_id=active_queues[queue_id]["chat_message_id"]
-    )
-
-
-def slow_update_comments_queue(queue_id):
-    comments_cnt = app_billing.get_discussion_replies_count(server.server_vars.dot_ch_chat_id, message_id=active_queues[queue_id]["chat_message_id"])
-
-    active_queues[queue_id]["comments"]["cnt"] = comments_cnt
-
-
-def fast_update_comments_queue(queue_id, change=1):
-    active_queues[queue_id]["comments"]["cnt"] += change
-    active_queues[queue_id]["comments"]["dfingerprint"] = emoji_fingerprint()
+    add_event_comment(queue_id, event, event_emoji)
 
 
 def prerender_queue_user_and_update_name_and_get_queue_user(user):
@@ -81,9 +117,7 @@ def prerender_queue_user_and_update_name_and_get_queue_user(user):
     queue_users.setdefault(
         user_id,
         {
-            "in_queue": None,
-            "last_clicked": None,
-            "minutes_to_refresh": None,
+            "in": None,
             "name": None
         }
     )
@@ -93,27 +127,60 @@ def prerender_queue_user_and_update_name_and_get_queue_user(user):
     return queue_user
 
 
+def update_queue_user_click(user_id):
+    queue_user = queue_users[user_id]
+
+    queue_id = queue_user["in"]["id"]
+    queue_delay_minutes = active_queues[queue_id]["rules"]["delay_minutes"]
+    queue_user["in"] = {
+        "type": "queue",
+        "id": queue_id,
+        "timestamp": timestamp_now(),
+        "delay_minutes": queue_delay_minutes
+    }
+
+
+def add_user_to_queue(user_id, queue_id):
+    queue_user = queue_users[user_id]
+    add_user_queue_event(queue_id, user_id, "заходит в очередь!", event_emoji='👥')
+
+    active_queues[queue_id]['queue_order'].append(user_id)
+    queue_delay_minutes = active_queues[queue_id]["rules"]["delay_minutes"]
+    queue_user["in"] = {
+        "type": "queue",
+        "id": queue_id,
+        "timestamp": timestamp_now(),
+        "delay_minutes": queue_delay_minutes
+    }
+
+
 def clear_queue_user(user_id):
-    in_queue = queue_users[user_id]["in_queue"]
-    for key in ["in_queue", "last_clicked", "minutes_to_refresh"]:
-        queue_users[user_id][key] = None
-    active_queues[in_queue]['queue'].remove(user_id)
+    queue_user = queue_users[user_id]
+
+    intype = queue_user["in"]["type"]
+    assert intype == "queue", f'queue_user["in"]["type"] must be "queue", not {intype}'
+    queue_id = queue_user["in"]["id"]
+    queue_user["in"] = None
+    active_queues[queue_id]['queue_order'].remove(user_id)
 
 
-def kick_user_from_queue(queue_user, user_id):
-    add_user_queue_event(queue_user["in_queue"], queue_user, "вылетает из очереди!", event_emoji='🥾')
+def kick_user_from_queue(user_id, to_update_queue=False):
+    queue_user = queue_users[user_id]
+    assert queue_user["in"]["type"] == "queue", f'queue_user["in"]["type"] must be "queue", not {queue_user["in"]["type"]}'
+    queue_id = queue_user["in"]["id"]
+
+    add_user_queue_event(queue_id, user_id, "вылетает из очереди!", event_emoji='🥾')
     clear_queue_user(user_id)
-
-
-def open_cabinet(queue_id, to_update_queue=False):
-    active_queues[queue_id]['cabinet']['state'] = "work"
-    add_global_queue_event(queue_id, "раздача началась!", event_emoji='🚩')
     if to_update_queue:
         update_queue(queue_id)
 
 
-def close_cabinet(queue_id, to_update_queue=False):
-    active_queues[queue_id]['cabinet']['state'] = "after_work"
-    add_global_queue_event(queue_id, "раздача закончилась!", event_emoji='🏁')
+def queue_lock(queue_id, to_update_queue=False):
+    """Залочить очередь — запретить входить в очередь (нужно для плавного удаления)"""
+    queue = active_queues[queue_id]
+    # update queue
+    queue['state']['is_locked'] = True
     if to_update_queue:
         update_queue(queue_id)
+    # del queue
+    return f"Очередь https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id} залочена!"
