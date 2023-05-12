@@ -44,6 +44,7 @@ money_drop_amount = 0.00777
 
 queue_md = {
     "period_minutes": 60*24*7,  # раз в неделю
+    "drops": 1,  # кол-во дропов в цикл (не подразумевается ≥2, только 0 и 1)
     "cabinet_work_start_delay_minutes": 60*12,
     "cabinet_reward_max_sum": 0.2,
     "queue_lock_delta_minutes": 60*24,
