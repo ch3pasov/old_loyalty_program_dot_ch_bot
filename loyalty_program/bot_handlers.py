@@ -19,7 +19,6 @@ app = global_vars.app
 def start_handlers():
     @app.on_message(filters.command(["start"]) & filters.private)
     def my_handler(client, message):
-
         referer_id = None
         if len(message.command) >= 2:
             command_text = message.command[1]
@@ -27,17 +26,20 @@ def start_handlers():
             if re_search:
                 referer_id = re_search.group(1)
 
-        user_id = str(message.from_user.id)
-
-        if is_registered(user_id):
-            screen.create(client, message.chat.id, screen.home_exist(user_id))
-            if referer_id:
+        if referer_id:
+            user_id = str(message.from_user.id)
+            if is_registered(user_id):
                 screen.create(client, message.chat.id, screen.set_referer_confirm(referer_id=referer_id))
-        else:
-            screen.create(client, message.chat.id, screen.home_new())
-            if referer_id:
+            else:
+                screen.create(client, message.chat.id, screen.lp_home_new())
                 print(f"Незарегистрированный пользователь {user_id} зашёл по реферерке {referer_id}! Запомнил это.")
                 user_referers[user_id] = referer_id
+        else:
+            screen.create(client, message.chat.id, screen.home())
+
+    @app.on_callback_query(filters.regex('to_home'))
+    def answer_home(client, callback_query):
+        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.home())
 
     @app.on_callback_query(filters.regex('to_schema'))
     def answer_schema(client, callback_query):
@@ -48,15 +50,13 @@ def start_handlers():
             user_level = None
         screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.schema(user_level))
 
-    @app.on_callback_query(filters.regex('to_home'))
-    def answer_home(client, callback_query):
-        # global users
+    @app.on_callback_query(filters.regex('to_lp_home'))
+    def answer_lp_home(client, callback_query):
         user_id = str(callback_query.from_user.id)
-
         if is_registered(user_id):
-            screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.home_exist(user_id))
+            screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.lp_home_exist(user_id))
         else:
-            screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.home_new())
+            screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.lp_home_new())
 
     @app.on_callback_query(filters.regex('to_register'))
     def answer_register(client, callback_query):
