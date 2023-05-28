@@ -10,6 +10,10 @@ bot_username = global_vars.bot_username
 
 home_text = '''Новая морда.'''
 
+library_home_text = '''Добро пожаловать в __Каталог__.
+
+Тут может быть всё, что мне захочется сюда положить. Чувствуй себя как дома.'''
+
 lp_home_new_text = '''Привет! 🖖🏻
 Я провожу ПРОГРАММУ ЛОЯЛЬНОСТИ 😳 телеграм-канала Анатолия @ch_an.
 
@@ -111,6 +115,44 @@ def home():
                         callback_data="to_lp_home"
                     )
                 ],
+                [
+                    InlineKeyboardButton(
+                        button_to_library,
+                        callback_data="to_library"
+                    )
+                ]
+            ]
+        )
+    }
+
+
+def library_home():
+    return {
+        "text": library_home_text,
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "🌱в Корень🌱",
+                        callback_data="to_library?id=root"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        button_to_home,
+                        callback_data="to_home"
+                    )
+                ]
+            ]
+        )
+    }
+
+
+def library_unknown():
+    return {
+        "text": "Неизвестная страница! ):\n\n¯\\_(ツ)_/¯",
+        "reply_markup": InlineKeyboardMarkup(
+            [
                 [
                     InlineKeyboardButton(
                         button_to_library,

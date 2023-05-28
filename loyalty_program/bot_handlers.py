@@ -1,6 +1,7 @@
 import global_vars
-from global_vars import print
+from global_vars import print, the_library
 import lib.screen as screen
+from lib.screen_library import screen_library
 import server.server_vars
 from lib.useful_lib import seconds_from_timestamp, timestamp_now
 from lib.social_lib import is_member, is_registered
@@ -16,17 +17,27 @@ app_billing = global_vars.app_billing
 app = global_vars.app
 
 
-def start_handlers():
+def start_bot_handlers():
     @app.on_message(filters.command(["start"]) & filters.private)
     def my_handler(client, message):
         referer_id = None
+        library_id = None
         if len(message.command) >= 2:
             command_text = message.command[1]
             re_search = re.search(r"^referer_id=(\d+)$", command_text)
             if re_search:
                 referer_id = re_search.group(1)
+            re_search = re.search(r"^to_library_id=([a-zA-Z\d_]+)$", command_text)
+            if re_search:
+                library_id = re_search.group(1)
 
-        if referer_id:
+        if library_id:
+            if library_id in the_library:
+                desired_screen = screen_library(library_id)
+            else:
+                desired_screen = screen.library_unknown()
+            screen.create(client, message.chat.id, desired_screen)
+        elif referer_id:
             user_id = str(message.from_user.id)
             if is_registered(user_id):
                 screen.create(client, message.chat.id, screen.set_referer_confirm(referer_id=referer_id))
@@ -207,11 +218,3 @@ def start_handlers():
         else:
             # не команда
             screen.create(client, message.chat.id, screen.no_messages())
-
-    @app.on_message(filters.private & filters.voice & filters.incoming)
-    def answer_voices(client, message):
-        screen.create(client, message.chat.id, screen.no_voices())
-
-    @app.on_message(filters.private & filters.video_note & filters.incoming)
-    def answer_video_notes(client, message):
-        screen.create(client, message.chat.id, screen.no_video_notes())
