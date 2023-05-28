@@ -2,12 +2,11 @@ import global_vars
 from global_vars import print
 import server.server_vars
 from pyrogram import filters
-from lib.queue_lib import (
-    create_queue,
-)
-from lib.q_md_lib import queue_money_drop, generate_queue_params
+# from lib.queue_lib import (create_queue)
+from lib.q_md_lib import queue_money_drop  # , generate_queue_params
 import lib.screen as screen
 from lib.money import money_drop
+from saving_schedule import reread_the_library_job
 
 users = global_vars.users
 
@@ -21,11 +20,12 @@ def test_sum(param1: int, param2: int = 123) -> int:
 
 commands = {
     test_sum.__name__: test_sum,
-    create_queue.__name__: create_queue,
+    # create_queue.__name__: create_queue,
     # queue_delete_int.__name__: queue_delete_int,
     queue_money_drop.__name__: queue_money_drop,
-    generate_queue_params.__name__: generate_queue_params,
-    money_drop.__name__: money_drop
+    # generate_queue_params.__name__: generate_queue_params,
+    money_drop.__name__: money_drop,
+    reread_the_library_job.__name__: reread_the_library_job
 }
 
 
