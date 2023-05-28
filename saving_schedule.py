@@ -3,9 +3,18 @@ import os
 import warnings
 from datetime import datetime, timezone
 from apscheduler.schedulers.background import BackgroundScheduler
-from global_vars import print, users, active_queues, queue_users
+from global_vars import print, users, active_queues, queue_users, the_library
 
 warnings.filterwarnings("ignore")
+
+
+# прочитать the_library.json заново
+def reread_the_library_job(verbose=False):
+    if verbose:
+        print('re-read the_library.json!')
+
+    with open('server/the_library.json') as f:
+        the_library.update(json.load(f))
 
 
 # бэкап в папку server/logs/
@@ -89,6 +98,7 @@ def start_saving_scheduler(verbose=True):
 
     saving_scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     saving_scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"verbose": verbose}, max_instances=1)
+    saving_scheduler.add_job(reread_the_library_job, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1)
 
     saving_scheduler.start()
 
