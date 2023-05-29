@@ -6,7 +6,7 @@ from pyrogram import filters
 from lib.q_md_lib import queue_money_drop  # , generate_queue_params
 import lib.screen as screen
 from lib.money import money_drop
-from saving_schedule import reread_the_library_job
+from saving_schedule import reread_all_job
 
 users = global_vars.users
 
@@ -25,7 +25,7 @@ commands = {
     queue_money_drop.__name__: queue_money_drop,
     # generate_queue_params.__name__: generate_queue_params,
     money_drop.__name__: money_drop,
-    reread_the_library_job.__name__: reread_the_library_job
+    reread_all_job.__name__: reread_all_job
 }
 
 
