@@ -19,14 +19,13 @@ def trim_to_ten_thousandths(number):
 
 
 def generate_queue_params_by_type(queue_md_type, queue_md=queue_md):
-    cabinet_work_start_delay_minutes = queue_md['cabinet_work_start_delay_minutes']
-    reward_max_sum = queue_md['cabinet_reward_max_sum']
-
     queue_lock_delta_minutes = queue_md['queue_lock_delta_minutes']
     queue_delete_delta_minutes = queue_md['queue_delete_delta_minutes']
 
     queue_md_type_params = queue_md['types'][queue_md_type]
 
+    cabinet_work_start_delay_minutes = queue_md_type_params['cabinet']['cabinet_work_start_delay_minutes']
+    reward_max_sum = queue_md_type_params['cabinet']['cabinet_reward_max_sum']
     queue_delay_minutes_range = queue_md_type_params['queue']['delay_minutes']
     queue_delay_minutes = randrange(queue_delay_minutes_range['min'], queue_delay_minutes_range['max']+1)
 

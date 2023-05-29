@@ -44,8 +44,7 @@ money_drop_amount = 0.00777
 
 queue_md = {
     "period_minutes": 60*24*7,  # раз в неделю
-    "drops": 1,  # кол-во дропов в цикл (не подразумевается ≥2, только 0 и 1)
-    "cabinet_work_start_delay_minutes": 60*12,
+    "drops": 0,  # кол-во дропов в цикл (не подразумевается ≥2, только 0 и 1)
     "cabinet_reward_max_sum": 0.2,
     "queue_lock_delta_minutes": 60*24,
     "queue_delete_delta_minutes": 60*24,
@@ -59,6 +58,7 @@ queue_md = {
                 },
             },
             "cabinet": {
+                "cabinet_work_start_delay_minutes": 60*12,
                 "delay_minutes": {
                     "min": 4,
                     "max": 8
@@ -82,6 +82,7 @@ queue_md = {
                 },
             },
             "cabinet": {
+                "cabinet_work_start_delay_minutes": 60*12,
                 "delay_minutes": {
                     "min": 8,
                     "max": 15
@@ -105,6 +106,7 @@ queue_md = {
                 },
             },
             "cabinet": {
+                "cabinet_work_start_delay_minutes": 60*12,
                 "delay_minutes": {
                     "min": 36,
                     "max": 60
