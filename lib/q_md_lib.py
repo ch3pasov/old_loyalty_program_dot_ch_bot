@@ -1,11 +1,10 @@
 # from lib.queue_lib import create_queue
 from random import choice, random, randrange
-from server.server_vars import queue_md
 from lib.queue_cabinet_generate_lib import create_queue_and_cabinet_delta
-from global_vars import print
+from global_vars import print, queue_md_params
 
 
-def choice_queue_md_type(queue_md=queue_md):
+def choice_queue_md_type(queue_md=queue_md_params):
     types = queue_md['types']
     return choice(sum([[key]*types[key]['freq'] for key in types], []))
 
@@ -18,7 +17,7 @@ def trim_to_ten_thousandths(number):
     return int(number*10000)/10000
 
 
-def generate_queue_params_by_type(queue_md_type, queue_md=queue_md):
+def generate_queue_params_by_type(queue_md_type, queue_md=queue_md_params):
     queue_lock_delta_minutes = queue_md['queue_lock_delta_minutes']
     queue_delete_delta_minutes = queue_md['queue_delete_delta_minutes']
 
@@ -50,11 +49,11 @@ def generate_queue_params_by_type(queue_md_type, queue_md=queue_md):
     }
 
 
-def generate_queue_params(queue_md=queue_md):
+def generate_queue_params(queue_md=queue_md_params):
     return generate_queue_params_by_type(choice_queue_md_type(queue_md), queue_md)
 
 
 def queue_money_drop():
     print("QUEUE MONEY DROP")
-    q_md_params = generate_queue_params(queue_md)
+    q_md_params = generate_queue_params(queue_md_params)
     return create_queue_and_cabinet_delta(**q_md_params)

@@ -34,6 +34,9 @@ with open('server/queue_users.json') as f:
 with open('server/the_library.json') as f:
     the_library = json.load(f)
 
+with open('server/queue_md_params.json') as f:
+    queue_md_params = json.load(f)
+
 api_id = secret.api_id
 api_hash = secret.api_hash
 
