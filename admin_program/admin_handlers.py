@@ -2,8 +2,9 @@ import global_vars
 from global_vars import print
 import server.server_vars
 from pyrogram import filters
-# from lib.queue_lib import (create_queue)
-from lib.q_md_lib import queue_money_drop  # , generate_queue_params
+from lib.queue_lib import create_queue
+from lib.queue_actions_lib import queue_delete
+from lib.q_md_lib import queue_money_drop, queue_money_drop_by_type, get_qmd_params
 import lib.screen as screen
 from lib.money import money_drop
 from saving_schedule import reread_all_job
@@ -13,19 +14,28 @@ users = global_vars.users
 app = global_vars.app
 
 
-def test_sum(param1: int, param2: int = 123) -> int:
-    """Тестовая функция, даёт сумму"""
+def test_sum(param1: str, param2: str = 'string_two') -> str:
+    """Тестовая функция, даёт сумму строк"""
     return param1+param2
+
+
+def test_sum_int(param1: int, param2: int = 1) -> int:
+    """Тестовая функция, даёт сумму чисел"""
+    param1 = int(param1)
+    param2 = int(param2)
+    return test_sum(param1, param2)
 
 
 commands = {
     test_sum.__name__: test_sum,
-    # create_queue.__name__: create_queue,
-    # queue_delete_int.__name__: queue_delete_int,
+    test_sum_int.__name__: test_sum_int,
+    create_queue.__name__: create_queue,
+    queue_delete.__name__: queue_delete,
     queue_money_drop.__name__: queue_money_drop,
-    # generate_queue_params.__name__: generate_queue_params,
+    queue_money_drop_by_type.__name__: queue_money_drop_by_type,
     money_drop.__name__: money_drop,
-    reread_all_job.__name__: reread_all_job
+    reread_all_job.__name__: reread_all_job,
+    get_qmd_params.__name__: get_qmd_params
 }
 
 
@@ -37,7 +47,7 @@ def start_admin_handlers():
         print(message.command)
         if len(message.command) > 1:
             command_name = message.command[1]
-            args = map(int, message.command[2:])
+            args = message.command[2:]
             if command_name in commands:
                 command = commands[command_name]
 

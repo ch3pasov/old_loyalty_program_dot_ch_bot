@@ -9,6 +9,8 @@ from time import sleep
 
 def create_queue(queue_delay_minutes=15):
     """Создать очередь"""
+    # для админки
+    queue_delay_minutes = int(queue_delay_minutes)
     # создаю пост
     channel_message_id = (screen.create(app, server.server_vars.dot_ch_id, screen.queue_initial_post())).id
     # print(channel_message_id)
