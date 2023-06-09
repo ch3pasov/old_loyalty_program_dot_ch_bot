@@ -1,11 +1,10 @@
 # from lib.queue_lib import create_queue
 from random import choice, random, randrange
-from server.server_vars import queue_md
 from lib.queue_cabinet_generate_lib import create_queue_and_cabinet_delta
-from global_vars import print
+from global_vars import print, queue_md_params
 
 
-def choice_queue_md_type(queue_md=queue_md):
+def choice_queue_md_type(queue_md=queue_md_params):
     types = queue_md['types']
     return choice(sum([[key]*types[key]['freq'] for key in types], []))
 
@@ -18,15 +17,14 @@ def trim_to_ten_thousandths(number):
     return int(number*10000)/10000
 
 
-def generate_queue_params_by_type(queue_md_type, queue_md=queue_md):
-    cabinet_work_start_delay_minutes = queue_md['cabinet_work_start_delay_minutes']
-    reward_max_sum = queue_md['cabinet_reward_max_sum']
-
+def generate_queue_params_by_type(queue_md_type, queue_md=queue_md_params):
     queue_lock_delta_minutes = queue_md['queue_lock_delta_minutes']
     queue_delete_delta_minutes = queue_md['queue_delete_delta_minutes']
 
     queue_md_type_params = queue_md['types'][queue_md_type]
 
+    cabinet_work_start_delay_minutes = queue_md_type_params['cabinet']['cabinet_work_start_delay_minutes']
+    reward_max_sum = queue_md_type_params['cabinet']['cabinet_reward_max_sum']
     queue_delay_minutes_range = queue_md_type_params['queue']['delay_minutes']
     queue_delay_minutes = randrange(queue_delay_minutes_range['min'], queue_delay_minutes_range['max']+1)
 
@@ -51,11 +49,25 @@ def generate_queue_params_by_type(queue_md_type, queue_md=queue_md):
     }
 
 
-def generate_queue_params(queue_md=queue_md):
+def generate_queue_params(queue_md=queue_md_params):
     return generate_queue_params_by_type(choice_queue_md_type(queue_md), queue_md)
 
 
-def queue_money_drop():
+def queue_money_drop_by_type(type_name: str):
+    '''Создать очередь-манидроп определённого типа'''
+    # для админки
+    type_name = str(type_name)
+    q_md_params = generate_queue_params_by_type(type_name, queue_md_params)
     print("QUEUE MONEY DROP")
-    q_md_params = generate_queue_params(queue_md)
     return create_queue_and_cabinet_delta(**q_md_params)
+
+
+def queue_money_drop():
+    '''Создать очередь-манидроп случайного типа'''
+    type_name = choice_queue_md_type(queue_md_params)
+    return queue_money_drop_by_type(type_name, queue_md=queue_md_params)
+
+
+def get_qmd_params():
+    '''показать нынешний queue_md_params'''
+    return queue_md_params

@@ -8,7 +8,13 @@ from global_vars import users, queue_users, active_queues
 
 bot_username = global_vars.bot_username
 
-home_new_text = '''Привет! 🖖🏻
+home_text = '''Новая морда.'''
+
+library_home_text = '''Добро пожаловать в __Каталог__.
+
+Тут может быть всё, что мне захочется сюда положить. Чувствуй себя как дома.'''
+
+lp_home_new_text = '''Привет! 🖖🏻
 Я провожу ПРОГРАММУ ЛОЯЛЬНОСТИ 😳 телеграм-канала Анатолия @ch_an.
 
 Правила такие:
@@ -19,7 +25,7 @@ home_new_text = '''Привет! 🖖🏻
 
 Увидеть нынешнюю сетку уровней и зарегистрироваться в ПРОГРАММЕ ЛОЯЛЬНОСТИ ты можешь по кнопкам ниже:'''
 
-home_exist_text = '''Привет, юзер с ID `{user_id}`! 😳
+lp_home_exist_text = '''Привет, юзер с ID `{user_id}`! 😳
 
 Увидеть сетку уровней, свой профиль и глобальную статистику ты можешь по кнопкам ниже:'''
 
@@ -49,14 +55,6 @@ def level_status(loyalty_program_row, user_level=None):
 def render_level_schema(user_level=None):
     return level_schema_header + '\n'.join([obj[0]+level_status(obj[1], user_level) for obj in level_schema_preform])
 
-
-# schema_columns = "👤уровень\t🗓Дней\t🪙Награда"
-
-# schema_level = """**👤 уровень: {level}**
-# 🗓 Дней, для левелапа: {days}
-# 🪙 Награда при левелапе: {reward}💎"""
-
-# schema_cooked = '\n\n'.join([schema_level.format(**line.__dict__) for line in server.server_vars.loyalty_program])
 
 referer_program_text = '''**Реферерная программа**
 
@@ -95,22 +93,85 @@ ID твоего реферера: `{user_referer_id}`'''
 
 button_to_schema = '''📈уровни📈'''
 button_to_home = '''🏘на главную🏘'''
+button_to_lp_home = '''💸программа лояльности💸'''
+button_back_to_lp_home = '''◀️ к программе лояльности'''
 button_to_register = '''❇️регистрация❇️'''
 button_to_statistic = '''📊статистика📊'''
 button_to_profile = '''👤мой профиль👤'''
 button_to_profile_refresh = '''🔄мой профиль🔄'''
 button_to_referer_program = '''😳реферерная программа😳'''
 button_back_to_referer_program = '''◀️ к реферерной программе'''
+button_to_library = '''📙каталог📗'''
 
 
-def home_new():
+def home():
     return {
-        "text": home_new_text,
+        "text": home_text,
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
-                        button_to_schema,
+                        button_to_lp_home,
+                        callback_data="to_lp_home"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        button_to_library,
+                        callback_data="to_library"
+                    )
+                ]
+            ]
+        )
+    }
+
+
+def library_home():
+    return {
+        "text": library_home_text,
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "🌱в Корень🌱",
+                        callback_data="to_library?id=root"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        button_to_home,
+                        callback_data="to_home"
+                    )
+                ]
+            ]
+        )
+    }
+
+
+def library_unknown():
+    return {
+        "text": "Неизвестная страница! ):\n\n¯\\_(ツ)_/¯",
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        button_to_library,
+                        callback_data="to_library"
+                    )
+                ]
+            ]
+        )
+    }
+
+
+def lp_home_new():
+    return {
+        "text": lp_home_new_text,
+        "reply_markup": InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        button_to_lp_home,
                         callback_data="to_schema"
                     )
                 ],
@@ -119,15 +180,21 @@ def home_new():
                         button_to_register,
                         callback_data="to_register"
                     )
+                ],
+                [
+                    InlineKeyboardButton(
+                        button_to_home,
+                        callback_data="to_home"
+                    )
                 ]
             ]
         )
     }
 
 
-def home_exist(user_id):
+def lp_home_exist(user_id):
     return {
-        "text": home_exist_text.format(user_id=user_id),
+        "text": lp_home_exist_text.format(user_id=user_id),
         "reply_markup": InlineKeyboardMarkup(
             [
                 [
@@ -151,6 +218,12 @@ def home_exist(user_id):
                         button_to_statistic,
                         callback_data="to_statistic"
                     )
+                ],
+                [
+                    InlineKeyboardButton(
+                        button_to_home,
+                        callback_data="to_home"
+                    )
                 ]
             ]
         )
@@ -164,8 +237,8 @@ def schema(user_level=None):
             [
                 [
                     InlineKeyboardButton(
-                        button_to_home,
-                        callback_data="to_home"
+                        button_back_to_lp_home,
+                        callback_data="to_lp_home"
                     )
                 ]
             ]
@@ -187,8 +260,8 @@ def register_already_register():
             [
                 [
                     InlineKeyboardButton(
-                        button_to_home,
-                        callback_data="to_home"
+                        button_back_to_lp_home,
+                        callback_data="to_lp_home"
                     )
                 ]
             ]
@@ -210,8 +283,8 @@ def register_not_subscribed():
                 ],
                 [
                     InlineKeyboardButton(
-                        button_to_home,
-                        callback_data="to_home"
+                        button_back_to_lp_home,
+                        callback_data="to_lp_home"
                     )
                 ]
             ]
@@ -232,8 +305,8 @@ def register_successfully():
             [
                 [
                     InlineKeyboardButton(
-                        button_to_home,
-                        callback_data="to_home"
+                        button_back_to_lp_home,
+                        callback_data="to_lp_home"
                     )
                 ]
             ]
@@ -267,8 +340,8 @@ def profile(user_id):
                 ],
                 [
                     InlineKeyboardButton(
-                        button_to_home,
-                        callback_data="to_home"
+                        button_back_to_lp_home,
+                        callback_data="to_lp_home"
                     )
                 ]
             ]
@@ -301,8 +374,8 @@ def statistic():
             [
                 [
                     InlineKeyboardButton(
-                        button_to_home,
-                        callback_data="to_home"
+                        button_back_to_lp_home,
+                        callback_data="to_lp_home"
                     )
                 ]
             ]
@@ -344,8 +417,8 @@ def referer_program(user_id):
                 ],
                 [
                     InlineKeyboardButton(
-                        button_to_home,
-                        callback_data="to_home"
+                        button_back_to_lp_home,
+                        callback_data="to_lp_home"
                     )
                 ],
             ]
@@ -436,8 +509,8 @@ def unknown_command():
             [
                 [
                     InlineKeyboardButton(
-                        button_to_home,
-                        callback_data="to_home"
+                        button_back_to_lp_home,
+                        callback_data="to_lp_home"
                     )
                 ]
             ]
@@ -492,8 +565,8 @@ def unsubscribed_from_channel():
             [
                 [
                     InlineKeyboardButton(
-                        button_to_home,
-                        callback_data="to_home"
+                        button_back_to_lp_home,
+                        callback_data="to_lp_home"
                     )
                 ]
             ]
@@ -508,8 +581,8 @@ def money_hidden_block_check(text="💸"):
             [
                 [
                     InlineKeyboardButton(
-                        button_to_home,
-                        callback_data="to_home"
+                        button_back_to_lp_home,
+                        callback_data="to_lp_home"
                     )
                 ]
             ]
@@ -540,8 +613,8 @@ def queue_admin_help(commands):
     for command_name in commands:
         command = commands[command_name]
         signature_command = signature(command)
+        out += f"\n\n`/admin {command_name} {' '.join([obj for obj in signature_command.parameters])}`"
         out += f"\n{command_name} — {command.__doc__}\n{signature_command}"
-        out += f"\n`/admin {command_name} {' '.join([obj for obj in signature_command.parameters])}`"
 
     return {
         "text": out
@@ -573,7 +646,11 @@ def queue_first_comment(queue_id, chat_message_id):
                     InlineKeyboardButton(
                         "👥",
                         callback_data=f"queue?id={queue_id}"
-                    )
+                    ),
+                    InlineKeyboardButton(
+                        "🚶👥",
+                        callback_data=f"queue/quit?id={queue_id}"
+                    ),
                 ]
             ]
         ),
@@ -618,7 +695,7 @@ def queue_state(queue_id, archive=False):
         rules_reward = rules['reward']
         winners_sum = cabinet_state['winners']['sum']
         post_text += f"\n\n🏆 **Награда в тонах:** {rules_reward['per_one']}"
-        post_text += f"\n🏦 **Банк очереди:** {rules_reward['max_sum']-winners_sum:.4f}/{rules_reward['max_sum']:.4f}"
+        post_text += f"\n🏦 **Банк кабинета:** {rules_reward['max_sum']-winners_sum:.4f}/{rules_reward['max_sum']:.4f}"
 
         # Минуты в кабинете (при кабинете)
         post_text += f"\n\n⌚️🚪 **Минут в кабинете:** {rules_work['delay_minutes']}"
@@ -657,6 +734,10 @@ def queue_state(queue_id, archive=False):
                     )
                 ],
                 [
+                    InlineKeyboardButton(
+                        "🚶👥",
+                        callback_data=f"queue/quit?id={queue_id}"
+                    ),
                     InlineKeyboardButton(
                         f"{comments_fingerprint} комменты ({comments_cnt})",
                         url=f'https://t.me/c/{(-server.server_vars.dot_ch_chat_id)%10**10}/{chat_message_id}?thread={chat_message_id}'

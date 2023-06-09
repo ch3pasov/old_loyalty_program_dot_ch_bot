@@ -4,8 +4,10 @@ from lib.queue_lib import kick_user_from_queue, update_queue
 from lib.cabinet_actions_lib import kick_user_from_cabinet
 
 
-def queue_delete(queue_id):
+def queue_delete(queue_id: str):
     """Удалить очередь — пост останется в архиве, но просчитываться не будет."""
+    # для админки
+    queue_id = str(queue_id)
     # kick all users
     queue = active_queues[queue_id]
     for user_id in queue['queue_order']:
@@ -23,9 +25,3 @@ def queue_delete(queue_id):
     # del queue
     active_queues.pop(queue_id)
     return f"Очередь https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id} удалена!"
-
-
-def queue_delete_int(channel_message_id):
-    """Удалить очередь — пост останется в архиве, но просчитываться не будет."""
-    queue_id = str(channel_message_id)
-    return queue_delete(queue_id)
