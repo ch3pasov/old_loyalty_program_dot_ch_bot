@@ -613,8 +613,8 @@ def queue_admin_help(commands):
     for command_name in commands:
         command = commands[command_name]
         signature_command = signature(command)
+        out += f"\n\n`/admin {command_name} {' '.join([obj for obj in signature_command.parameters])}`"
         out += f"\n{command_name} — {command.__doc__}\n{signature_command}"
-        out += f"\n`/admin {command_name} {' '.join([obj for obj in signature_command.parameters])}`"
 
     return {
         "text": out
@@ -646,7 +646,11 @@ def queue_first_comment(queue_id, chat_message_id):
                     InlineKeyboardButton(
                         "👥",
                         callback_data=f"queue?id={queue_id}"
-                    )
+                    ),
+                    InlineKeyboardButton(
+                        "🚶👥",
+                        callback_data=f"queue/quit?id={queue_id}"
+                    ),
                 ]
             ]
         ),
@@ -730,6 +734,10 @@ def queue_state(queue_id, archive=False):
                     )
                 ],
                 [
+                    InlineKeyboardButton(
+                        "🚶👥",
+                        callback_data=f"queue/quit?id={queue_id}"
+                    ),
                     InlineKeyboardButton(
                         f"{comments_fingerprint} комменты ({comments_cnt})",
                         url=f'https://t.me/c/{(-server.server_vars.dot_ch_chat_id)%10**10}/{chat_message_id}?thread={chat_message_id}'
