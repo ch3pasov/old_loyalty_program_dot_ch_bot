@@ -53,7 +53,21 @@ def generate_queue_params(queue_md=queue_md_params):
     return generate_queue_params_by_type(choice_queue_md_type(queue_md), queue_md)
 
 
-def queue_money_drop():
+def queue_money_drop_by_type(type_name: str):
+    '''Создать очередь-манидроп определённого типа'''
+    # для админки
+    type_name = str(type_name)
+    q_md_params = generate_queue_params_by_type(type_name, queue_md_params)
     print("QUEUE MONEY DROP")
-    q_md_params = generate_queue_params(queue_md_params)
     return create_queue_and_cabinet_delta(**q_md_params)
+
+
+def queue_money_drop():
+    '''Создать очередь-манидроп случайного типа'''
+    type_name = choice_queue_md_type(queue_md_params)
+    return queue_money_drop_by_type(type_name, queue_md=queue_md_params)
+
+
+def get_qmd_params():
+    '''показать нынешний queue_md_params'''
+    return queue_md_params
