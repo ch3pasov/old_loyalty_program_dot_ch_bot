@@ -26,7 +26,7 @@ def start_queue_handlers():
     print("start_queue_handlers")
 
     @app.on_callback_query(filters.regex(r"queue\?id=(\d+)"))
-    def queue_click(client, callback_query, **kwargs):
+    async def queue_click(client, callback_query, **kwargs):
 
         queue_id = re.search(r"queue\?id=(\d+)", callback_query.data).group(1)
         user_id = str(callback_query.from_user.id)
@@ -74,7 +74,7 @@ def start_queue_handlers():
             print(f'new in queue {queue_id}')
             cabinet = queue['cabinet']
             if cabinet:
-                check_to_cabinet_pull(queue_id)
+                await check_to_cabinet_pull(queue_id)
 
             emoji_update = "🆕👥"
             to_update = True
@@ -94,12 +94,12 @@ def start_queue_handlers():
             )
 
         if to_update:
-            update_queue(queue_id)
+            await update_queue(queue_id)
 
         set_check_user_scheduler_job(user_id)
 
     @app.on_message(filters.chat(server.server_vars.dot_ch_chat_id) & filters.reply)
-    def answer_comment(client, message):
+    async def answer_comment(client, message):
         # print('message!')
 
         top_message_id = message.reply_to_top_message_id if message.reply_to_top_message_id else message.reply_to_message_id
@@ -113,7 +113,7 @@ def start_queue_handlers():
 
             if message.sender_chat:
                 add_queue_event(queue_id, "кто-то\nпишет от лица канала 🤮", event_emoji='🐖💨', ignore_time=False)
-                update_queue(queue_id)
+                await update_queue(queue_id)
                 # комменты от каналов — игнорируем
                 return
 
@@ -126,4 +126,4 @@ def start_queue_handlers():
                 event = f"[пишет]({comment_url}):\n{message_text_sanitized}"
                 add_user_queue_event(queue_id, user_id, event, event_emoji='🗣', gap=' ', ignore_time=True)
 
-            update_queue(queue_id)
+            await update_queue(queue_id)

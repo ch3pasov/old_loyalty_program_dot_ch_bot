@@ -8,14 +8,14 @@ def start_the_library_handlers():
     print("start_the_library_handlers")
 
     @app.on_callback_query(filters.regex(r"^to_library$"))
-    def answer_library_home(client, callback_query, **kwargs):
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.library_home())
+    async def answer_library_home(client, callback_query, **kwargs):
+        await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.library_home())
 
     @app.on_callback_query(filters.regex(r"^to_library\?id=([a-zA-Z\d_]+)$"))
-    def answer_library_id(client, callback_query, **kwargs):
+    async def answer_library_id(client, callback_query, **kwargs):
         library_id = callback_query.matches[0].group(1)
         if library_id in the_library:
             desired_screen = screen_library(library_id)
         else:
             desired_screen = screen.library_unknown()
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, desired_screen)
+        await screen.update(client, callback_query.message.chat.id, callback_query.message.id, desired_screen)

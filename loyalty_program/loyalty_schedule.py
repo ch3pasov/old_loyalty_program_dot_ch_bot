@@ -4,9 +4,9 @@ from datetime import datetime
 
 import lib.screen as screen
 import server.server_vars
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from lib.useful_lib import timestamp_now, seconds_between_timestamps
-from lib.dataclasses import LoyaltyLevel
+from lib.dataclasses_lib import LoyaltyLevel
 from lib.social_lib import check_if_banned_before_money, is_registered, is_member
 from lib.money import send_money
 
@@ -18,12 +18,9 @@ warnings.filterwarnings("ignore")
 # 1. Удаляет всех отписавшихся от канала.
 # 2. Левелапает всех, кого надо левалапнуть.
 # 3. Баню, если внезапно чел заблочил бота.
-def update_user_progress(verbose=True):
+async def update_user_progress(verbose=True):
     if verbose:
         print('update_user_progress!')
-
-    # member_ids = [member.user.id for member in app.get_chat_members(server.server_vars.dot_ch_id)]
-    # print(member_ids)
 
     timestamp_now_const = timestamp_now()
 
@@ -34,8 +31,8 @@ def update_user_progress(verbose=True):
         # отписавшихся — выкидываем
         if not is_member(server.server_vars.dot_ch_id, int(user_id)):
             users[user_id]["loyalty_program"]["subscribed_since"] = None
-            screen.create(app, user_id, screen.unsubscribed_from_channel_emoji())
-            screen.create(app, user_id, screen.unsubscribed_from_channel())
+            await screen.create(app, user_id, screen.unsubscribed_from_channel_emoji())
+            await screen.create(app, user_id, screen.unsubscribed_from_channel())
             continue
 
         # живых — проверяем на левелап
@@ -47,14 +44,14 @@ def update_user_progress(verbose=True):
         level_need_days = schema_level.days
         if user_exp_days >= level_need_days:
             # если он меня забанил — то я его тоже 🔫🔫🔫
-            if not check_if_banned_before_money(user_id):
+            if not await check_if_banned_before_money(user_id):
                 continue
 
             reward = schema_level.reward
-            send_money(reward, user_id, referer_enable=True)
+            await send_money(reward, user_id, referer_enable=True)
             users[user_id]["loyalty_program"]["level"] += 1
 
-            screen.create(
+            await screen.create(
                 app,
                 user_id,
                 screen.level_up(
@@ -65,7 +62,7 @@ def update_user_progress(verbose=True):
 
 
 def start_loyalty_scheduler(verbose=True):
-    loyalty_scheduler = BackgroundScheduler()
+    loyalty_scheduler = AsyncIOScheduler()
     loyalty_scheduler.add_job(update_user_progress, "interval", minutes=2, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
 
     loyalty_scheduler.start()

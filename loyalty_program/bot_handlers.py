@@ -5,7 +5,7 @@ from lib.screen_library import screen_library
 import server.server_vars
 from lib.useful_lib import seconds_from_timestamp, timestamp_now
 from lib.social_lib import is_member, is_registered
-from lib.dataclasses import LoyaltyLevel
+from lib.dataclasses_lib import LoyaltyLevel
 from lib.money import send_money
 from pyrogram import filters
 import re
@@ -19,7 +19,7 @@ app = global_vars.app
 
 def start_bot_handlers():
     @app.on_message(filters.command(["start"]) & filters.private)
-    def my_handler(client, message):
+    async def my_handler(client, message):
         referer_id = None
         library_id = None
         if len(message.command) >= 2:
@@ -36,52 +36,52 @@ def start_bot_handlers():
                 desired_screen = screen_library(library_id)
             else:
                 desired_screen = screen.library_unknown()
-            screen.create(client, message.chat.id, desired_screen)
+            await screen.create(client, message.chat.id, desired_screen)
         elif referer_id:
             user_id = str(message.from_user.id)
             if is_registered(user_id):
-                screen.create(client, message.chat.id, screen.set_referer_confirm(referer_id=referer_id))
+                await screen.create(client, message.chat.id, screen.set_referer_confirm(referer_id=referer_id))
             else:
-                screen.create(client, message.chat.id, screen.lp_home_new())
+                await screen.create(client, message.chat.id, screen.lp_home_new())
                 print(f"Незарегистрированный пользователь {user_id} зашёл по реферерке {referer_id}! Запомнил это.")
                 user_referers[user_id] = referer_id
         else:
-            screen.create(client, message.chat.id, screen.home())
+            await screen.create(client, message.chat.id, screen.home())
 
     @app.on_callback_query(filters.regex('to_home'))
-    def answer_home(client, callback_query):
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.home())
+    async def answer_home(client, callback_query):
+        await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.home())
 
     @app.on_callback_query(filters.regex('to_schema'))
-    def answer_schema(client, callback_query):
+    async def answer_schema(client, callback_query):
         user_id = str(callback_query.from_user.id)
         if user_id in users:
             user_level = users[user_id]['loyalty_program']['level']
         else:
             user_level = None
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.schema(user_level))
+        await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.schema(user_level))
 
     @app.on_callback_query(filters.regex('to_lp_home'))
-    def answer_lp_home(client, callback_query):
+    async def answer_lp_home(client, callback_query):
         user_id = str(callback_query.from_user.id)
         if is_registered(user_id):
-            screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.lp_home_exist(user_id))
+            await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.lp_home_exist(user_id))
         else:
-            screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.lp_home_new())
+            await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.lp_home_new())
 
     @app.on_callback_query(filters.regex('to_register'))
-    def answer_register(client, callback_query):
+    async def answer_register(client, callback_query):
         global users
 
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.loading())
+        await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.loading())
         user_id = str(callback_query.from_user.id)
 
         if is_registered(user_id):
-            screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.register_already_register())
+            await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.register_already_register())
             return 0
 
         if not is_member(server.server_vars.dot_ch_id, user_id):
-            screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.register_not_subscribed())
+            await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.register_not_subscribed())
             return 0
 
         users.setdefault(
@@ -99,7 +99,7 @@ def start_bot_handlers():
         users[user_id]["loyalty_program"]["subscribed_since"] = timestamp_now()
         print(f"Юзер {user_id} зарегистрировался!")
 
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.congratulation_emoji())
+        await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.congratulation_emoji())
 
         # мгновенно выдать уровень, если норм
         user_line = users[user_id]["loyalty_program"]
@@ -109,35 +109,35 @@ def start_bot_handlers():
         user_exp_days = seconds_from_timestamp(user_line["subscribed_since"])/86400
         level_need_days = schema_level.days
         if user_exp_days >= level_need_days:
-            screen.create(client, user_id, screen.level_up(
+            await screen.create(client, user_id, screen.level_up(
                 congrats_text=schema_level.congrats_text,
                 congrats_link=schema_level.congrats_link,
             ))
 
             reward = schema_level.reward
-            send_money(reward, user_id, referer_enable=True)
+            await send_money(reward, user_id, referer_enable=True)
             users[user_id]["loyalty_program"]["level"] += 1
 
-        screen.create(client, callback_query.message.chat.id, screen.register_successfully())
+        await screen.create(client, callback_query.message.chat.id, screen.register_successfully())
         if user_id in user_referers:
-            screen.create(client, callback_query.message.chat.id, screen.set_referer_confirm(referer_id=user_referers[user_id]))
+            await screen.create(client, callback_query.message.chat.id, screen.set_referer_confirm(referer_id=user_referers[user_id]))
 
     @app.on_callback_query(filters.regex('to_statistic'))
-    def answer_statistic(client, callback_query):
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.statistic())
+    async def answer_statistic(client, callback_query):
+        await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.statistic())
 
     @app.on_callback_query(filters.regex('to_referer_program'))
-    def answer_referer_program(client, callback_query):
+    async def answer_referer_program(client, callback_query):
         user_id = str(callback_query.from_user.id)
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.referer_program(user_id))
+        await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.referer_program(user_id))
 
     @app.on_callback_query(filters.regex('to_referals_list'))
-    def answer_referals_list(client, callback_query):
+    async def answer_referals_list(client, callback_query):
         user_id = str(callback_query.from_user.id)
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.referals_list(user_id))
+        await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.referals_list(user_id))
 
     @app.on_callback_query(filters.regex(r"to_set_referer\?referer_id=(\d+)"))
-    def answer(client, callback_query, **kwargs):
+    async def answer(client, callback_query, **kwargs):
         global users
 
         user_id = str(callback_query.from_user.id)
@@ -156,7 +156,7 @@ def start_bot_handlers():
             wrong = "👨🏻‍🍼 Твой реферер не может быть младше тебя!\nВремя регистрации можно проверить во вкладке с профилем."
 
         if wrong:
-            screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong(wrong))
+            await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.set_referer_smth_wrong(wrong))
             return
 
         users[user_id]['loyalty_program']['referer_id'] = referer_id
@@ -166,19 +166,19 @@ def start_bot_handlers():
             show_alert=False
         )
 
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.congratulation_emoji())
-        screen.create(client, callback_query.message.chat.id, screen.set_referer_successfully())
+        await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.congratulation_emoji())
+        await screen.create(client, callback_query.message.chat.id, screen.set_referer_successfully())
 
     @app.on_callback_query(filters.regex('to_profile'))
-    def answer_profile(client, callback_query):
+    async def answer_profile(client, callback_query):
         global users
 
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.loading())
+        await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.loading())
         user_id = str(callback_query.from_user.id)
-        screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.profile(user_id))
+        await screen.update(client, callback_query.message.chat.id, callback_query.message.id, screen.profile(user_id))
 
     @app.on_chat_member_updated(group=server.server_vars.dot_ch_id)
-    def handler_channel_update(client, chat_member_updated):
+    async def handler_channel_update(client, chat_member_updated):
         global users
 
         if not chat_member_updated.chat.id == server.server_vars.dot_ch_id:
@@ -194,12 +194,12 @@ def start_bot_handlers():
             return
 
         users[user_id]["loyalty_program"]["subscribed_since"] = None
-        screen.create(client, user_id, screen.unsubscribed_from_channel_emoji())
-        screen.create(client, user_id, screen.unsubscribed_from_channel())
+        await screen.create(client, user_id, screen.unsubscribed_from_channel_emoji())
+        await screen.create(client, user_id, screen.unsubscribed_from_channel())
 
     # сообщения в личку
     @app.on_message(filters.private & filters.text & filters.incoming)
-    def answer_messages(client, message):
+    async def answer_messages(client, message):
         import re
 
         message_text = message.text
@@ -210,11 +210,11 @@ def start_bot_handlers():
             if search:
                 referer_id = search.group(1)
                 if re.search(r"^[0-9]{1,}$", referer_id):
-                    screen.create(client, message.chat.id, screen.set_referer_confirm(referer_id=referer_id))
+                    await screen.create(client, message.chat.id, screen.set_referer_confirm(referer_id=referer_id))
                 else:
-                    screen.create(client, message.chat.id, screen.set_referer_not_number())
+                    await screen.create(client, message.chat.id, screen.set_referer_not_number())
             else:
-                screen.create(client, message.chat.id, screen.unknown_command())
+                await screen.create(client, message.chat.id, screen.unknown_command())
         else:
             # не команда
-            screen.create(client, message.chat.id, screen.no_messages())
+            await screen.create(client, message.chat.id, screen.no_messages())

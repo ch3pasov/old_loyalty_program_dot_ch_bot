@@ -748,23 +748,23 @@ def queue_state(queue_id, archive=False):
     }
 
 
-def create(client, chat_id, screen):
-    return client.send_message(
+async def create(client, chat_id, screen):
+    return await client.send_message(
         chat_id,
         **screen
     )
 
 
-def update(client, chat_id, message_id, screen):
+async def update(client, chat_id, message_id, screen):
     assert type(message_id) == int, f"message_id должен быть int, не {type(message_id)}"
     if "text" in screen:
-        return client.edit_message_text(
+        return await client.edit_message_text(
             chat_id=chat_id,
             message_id=int(message_id),
             **screen
         )
     else:
-        return client.edit_message_reply_markup(
+        return await client.edit_message_reply_markup(
             chat_id=chat_id,
             message_id=int(message_id),
             **screen

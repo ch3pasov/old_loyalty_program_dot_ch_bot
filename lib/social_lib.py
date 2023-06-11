@@ -4,14 +4,14 @@ from global_vars import app, users, queue_users
 import lib.screen as screen
 
 
-def is_member(chat_id, user_id):
+async def is_member(chat_id, user_id):
     # print('🔥')
     # print(chat_id, user_id)
     # print(type(chat_id), type(user_id))
     # print('🔥')
 
     try:
-        is_member = app.get_chat_member(chat_id, user_id).is_member
+        is_member = await app.get_chat_member(chat_id, user_id).is_member
         if is_member is None:
             return True
         else:
@@ -45,10 +45,10 @@ def is_user_in_queue_or_cabinet(user_id):
     return queue_user["in"]["type"]
 
 
-def check_if_banned_before_money(user_id, text="💸"):
+async def check_if_banned_before_money(user_id, text="💸"):
     # если он меня забанил — то я его тоже 🔫🔫🔫
     try:
-        screen.create(app, user_id, screen.money_hidden_block_check(text))
+        await screen.create(app, user_id, screen.money_hidden_block_check(text))
         return True
     except (errors.exceptions.bad_request_400.UserIsBlocked, errors.exceptions.bad_request_400.InputUserDeactivated) as e:
         print(f"{user_id} IS BLOCKED ME or something wtf: {e}")

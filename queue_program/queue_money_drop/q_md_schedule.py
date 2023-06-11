@@ -2,7 +2,7 @@
 import warnings
 from datetime import datetime
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from lib.useful_lib import random_datetime
 
 from lib.q_md_lib import queue_money_drop
@@ -27,7 +27,7 @@ def q_drop_scheduler(q_moneydrop_scheduler, verbose=True):
 
 
 def start_q_moneydrop_scheduler(verbose=True):
-    q_moneydrop_scheduler = BackgroundScheduler()
+    q_moneydrop_scheduler = AsyncIOScheduler()
 
     q_moneydrop_scheduler.add_job(
         q_drop_scheduler, "interval", minutes=queue_md_params["period_minutes"],

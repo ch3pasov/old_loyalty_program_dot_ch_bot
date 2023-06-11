@@ -43,7 +43,7 @@ def start_admin_handlers():
     print("start_admin_handlers")
 
     @app.on_message(filters.command(["admin"]) & filters.chat(server.server_vars.creator_id))
-    def answer_admin_command(client, message):
+    async def answer_admin_command(client, message):
         print(message.command)
         if len(message.command) > 1:
             command_name = message.command[1]
@@ -66,7 +66,7 @@ def start_admin_handlers():
                 )
                 try:
                     print('try!')
-                    command_output = command(*args)
+                    command_output = await command(*args)
                     is_success = True
                 except excpetion_except_pyrogram as e:
                     print('except!')
@@ -74,7 +74,7 @@ def start_admin_handlers():
                     is_success = False
                 # command_output = command(*args)
                 # is_success = True
-                screen.create(
+                await screen.create(
                     client,
                     message.chat.id,
                     screen.queue_admin_run(
@@ -84,4 +84,4 @@ def start_admin_handlers():
                     )
                 )
                 return
-        return screen.create(client, message.chat.id, screen.queue_admin_help(commands))
+        return await screen.create(client, message.chat.id, screen.queue_admin_help(commands))

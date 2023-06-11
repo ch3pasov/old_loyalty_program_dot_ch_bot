@@ -4,21 +4,21 @@ from pyrogram import errors
 import lib.screen as screen
 from lib.useful_lib import emoji_fingerprint, now_text, timestamp_now
 from lib.social_lib import get_user_name
-from time import sleep
+import asyncio
 
 
-def create_queue(queue_delay_minutes=15):
+async def create_queue(queue_delay_minutes=15):
     """Создать очередь"""
     # для админки
     queue_delay_minutes = int(queue_delay_minutes)
     # создаю пост
-    channel_message_id = (screen.create(app, server.server_vars.dot_ch_id, screen.queue_initial_post())).id
+    channel_message_id = (await screen.create(app, server.server_vars.dot_ch_id, screen.queue_initial_post())).id
     # print(channel_message_id)
 
     print("DEBUG SLEEP BEFORE")
-    sleep(10)  # внезапно, оно работает как надо и не стопит параллельные процессы
+    await asyncio.sleep(10)  # внезапно, оно работает как надо и не стопит параллельные процессы
     print("DEBUG SLEEP AFTER")
-    chat_message_id = app_billing.get_discussion_message(
+    chat_message_id = await app_billing.get_discussion_message(
         chat_id=server.server_vars.dot_ch_id,
         message_id=channel_message_id
     ).id
@@ -47,22 +47,22 @@ def create_queue(queue_delay_minutes=15):
     queue_id = str(channel_message_id)
     active_queues[queue_id] = queue
 
-    screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id))
-    screen.create(app, server.server_vars.dot_ch_chat_id, screen.queue_first_comment(queue_id, chat_message_id))
+    await screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id))
+    await screen.create(app, server.server_vars.dot_ch_chat_id, screen.queue_first_comment(queue_id, chat_message_id))
     print(f"Очередь {queue_id} создана! https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id}")
     return queue_id
 
 
-def update_queue(queue_id, archive=False):
+async def update_queue(queue_id, archive=False):
     channel_message_id = active_queues[queue_id]["id"]["channel"]
     try:
-        screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id, archive=archive))
+        await screen.update(app, server.server_vars.dot_ch_id, channel_message_id, screen.queue_state(queue_id, archive=archive))
     except errors.exceptions.bad_request_400.MessageNotModified:
         print(f'{queue_id} ничего не изменилось')
 
 
-def slow_update_comments_queue(queue_id):
-    comments_cnt = app_billing.get_discussion_replies_count(
+async def slow_update_comments_queue(queue_id):
+    comments_cnt = await app_billing.get_discussion_replies_count(
         server.server_vars.dot_ch_chat_id,
         message_id=active_queues[queue_id]["id"]["chat"]
     )
@@ -83,8 +83,8 @@ def add_queue_event(queue_id, event, event_emoji='', ignore_time=False):
     active_queues[queue_id]["show"]["last_n_events"].append(new_event)
 
 
-def add_event_comment(queue_id, event, event_emoji):
-    app.send_message(
+async def add_event_comment(queue_id, event, event_emoji):
+    await app.send_message(
         server.server_vars.dot_ch_chat_id,
         f"{event_emoji} {event}",
         reply_to_message_id=active_queues[queue_id]["id"]["chat"]
@@ -97,7 +97,7 @@ def add_user_queue_event(queue_id, user_id, event, event_emoji='', gap='\n', ign
     add_queue_event(queue_id, f"{queue_user['name']}{gap}{event}", event_emoji=event_emoji, ignore_time=ignore_time)
 
 
-def add_global_user_queue_event(queue_id, user_id, event_short, event_long, event_emoji='', gap=' ', to_summon=False):
+async def add_global_user_queue_event(queue_id, user_id, event_short, event_long, event_emoji='', gap=' ', to_summon=False):
     add_user_queue_event(queue_id, user_id, event_short, event_emoji=event_emoji)
     queue_user = queue_users[user_id]
 
@@ -106,12 +106,12 @@ def add_global_user_queue_event(queue_id, user_id, event_short, event_long, even
     else:
         event = f"{queue_user['name']}{gap}{event_long}"
 
-    add_event_comment(queue_id, event, event_emoji)
+    await add_event_comment(queue_id, event, event_emoji)
 
 
-def add_global_queue_event(queue_id, event, event_emoji=''):
+async def add_global_queue_event(queue_id, event, event_emoji=''):
     add_queue_event(queue_id, event, event_emoji=event_emoji)
-    add_event_comment(queue_id, event, event_emoji)
+    await add_event_comment(queue_id, event, event_emoji)
 
 
 def prerender_queue_user_and_update_name_and_get_queue_user(user):
@@ -166,7 +166,7 @@ def clear_queue_user(user_id):
     active_queues[queue_id]['queue_order'].remove(user_id)
 
 
-def kick_user_from_queue(user_id, to_update_queue=False):
+async def kick_user_from_queue(user_id, to_update_queue=False):
     queue_user = queue_users[user_id]
     assert queue_user["in"]["type"] == "queue", f'queue_user["in"]["type"] must be "queue", not {queue_user["in"]["type"]}'
     queue_id = queue_user["in"]["id"]
@@ -174,15 +174,15 @@ def kick_user_from_queue(user_id, to_update_queue=False):
     add_user_queue_event(queue_id, user_id, "вылетает из очереди!", event_emoji='🥾')
     clear_queue_user(user_id)
     if to_update_queue:
-        update_queue(queue_id)
+        await update_queue(queue_id)
 
 
-def queue_lock(queue_id, to_update_queue=False):
+async def queue_lock(queue_id, to_update_queue=False):
     """Залочить очередь — запретить входить в очередь (нужно для плавного удаления)"""
     queue = active_queues[queue_id]
     # update queue
     queue['state']['is_locked'] = True
     if to_update_queue:
-        update_queue(queue_id)
+        await update_queue(queue_id)
     # del queue
     return f"Очередь https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id} залочена!"

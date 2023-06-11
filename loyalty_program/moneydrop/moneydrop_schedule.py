@@ -3,7 +3,7 @@ import warnings
 from datetime import datetime
 
 import server.server_vars
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from lib.useful_lib import random_datetime
 from lib.money import money_drop
 
@@ -33,7 +33,7 @@ def drop_scheduler(dot_ch_chat_id, money_drop_message_id, moneydrop_scheduler, v
 
 def start_moneydrop_scheduler(verbose=True):
     # global users
-    moneydrop_scheduler = BackgroundScheduler()
+    moneydrop_scheduler = AsyncIOScheduler()
 
     moneydrop_scheduler.add_job(
         drop_scheduler, "interval", minutes=server.server_vars.money_drop_period_minutes,

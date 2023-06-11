@@ -1,4 +1,4 @@
-from lib.dataclasses import LoyaltyLevel
+from lib.dataclasses_lib import LoyaltyLevel
 
 money_chat_id = -0  # id чата, куда Человек будет кидать деньги
 dot_ch_id = -0  # id канала, на который нужно быть подписанным

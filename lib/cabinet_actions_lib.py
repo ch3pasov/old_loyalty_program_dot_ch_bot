@@ -3,21 +3,21 @@ from lib.queue_lib import add_global_queue_event, update_queue
 from lib.social_lib import check_if_banned_before_money
 
 
-def cabinet_start(queue_id, to_update_queue=False):
+async def cabinet_start(queue_id, to_update_queue=False):
     active_queues[queue_id]['cabinet']['state']['cabinet_status'] = 0
-    add_global_queue_event(queue_id, "кабинет открывается!\nПроходим в порядке очереди!", event_emoji='🚩')
+    await add_global_queue_event(queue_id, "кабинет открывается!\nПроходим в порядке очереди!", event_emoji='🚩')
     if to_update_queue:
-        update_queue(queue_id)
+        await update_queue(queue_id)
 
 
-def cabinet_finish(queue_id, to_update_queue=False):
+async def cabinet_finish(queue_id, to_update_queue=False):
     active_queues[queue_id]['cabinet']['state']['cabinet_status'] = 1
-    add_global_queue_event(queue_id, "кабинет закрывается!\nВсем спасибо за участие ❤️", event_emoji='🏁')
+    await add_global_queue_event(queue_id, "кабинет закрывается!\nВсем спасибо за участие ❤️", event_emoji='🏁')
     if to_update_queue:
-        update_queue(queue_id)
+        await update_queue(queue_id)
 
 
-def get_user_cabinet_status_before_reward(user_id, queue_id, verbose=True):
+async def get_user_cabinet_status_before_reward(user_id, queue_id, verbose=True):
     cabinet = active_queues[queue_id]["cabinet"]
     winners = cabinet["state"]["winners"]
     reward = cabinet["rules"]["reward"]
@@ -30,7 +30,7 @@ def get_user_cabinet_status_before_reward(user_id, queue_id, verbose=True):
     elif winners["sum"] + reward["per_one"] >= reward["max_sum"]:
         user_cabinet_status = "pauper"
     else:
-        is_available_to_reward = check_if_banned_before_money(user_id, text="🏆")
+        is_available_to_reward = await check_if_banned_before_money(user_id, text="🏆")
         if is_available_to_reward:
             user_cabinet_status = "winner"
         else:

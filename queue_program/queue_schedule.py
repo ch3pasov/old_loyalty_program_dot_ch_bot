@@ -2,7 +2,7 @@
 import warnings
 from datetime import datetime
 
-# from apscheduler.schedulers.background import BackgroundScheduler
+# from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from lib.queue_lib import (
     slow_update_comments_queue,
     update_queue,
@@ -22,11 +22,12 @@ from lib.useful_lib import timestamp_now, timestamp_to_datetime, dt_plus_n_minut
 from lib.money import send_money
 # from lib.useful_lib import seconds_between_timestamps
 from global_vars import print, active_queues, queue_users, bot_username, queue_common_scheduler
+import asyncio
 
 warnings.filterwarnings("ignore")
 
 
-def check_user(user_id, verbose=True, to_update_queue=False):
+async def check_user(user_id, verbose=True, to_update_queue=False):
     '''Проверяет и кикает игрока из очереди/кабинета, если надо'''
     if verbose:
         print(f"check user! {user_id}")
@@ -47,12 +48,12 @@ def check_user(user_id, verbose=True, to_update_queue=False):
         # кикнуть из очереди
         if verbose:
             print(f"kick user {user_id} from queue! queue {queue_id}.")
-        kick_user_from_queue(user_id, to_update_queue=to_update_queue)
+        await kick_user_from_queue(user_id, to_update_queue=to_update_queue)
     elif intype == "cabinet":
         # Подсчитать награду и кикнуть из очереди
         if verbose:
             print(f"push user {user_id} from cabinet! queue {queue_id}.")
-        cabinet_push(queue_id, to_update_queue=to_update_queue)
+        await cabinet_push(queue_id, to_update_queue=to_update_queue)
     else:
         raise ValueError(f'queue_user["in"]["type"] must be "queue" or "cabinet", not {intype}!')
 
@@ -98,7 +99,7 @@ def initial_set_check_user_scheduler_jobs(verbose=True):
         set_check_user_scheduler_job(user_id)
 
 
-def cabinet_pull(queue_id, to_update_queue=False):
+async def cabinet_pull(queue_id, to_update_queue=False):
     queue = active_queues[queue_id]
     user_id = queue['queue_order'].pop(0)
     queue_user = queue_users[user_id]
@@ -115,22 +116,22 @@ def cabinet_pull(queue_id, to_update_queue=False):
     set_check_user_scheduler_job(user_id)
 
     if to_update_queue:
-        update_queue(queue_id)
+        await update_queue(queue_id)
 
 
-def check_to_cabinet_pull(queue_id, to_update_queue=False):
+async def check_to_cabinet_pull(queue_id, to_update_queue=False):
     queue = active_queues[queue_id]
     cabinet = queue['cabinet']
     if cabinet['state']['cabinet_status'] == 0 and cabinet['state']['inside'] is None and len(queue['queue_order']) > 0:
         erase_check_user_scheduler_job(user_id=queue['queue_order'][0])
-        cabinet_pull(queue_id, to_update_queue=to_update_queue)
+        await cabinet_pull(queue_id, to_update_queue=to_update_queue)
 
 
-def cabinet_push(queue_id, to_update_queue=False):
+async def cabinet_push(queue_id, to_update_queue=False):
     queue = active_queues[queue_id]
 
     user_id = queue['cabinet']['state']['inside']
-    user_cabinet_status = get_user_cabinet_status_before_reward(user_id, queue_id)
+    user_cabinet_status = await get_user_cabinet_status_before_reward(user_id, queue_id)
     print(user_cabinet_status)
 
     gap = ' '
@@ -166,64 +167,64 @@ def cabinet_push(queue_id, to_update_queue=False):
         event_long = event_short
         to_summon = False
         # самое волнительное!
-        send_money(per_one, user_id, referer_enable=True)
+        await send_money(per_one, user_id, referer_enable=True)
         winners["sum"] += per_one
         winners["players"].setdefault(user_id, 0)
         winners["players"][user_id] += per_one
     else:
         raise ValueError(f"Unknown user_cabinet_status! '{user_cabinet_status}'")
 
-    add_global_user_queue_event(queue_id, user_id, event_short, event_long, event_emoji=event_emoji, gap=gap, to_summon=to_summon)
+    await add_global_user_queue_event(queue_id, user_id, event_short, event_long, event_emoji=event_emoji, gap=gap, to_summon=to_summon)
     add_user_queue_event(queue_id, user_id, "выходит из кабинета!", event_emoji="⬇️")
 
     kick_user_from_cabinet(user_id, queue_id)
 
-    check_to_cabinet_pull(queue_id)
+    await check_to_cabinet_pull(queue_id)
     if to_update_queue:
-        update_queue(queue_id)
+        await update_queue(queue_id)
 
 
-def cabinet_start_and_pull(queue_id, to_update_queue=True):
-    cabinet_start(queue_id)
-    check_to_cabinet_pull(queue_id)
+async def cabinet_start_and_pull(queue_id, to_update_queue=True):
+    await cabinet_start(queue_id)
+    await check_to_cabinet_pull(queue_id)
     if to_update_queue:
-        update_queue(queue_id)
+        await update_queue(queue_id)
 
 
-def check_to_cabinet_start(queue_id, timestamp_now_const, verbose=True, to_update_queue=False):
+async def check_to_cabinet_start(queue_id, timestamp_now_const, verbose=True, to_update_queue=False):
     cabinet = active_queues[queue_id]['cabinet']
     if cabinet['rules']['work']['start'] < timestamp_now_const and cabinet['state']['cabinet_status'] == -1:
         if verbose:
             print(f"{queue_id} open cabinet!")
-        cabinet_start_and_pull(queue_id, to_update_queue=to_update_queue)
+        await cabinet_start_and_pull(queue_id, to_update_queue=to_update_queue)
 
 
-def check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True):
+async def check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True):
     cabinet = active_queues[queue_id]['cabinet']
     if cabinet['rules']['work']['finish'] < timestamp_now_const and cabinet['state']['cabinet_status'] == 0:
         if verbose:
             print(f"{queue_id} close cabinet!")
-        cabinet_finish(queue_id)
+        await cabinet_finish(queue_id)
 
 
-def check_to_queue_lock(queue_id, timestamp_now_const, verbose=True, to_update_queue=False):
+async def check_to_queue_lock(queue_id, timestamp_now_const, verbose=True, to_update_queue=False):
     queue = active_queues[queue_id]
     cabinet = active_queues[queue_id]['cabinet']
     lock = cabinet['rules']['work']['lock']
     if lock < timestamp_now_const and not queue['state']['is_locked']:
         if verbose:
             print(f"{queue_id} lock queue!")
-        queue_lock(queue_id, to_update_queue=to_update_queue)
+        await queue_lock(queue_id, to_update_queue=to_update_queue)
 
 
-def check_to_queue_delete(queue_id, timestamp_now_const, verbose=True):
+async def check_to_queue_delete(queue_id, timestamp_now_const, verbose=True):
     # queue = active_queues[queue_id]
     cabinet = active_queues[queue_id]['cabinet']
     delete = cabinet['rules']['work']['delete']
     if delete < timestamp_now_const:
         if verbose:
             print(f"{queue_id} delete queue!")
-        queue_delete(queue_id)
+        await queue_delete(queue_id)
         return True
     return False
 
@@ -233,30 +234,30 @@ def check_to_queue_delete(queue_id, timestamp_now_const, verbose=True):
 # Проверяю, а не закрылся ли кабинет
 # Проверяю, не залочить ли очередь
 # Проверяю, не удалить ли очередь
-def update_all_queues(verbose=True):
+async def update_all_queues(verbose=True):
     if verbose:
         print("update_all_queues!")
     timestamp_now_const = timestamp_now()
     # это единственное место, где я могу удалять очереди, поэтому итерируюсь по неизменяемому объекту
     for queue_id in list(active_queues):
-        slow_update_comments_queue(queue_id)
+        await slow_update_comments_queue(queue_id)
 
         queue_deleted = False
         if active_queues[queue_id]['cabinet']:
-            check_to_cabinet_start(queue_id, timestamp_now_const, verbose=True)
-            check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True)
-            check_to_queue_lock(queue_id, timestamp_now_const, verbose=True)
-            queue_deleted = check_to_queue_delete(queue_id, timestamp_now_const, verbose=True)
+            await check_to_cabinet_start(queue_id, timestamp_now_const, verbose=True)
+            await check_to_cabinet_finish(queue_id, timestamp_now_const, verbose=True)
+            await check_to_queue_lock(queue_id, timestamp_now_const, verbose=True)
+            queue_deleted = await check_to_queue_delete(queue_id, timestamp_now_const, verbose=True)
         if not queue_deleted:
-            update_queue(queue_id)
+            await update_queue(queue_id)
 
 
-def initial_check_users(verbose=True):
+async def initial_check_users(verbose=True):
     if verbose:
         print('initial_check_users!')
     for user_id in queue_users:
         if queue_users[user_id]["in"]:
-            check_user(user_id, verbose=True, to_update_queue=False)
+            await check_user(user_id, verbose=True, to_update_queue=False)
 
 
 def add_cabinet_start_and_pull_job(start_timestamp, queue_id):
@@ -279,7 +280,7 @@ def add_queue_delete_job(delete_timestamp, queue_id):
     queue_common_scheduler.add_job(queue_delete, "date", run_date=delete_date, args=[queue_id])
 
 
-def set_cabinet_state_scheduler_job(queue_id, cabinet, verbose=True):
+async def set_cabinet_state_scheduler_job(queue_id, cabinet, verbose=True):
     timestamp_now_const = timestamp_now()
     start = cabinet['rules']['work']['start']
     end = cabinet['rules']['work']['finish']
@@ -293,31 +294,35 @@ def set_cabinet_state_scheduler_job(queue_id, cabinet, verbose=True):
         add_queue_lock_job(lock, queue_id)
     if timestamp_now_const < delete:
         add_queue_delete_job(delete, queue_id)
-    check_to_cabinet_pull(queue_id)
+    await check_to_cabinet_pull(queue_id)
 
 
-def initial_set_cabinet_state_scheduler_jobs(verbose=True):
+async def initial_set_cabinet_state_scheduler_jobs(verbose=True):
     for queue_id in active_queues:
         cabinet = active_queues[queue_id]['cabinet']
         if cabinet:
-            set_cabinet_state_scheduler_job(queue_id, cabinet, verbose=verbose)
+            await set_cabinet_state_scheduler_job(queue_id, cabinet, verbose=verbose)
 
 
-def start_queue_scheduler(verbose=True):
-    # queue_common_scheduler = BackgroundScheduler()
+async def start_queue_scheduler(verbose=True):
+    # queue_common_scheduler = AsyncIOScheduler()
 
-    initial_check_users()
+    await initial_check_users()
     initial_set_check_user_scheduler_jobs()
 
-    initial_set_cabinet_state_scheduler_jobs()
+    await initial_set_cabinet_state_scheduler_jobs()
     queue_common_scheduler.add_job(update_all_queues, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
 
     print(queue_common_scheduler.get_jobs())
     # queue_common_scheduler.start()
 
 
-if __name__ == "__main__":
+async def main():
     from pyrogram import idle
 
-    start_queue_scheduler(verbose=True)
+    await start_queue_scheduler(verbose=True)
     idle()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

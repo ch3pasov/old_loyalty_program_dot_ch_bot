@@ -3,7 +3,7 @@ import sys
 
 import json
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pyrogram import Client
 import server.secret.secret as secret
 
@@ -37,19 +37,20 @@ with open('server/the_library.json') as f:
 with open('server/queue_md_params.json') as f:
     queue_md_params = json.load(f)
 
+user_referers = {}
+
 api_id = secret.api_id
 api_hash = secret.api_hash
 
-queue_common_scheduler = BackgroundScheduler()
+queue_common_scheduler = AsyncIOScheduler()
 queue_common_scheduler.start()
 
-app_billing = Client("server/secret/account_billing", api_id, api_hash)
 app = Client("server/secret/account_robot", api_id, api_hash)
+app_billing = Client("server/secret/account_billing", api_id, api_hash)
 
 print("login in robot!")
 app.start()
 print("login in billing!")
 app_billing.start()
 
-user_referers = {}
-bot_username = app.get_me().username
+bot_username = (app.get_me()).username

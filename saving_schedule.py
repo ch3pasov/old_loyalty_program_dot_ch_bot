@@ -2,7 +2,7 @@ import json
 import os
 import warnings
 from datetime import datetime, timezone
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from global_vars import print, users, active_queues, queue_users, the_library, queue_md_params
 
 warnings.filterwarnings("ignore")
@@ -96,7 +96,7 @@ def restore_queue_users():
 
 def start_saving_scheduler(verbose=True):
     restore_queue_users()
-    saving_scheduler = BackgroundScheduler()
+    saving_scheduler = AsyncIOScheduler()
 
     saving_scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
     saving_scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"verbose": verbose}, max_instances=1)

@@ -4,7 +4,7 @@ import server.server_vars
 from queue_program.queue_schedule import set_cabinet_state_scheduler_job
 
 
-def create_cabinet(
+async def create_cabinet(
     queue_id,
     start,  # timestamp начала работы кабинета
     end,  # timestamp конца работы кабинета
@@ -41,8 +41,8 @@ def create_cabinet(
     }
 
     cabinet = queue['cabinet']
-    set_cabinet_state_scheduler_job(queue_id, cabinet, verbose=True)
+    await set_cabinet_state_scheduler_job(queue_id, cabinet, verbose=True)
 
-    update_queue(queue_id)
+    await update_queue(queue_id)
 
     return f"Очередь {queue_id} создана! https://t.me/c/{(-server.server_vars.dot_ch_id)%10**10}/{queue_id}"
