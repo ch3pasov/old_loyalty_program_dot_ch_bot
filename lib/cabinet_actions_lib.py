@@ -25,10 +25,10 @@ def get_user_cabinet_status_before_reward(user_id, queue_id, verbose=True):
         user_cabinet_status = "stranger"
     elif not users[user_id]["loyalty_program"]["subscribed_since"]:
         user_cabinet_status = "unsubscriber"
-    elif winners["sum"] + reward["per_one"] >= reward["max_sum"]:
-        user_cabinet_status = "pauper"
     elif user_id in winners["players"]:
         user_cabinet_status = "repeater"
+    elif winners["sum"] + reward["per_one"] >= reward["max_sum"]:
+        user_cabinet_status = "pauper"
     else:
         is_available_to_reward = check_if_banned_before_money(user_id, text="🏆")
         if is_available_to_reward:
