@@ -2,6 +2,7 @@
 from random import choice, random, randrange
 from lib.queue_cabinet_generate_lib import create_queue_and_cabinet_delta
 from global_vars import print, queue_md_params
+import json
 
 
 def choice_queue_md_type(queue_md=queue_md_params):
@@ -70,4 +71,4 @@ def queue_money_drop():
 
 def get_qmd_params():
     '''показать нынешний queue_md_params'''
-    return queue_md_params
+    return f"```{json.dumps(queue_md_params, indent=4)}```"
