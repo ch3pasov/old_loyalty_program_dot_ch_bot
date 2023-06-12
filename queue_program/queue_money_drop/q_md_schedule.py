@@ -2,12 +2,11 @@
 import warnings
 from datetime import datetime
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from lib.useful_lib import random_datetime
 
 from lib.q_md_lib import queue_money_drop
 
-from global_vars import print, queue_md_params
+from global_vars import print, queue_md_params, common_scheduler
 
 warnings.filterwarnings("ignore")
 
@@ -27,17 +26,15 @@ def q_drop_scheduler(q_moneydrop_scheduler, verbose=True):
 
 
 def start_q_moneydrop_scheduler(verbose=True):
-    q_moneydrop_scheduler = BackgroundScheduler()
 
-    q_moneydrop_scheduler.add_job(
+    common_scheduler.add_job(
         q_drop_scheduler, "interval", minutes=queue_md_params["period_minutes"],
         kwargs={
-            "q_moneydrop_scheduler": q_moneydrop_scheduler,
+            "q_moneydrop_scheduler": common_scheduler,
             "verbose": verbose
-        }, max_instances=1, next_run_time=datetime.now()
+        }, max_instances=1, next_run_time=datetime.now(),
+        id="q_drop_scheduler"
     )
-
-    q_moneydrop_scheduler.start()
 
 
 if __name__ == "__main__":

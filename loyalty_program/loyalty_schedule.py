@@ -4,13 +4,12 @@ from datetime import datetime
 
 import lib.screen as screen
 import server.server_vars
-from apscheduler.schedulers.background import BackgroundScheduler
 from lib.useful_lib import timestamp_now, seconds_between_timestamps
 from lib.dataclasses import LoyaltyLevel
 from lib.social_lib import check_if_banned_before_money, is_registered, is_member
 from lib.money import send_money
 
-from global_vars import print, app, users
+from global_vars import print, app, users, common_scheduler
 
 warnings.filterwarnings("ignore")
 
@@ -65,10 +64,12 @@ def update_user_progress(verbose=True):
 
 
 def start_loyalty_scheduler(verbose=True):
-    loyalty_scheduler = BackgroundScheduler()
-    loyalty_scheduler.add_job(update_user_progress, "interval", minutes=2, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
-
-    loyalty_scheduler.start()
+    common_scheduler.add_job(
+        update_user_progress,
+        "interval", minutes=30, kwargs={"verbose": verbose},
+        max_instances=1, next_run_time=datetime.now(),
+        id="update_user_progress"
+    )
 
 
 if __name__ == "__main__":

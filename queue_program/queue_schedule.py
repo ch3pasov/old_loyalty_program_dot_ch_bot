@@ -2,7 +2,6 @@
 import warnings
 from datetime import datetime
 
-# from apscheduler.schedulers.background import BackgroundScheduler
 from lib.queue_lib import (
     slow_update_comments_queue,
     update_queue,
@@ -59,9 +58,9 @@ def check_user(user_id, verbose=True, to_update_queue=False):
 
 def erase_check_user_scheduler_job(user_id):
     # print(f"Debug! {user_id}")
-    if common_scheduler.get_job(user_id):
+    if common_scheduler.get_job(f"check_user?id={user_id}"):
         # print("Debug! нашёл и удалил!")
-        common_scheduler.remove_job(user_id)
+        common_scheduler.remove_job(f"check_user?id={user_id}")
 
 
 def set_check_user_scheduler_job(user_id):
@@ -83,7 +82,7 @@ def set_check_user_scheduler_job(user_id):
             "verbose": True,
             "to_update_queue": True
         },
-        id=user_id
+        id=f"check_user?id={user_id}"
     )
 
 
@@ -261,22 +260,38 @@ def initial_check_users(verbose=True):
 
 def add_cabinet_start_and_pull_job(start_timestamp, queue_id):
     open_date = timestamp_to_datetime(start_timestamp)
-    common_scheduler.add_job(cabinet_start_and_pull, "date", run_date=open_date, args=[queue_id])
+    common_scheduler.add_job(
+        cabinet_start_and_pull, "date",
+        run_date=open_date, args=[queue_id],
+        id=f"cabinet_start_and_pull?id={queue_id}"
+    )
 
 
 def add_cabinet_finish_job(end_timestamp, queue_id):
     close_date = timestamp_to_datetime(end_timestamp)
-    common_scheduler.add_job(cabinet_finish, "date", run_date=close_date, args=[queue_id, True])
+    common_scheduler.add_job(
+        cabinet_finish, "date",
+        run_date=close_date, args=[queue_id, True],
+        id=f"cabinet_finish?id={queue_id}"
+    )
 
 
 def add_queue_lock_job(lock_timestamp, queue_id):
     lock_date = timestamp_to_datetime(lock_timestamp)
-    common_scheduler.add_job(queue_lock, "date", run_date=lock_date, args=[queue_id, True])
+    common_scheduler.add_job(
+        queue_lock, "date",
+        run_date=lock_date, args=[queue_id, True],
+        id=f"queue_lock?id={queue_id}"
+    )
 
 
 def add_queue_delete_job(delete_timestamp, queue_id):
     delete_date = timestamp_to_datetime(delete_timestamp)
-    common_scheduler.add_job(queue_delete, "date", run_date=delete_date, args=[queue_id])
+    common_scheduler.add_job(
+        queue_delete, "date",
+        run_date=delete_date, args=[queue_id],
+        id=f"queue_delete?id={queue_id}"
+    )
 
 
 def set_cabinet_state_scheduler_job(queue_id, cabinet, verbose=True):
@@ -304,16 +319,17 @@ def initial_set_cabinet_state_scheduler_jobs(verbose=True):
 
 
 def start_queue_scheduler(verbose=True):
-    # common_scheduler = BackgroundScheduler()
-
     initial_check_users()
     initial_set_check_user_scheduler_jobs()
 
     initial_set_cabinet_state_scheduler_jobs()
-    common_scheduler.add_job(update_all_queues, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
+    common_scheduler.add_job(
+        update_all_queues, "interval", minutes=30,
+        kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now(),
+        id="update_all_queues"
+    )
 
     print(common_scheduler.get_jobs())
-    # common_scheduler.start()
 
 
 if __name__ == "__main__":

@@ -2,8 +2,8 @@ import json
 import os
 import warnings
 from datetime import datetime, timezone
-from apscheduler.schedulers.background import BackgroundScheduler
-from global_vars import print, users, active_queues, queue_users, the_library, queue_md_params
+# from apscheduler.schedulers.background import BackgroundScheduler
+from global_vars import print, users, active_queues, queue_users, the_library, queue_md_params, common_scheduler
 
 warnings.filterwarnings("ignore")
 
@@ -96,13 +96,25 @@ def restore_queue_users():
 
 def start_saving_scheduler(verbose=True):
     restore_queue_users()
-    saving_scheduler = BackgroundScheduler()
+    # saving_scheduler = BackgroundScheduler()
 
-    saving_scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
-    saving_scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"verbose": verbose}, max_instances=1)
-    saving_scheduler.add_job(reread_all_job, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1)
+    common_scheduler.add_job(
+        backup_log_job, "interval", minutes=30,
+        kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now(),
+        id="backup_log"
+    )
+    common_scheduler.add_job(
+        save_log_job, "interval", seconds=30,
+        kwargs={"verbose": verbose}, max_instances=1,
+        id="save_log"
+    )
+    common_scheduler.add_job(
+        reread_all_job, "interval", minutes=30,
+        kwargs={"verbose": verbose}, max_instances=1,
+        id="reread_all"
+    )
 
-    saving_scheduler.start()
+    # saving_scheduler.start()
 
 
 if __name__ == "__main__":
