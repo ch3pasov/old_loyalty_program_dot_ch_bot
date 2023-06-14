@@ -62,7 +62,7 @@ def money_drop(
         amount, dot_ch_chat_id,
         add_to_money_won=False,
         reply_to_message_id=money_drop_message_id,
-        text='💸 **регулярный money drop.** 💸\nкто первый встал того и тапки!',
+        text='💸 **money drop.** 💸\nкто первый встал того и тапки!',
         button_text=f'Получить {amount}+ε на @wallet',
         debug_comment='money drop',
     )
