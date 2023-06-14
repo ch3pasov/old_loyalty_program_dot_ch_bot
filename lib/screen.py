@@ -644,12 +644,12 @@ def queue_first_comment(queue_id, chat_message_id):
             [
                 [
                     InlineKeyboardButton(
-                        "👥",
-                        callback_data=f"queue?id={queue_id}"
-                    ),
-                    InlineKeyboardButton(
                         "🚶👥",
                         callback_data=f"queue/quit?id={queue_id}"
+                    ),
+                    InlineKeyboardButton(
+                        "👥",
+                        callback_data=f"queue?id={queue_id}"
                     ),
                 ]
             ]
