@@ -4,7 +4,7 @@ import server.server_vars
 from pyrogram import filters
 from lib.queue_lib import create_queue
 from lib.queue_actions_lib import queue_delete
-from lib.q_md_lib import queue_money_drop, queue_money_drop_by_type, get_qmd_params
+from lib.q_md_lib import queue_money_drop_by_type, get_qmd_params  # , queue_money_drop
 import lib.screen as screen
 from lib.money import money_drop
 from saving_schedule import reread_all_job
@@ -37,7 +37,7 @@ commands = {
     test_sum_int.__name__: test_sum_int,
     create_queue.__name__: create_queue,
     queue_delete.__name__: queue_delete,
-    queue_money_drop.__name__: queue_money_drop,
+    # queue_money_drop.__name__: queue_money_drop,
     queue_money_drop_by_type.__name__: queue_money_drop_by_type,
     money_drop.__name__: money_drop,
     reread_all_job.__name__: reread_all_job,
