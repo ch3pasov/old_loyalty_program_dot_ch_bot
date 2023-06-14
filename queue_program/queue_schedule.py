@@ -18,6 +18,7 @@ from lib.cabinet_actions_lib import (
     kick_user_from_cabinet
 )
 from lib.useful_lib import timestamp_now, timestamp_to_datetime, dt_plus_n_minutes, datetime_to_timestamp
+from lib.social_lib import is_user_in_queue_or_cabinet
 from lib.money import send_money
 # from lib.useful_lib import seconds_between_timestamps
 from global_vars import print, active_queues, queue_users, bot_username, common_scheduler
@@ -29,6 +30,8 @@ def check_user(user_id, verbose=True, to_update_queue=False):
     '''Проверяет и кикает игрока из очереди/кабинета, если надо'''
     if verbose:
         print(f"check user! {user_id}")
+    if not is_user_in_queue_or_cabinet(user_id):
+        return
 
     queue_user = queue_users[user_id]
 
@@ -39,6 +42,7 @@ def check_user(user_id, verbose=True, to_update_queue=False):
     queue_id = queue_user["in"]["id"]
 
     if timestamp_now() <= click_deadline:
+        set_check_user_scheduler_job(user_id)
         return
 
     intype = queue_user['in']['type']
@@ -250,9 +254,9 @@ def update_all_queues(verbose=True):
             update_queue(queue_id)
 
 
-def initial_check_users(verbose=True):
+def check_users(verbose=True):
     if verbose:
-        print('initial_check_users!')
+        print('check_users!')
     for user_id in queue_users:
         if queue_users[user_id]["in"]:
             check_user(user_id, verbose=True, to_update_queue=False)
@@ -318,18 +322,66 @@ def initial_set_cabinet_state_scheduler_jobs(verbose=True):
             set_cabinet_state_scheduler_job(queue_id, cabinet, verbose=verbose)
 
 
-def start_queue_scheduler(verbose=True):
-    initial_check_users()
-    initial_set_check_user_scheduler_jobs()
+def restore_queue_users():
+    # пользователи
+    for user_id in queue_users:
+        queue_user = queue_users[user_id]
+        if not queue_user["in"]:
+            continue
 
+        queue_id = queue_user["in"]["id"]
+        if queue_user["in"]["type"] == "queue":
+            if user_id not in active_queues[queue_id]['queue_order']:
+                print(f"⁉️ {user_id} in_queue problem (not in queue, but non-empty). Fixed it!")
+                queue_user["in"] = None
+        elif queue_user["in"]["type"] == "cabinet":
+            if user_id != active_queues[queue_id]['cabinet']['state']['inside']:
+                print(f"⁉️ {user_id} in_cabinet problem. Fixed it!")
+                queue_user["in"] = None
+        else:
+            raise ValueError(f'queue_user["in"]["type"] must be "queue" or "cabinet", not {queue_user["in"]["type"]}!')
+
+    # очереди и кабинеты
+    for queue_id in active_queues:
+        queue = active_queues[queue_id]
+        queue_order = queue["queue_order"]
+        for queue_user_id in queue_order:
+            if not queue_users[queue_user_id]["in"]:
+                raise ValueError(f'⁉️ {user_id} in_queue problem (in queue {queue_id}, but empty). Crush!')
+        cabinet = queue["cabinet"]
+        if cabinet:
+            cabinet_user_id = cabinet["state"]["inside"]
+            if cabinet_user_id:
+                if not queue_users[cabinet_user_id]["in"]:
+                    raise ValueError(f'⁉️ {user_id} in_cabinet problem (in cabinet {queue_id}, but empty). Crush!')
+
+
+def start_queue_scheduler(verbose=True):
+    # решить противоречия в очереди
+    restore_queue_users()
+    # кикнуть всех очередей, если надо
+    check_users()
+
+    # создать джобы на чек пользователя
+    initial_set_check_user_scheduler_jobs()
+    # создать джобы на изменения состояния кабинета
     initial_set_cabinet_state_scheduler_jobs()
+
     common_scheduler.add_job(
         update_all_queues, "interval", minutes=30,
         kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now(),
         id="update_all_queues"
     )
-
-    print(common_scheduler.get_jobs())
+    common_scheduler.add_job(
+        restore_queue_users, "interval", minutes=30,
+        max_instances=1,
+        id="restore_queue_users"
+    )
+    common_scheduler.add_job(
+        check_users, "interval", minutes=30,
+        max_instances=1,
+        id="check_users"
+    )
 
 
 if __name__ == "__main__":
