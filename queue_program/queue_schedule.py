@@ -163,7 +163,13 @@ def cabinet_push(queue_id, to_update_queue=False):
     elif user_cabinet_status == "winner":
         reward = queue['cabinet']['rules']['reward']
         winners = queue['cabinet']['state']['winners']
-        per_one = reward['per_one']
+
+        winners_num = len(winners['players'])
+        # это лист из всех наград
+        reward_per_one = reward['per_one']
+        # сколько должен получить следующий игрок
+        per_one = reward_per_one[min(winners_num, len(reward_per_one)-1)]
+
         event_emoji = '🏆'
         event_short = f"выигрывает {per_one}💎!"
         event_long = event_short
