@@ -340,12 +340,14 @@ def restore_queue_users():
             if queue_id not in active_queues:
                 print(f"⁉️ {user_id} in_queue problem (queue not exists). Fixed it!")
                 queue_user["in"] = None
-                continue
-            if user_id not in active_queues[queue_id]['queue_order']:
+            elif user_id not in active_queues[queue_id]['queue_order']:
                 print(f"⁉️ {user_id} in_queue problem (not in queue, but non-empty). Fixed it!")
                 queue_user["in"] = None
         elif queue_user["in"]["type"] == "cabinet":
-            if user_id != active_queues[queue_id]['cabinet']['state']['inside']:
+            if queue_id not in active_queues:
+                print(f"⁉️ {user_id} in_queue problem (queue not exists). Fixed it!")
+                queue_user["in"] = None
+            elif user_id != active_queues[queue_id]['cabinet']['state']['inside']:
                 print(f"⁉️ {user_id} in_cabinet problem. Fixed it!")
                 queue_user["in"] = None
         else:
