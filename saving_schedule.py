@@ -2,8 +2,8 @@ import json
 import os
 import warnings
 from datetime import datetime, timezone
-from apscheduler.schedulers.background import BackgroundScheduler
-from global_vars import print, users, active_queues, queue_users, the_library, queue_md_params
+# from apscheduler.schedulers.background import BackgroundScheduler
+from global_vars import print, users, active_queues, queue_users, the_library, queue_md_params, common_scheduler
 
 warnings.filterwarnings("ignore")
 
@@ -60,49 +60,26 @@ def save_log_job(verbose=False):
         json.dump(queue_users, f, ensure_ascii=False, indent=4)
 
 
-def restore_queue_users():
-    # пользователи
-    for user_id in queue_users:
-        queue_user = queue_users[user_id]
-        if not queue_user["in"]:
-            continue
-
-        queue_id = queue_user["in"]["id"]
-        if queue_user["in"]["type"] == "queue":
-            if user_id not in active_queues[queue_id]['queue_order']:
-                print(f"⁉️ {user_id} in_queue problem (not in queue, but non-empty). Fixed it!")
-                queue_user["in"] = None
-        elif queue_user["in"]["type"] == "cabinet":
-            if user_id != active_queues[queue_id]['cabinet']['state']['inside']:
-                print(f"⁉️ {user_id} in_cabinet problem. Fixed it!")
-                queue_user["in"] = None
-        else:
-            raise ValueError(f'queue_user["in"]["type"] must be "queue" or "cabinet", not {queue_user["in"]["type"]}!')
-
-    # очереди и кабинеты
-    for queue_id in active_queues:
-        queue = active_queues[queue_id]
-        queue_order = queue["queue_order"]
-        for queue_user_id in queue_order:
-            if not queue_users[queue_user_id]["in"]:
-                raise ValueError(f'⁉️ {user_id} in_queue problem (in queue {queue_id}, but empty). Crush!')
-        cabinet = queue["cabinet"]
-        if cabinet:
-            cabinet_user_id = cabinet["state"]["inside"]
-            if cabinet_user_id:
-                if not queue_users[cabinet_user_id]["in"]:
-                    raise ValueError(f'⁉️ {user_id} in_cabinet problem (in cabinet {queue_id}, but empty). Crush!')
-
-
 def start_saving_scheduler(verbose=True):
-    restore_queue_users()
-    saving_scheduler = BackgroundScheduler()
+    # saving_scheduler = BackgroundScheduler()
 
-    saving_scheduler.add_job(backup_log_job, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now())
-    saving_scheduler.add_job(save_log_job, "interval", seconds=30, kwargs={"verbose": verbose}, max_instances=1)
-    saving_scheduler.add_job(reread_all_job, "interval", minutes=30, kwargs={"verbose": verbose}, max_instances=1)
+    common_scheduler.add_job(
+        backup_log_job, "interval", minutes=30,
+        kwargs={"verbose": verbose}, max_instances=1, next_run_time=datetime.now(),
+        id="backup_log"
+    )
+    common_scheduler.add_job(
+        save_log_job, "interval", seconds=30,
+        kwargs={"verbose": verbose}, max_instances=1,
+        id="save_log"
+    )
+    common_scheduler.add_job(
+        reread_all_job, "interval", minutes=30,
+        kwargs={"verbose": verbose}, max_instances=1,
+        id="reread_all"
+    )
 
-    saving_scheduler.start()
+    # saving_scheduler.start()
 
 
 if __name__ == "__main__":

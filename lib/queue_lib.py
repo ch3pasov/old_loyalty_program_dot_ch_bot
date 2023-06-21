@@ -166,12 +166,17 @@ def clear_queue_user(user_id):
     active_queues[queue_id]['queue_order'].remove(user_id)
 
 
-def kick_user_from_queue(user_id, to_update_queue=False):
+def kick_user_from_queue(user_id, to_update_queue=False, voluntarily=False):
     queue_user = queue_users[user_id]
     assert queue_user["in"]["type"] == "queue", f'queue_user["in"]["type"] must be "queue", not {queue_user["in"]["type"]}'
     queue_id = queue_user["in"]["id"]
 
-    add_user_queue_event(queue_id, user_id, "вылетает из очереди!", event_emoji='🥾')
+    event_text = 'вылетает из очереди!'
+    event_emoji = '🥾'
+    if voluntarily:
+        event_text = 'выходит из очереди!'
+        event_emoji = '👞'
+    add_user_queue_event(queue_id, user_id, event_text, event_emoji=event_emoji)
     clear_queue_user(user_id)
     if to_update_queue:
         update_queue(queue_id)

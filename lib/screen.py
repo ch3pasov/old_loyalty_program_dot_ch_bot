@@ -8,14 +8,15 @@ from global_vars import users, queue_users, active_queues
 
 bot_username = global_vars.bot_username
 
-home_text = '''Новая морда.'''
+home_text = '''Привет! 🖖🏻
+Это домашняя страница бота Анатолия Ч. @ch_an.'''
 
 library_home_text = '''Добро пожаловать в __Каталог__.
 
 Тут может быть всё, что мне захочется сюда положить. Чувствуй себя как дома.'''
 
-lp_home_new_text = '''Привет! 🖖🏻
-Я провожу ПРОГРАММУ ЛОЯЛЬНОСТИ 😳 телеграм-канала Анатолия @ch_an.
+lp_home_new_text = '''**ПРОГРАММА ЛОЯЛЬНОСТИ**
+😳 телеграм-канала Анатолия Ч. @ch_an.
 
 Правила такие:
 1. Подписываешься на мой канал: 👉🏻 @ch_an.
@@ -644,12 +645,12 @@ def queue_first_comment(queue_id, chat_message_id):
             [
                 [
                     InlineKeyboardButton(
-                        "👥",
-                        callback_data=f"queue?id={queue_id}"
+                        "🏃",
+                        callback_data=f"queue/quit?id={queue_id}"
                     ),
                     InlineKeyboardButton(
-                        "🚶👥",
-                        callback_data=f"queue/quit?id={queue_id}"
+                        "👥",
+                        callback_data=f"queue?id={queue_id}"
                     ),
                 ]
             ]
@@ -694,7 +695,7 @@ def queue_state(queue_id, archive=False):
         cabinet_state = cabinet["state"]
         rules_reward = rules['reward']
         winners_sum = cabinet_state['winners']['sum']
-        post_text += f"\n\n🏆 **Награда в тонах:** {rules_reward['per_one']}"
+        post_text += f"\n\n🏆 **Награда в тонах:** {', '.join([str(obj) for obj in rules_reward['per_one']])}"
         post_text += f"\n🏦 **Банк кабинета:** {rules_reward['max_sum']-winners_sum:.4f}/{rules_reward['max_sum']:.4f}"
 
         # Минуты в кабинете (при кабинете)
@@ -729,15 +730,15 @@ def queue_state(queue_id, archive=False):
             [
                 [
                     InlineKeyboardButton(
+                        "🏃",
+                        callback_data=f"queue/quit?id={queue_id}"
+                    ),
+                    InlineKeyboardButton(
                         "👥",
                         callback_data=f"queue?id={queue_id}"
                     )
                 ],
                 [
-                    InlineKeyboardButton(
-                        "🚶👥",
-                        callback_data=f"queue/quit?id={queue_id}"
-                    ),
                     InlineKeyboardButton(
                         f"{comments_fingerprint} комменты ({comments_cnt})",
                         url=f'https://t.me/c/{(-server.server_vars.dot_ch_chat_id)%10**10}/{chat_message_id}?thread={chat_message_id}'

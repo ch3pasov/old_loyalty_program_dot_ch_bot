@@ -1,13 +1,14 @@
 import global_vars
-from global_vars import print
+from global_vars import print, common_scheduler
 import server.server_vars
 from pyrogram import filters
 from lib.queue_lib import create_queue
 from lib.queue_actions_lib import queue_delete
-from lib.q_md_lib import queue_money_drop, queue_money_drop_by_type, get_qmd_params
+from lib.q_md_lib import queue_money_drop_by_type, get_qmd_params  # , queue_money_drop
 import lib.screen as screen
 from lib.money import money_drop
 from saving_schedule import reread_all_job
+import json
 
 users = global_vars.users
 
@@ -26,16 +27,22 @@ def test_sum_int(param1: int, param2: int = 1) -> int:
     return test_sum(param1, param2)
 
 
+def get_all_jobs():
+    """Получить список всех работ common_scheduler"""
+    return f"{json.dumps([(item.id, item.name) for item in common_scheduler.get_jobs()], indent=4)}"
+
+
 commands = {
     test_sum.__name__: test_sum,
     test_sum_int.__name__: test_sum_int,
     create_queue.__name__: create_queue,
     queue_delete.__name__: queue_delete,
-    queue_money_drop.__name__: queue_money_drop,
+    # queue_money_drop.__name__: queue_money_drop,
     queue_money_drop_by_type.__name__: queue_money_drop_by_type,
     money_drop.__name__: money_drop,
     reread_all_job.__name__: reread_all_job,
-    get_qmd_params.__name__: get_qmd_params
+    get_qmd_params.__name__: get_qmd_params,
+    get_all_jobs.__name__: get_all_jobs
 }
 
 

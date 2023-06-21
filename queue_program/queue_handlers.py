@@ -11,6 +11,7 @@ from lib.queue_lib import (
     prerender_queue_user_and_update_name_and_get_queue_user,
     add_user_to_queue,
     update_queue_user_click,
+    kick_user_from_queue
 )
 from lib.social_lib import is_user_in_queue_or_cabinet
 from queue_program.queue_schedule import set_check_user_scheduler_job, check_to_cabinet_pull
@@ -24,6 +25,48 @@ app = global_vars.app
 
 def start_queue_handlers():
     print("start_queue_handlers")
+
+    @app.on_callback_query(filters.regex(r"queue/quit\?id=(\d+)"))
+    def queue_quit_click(client, callback_query, **kwargs):
+        queue_id = re.search(r"queue/quit\?id=(\d+)", callback_query.data).group(1)
+        user_id = str(callback_query.from_user.id)
+
+        if queue_id not in active_queues:
+            callback_query.answer(
+                r"🫥 Очередь не найдена ¯\_(ツ)_/¯",
+                show_alert=False
+            )
+            return
+
+        queue = active_queues[queue_id]
+
+        queue_order = queue["queue_order"]
+        queue_or_cabinet = is_user_in_queue_or_cabinet(user_id)
+        if not queue_or_cabinet:  # ни в очереди, ни в кабинете
+            callback_query.answer(
+                "👥🤷🏻‍♀️🚪 Чтобы выйти из очереди, нужно стоять в очереди!",
+                show_alert=False
+            )
+            return
+        elif queue_or_cabinet == "cabinet":  # в кабинете
+            callback_query.answer(
+                "👥🚪👤 Ты уже сидишь в кабинете!",
+                show_alert=False
+            )
+            return
+        elif queue_or_cabinet == "queue" and user_id not in queue_order:  # другая очередь
+            callback_query.answer(
+                "❌👥 Ты уже стоишь в другой очереди!",
+                show_alert=False
+            )
+            return
+
+        kick_user_from_queue(user_id, to_update_queue=True, voluntarily=True)
+        callback_query.answer(
+            r"🚶👥 Ты уходишь из очереди!",
+            show_alert=False
+        )
+        return
 
     @app.on_callback_query(filters.regex(r"queue\?id=(\d+)"))
     def queue_click(client, callback_query, **kwargs):

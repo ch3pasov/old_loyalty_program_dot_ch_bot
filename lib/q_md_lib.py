@@ -2,6 +2,7 @@
 from random import choice, random, randrange
 from lib.queue_cabinet_generate_lib import create_queue_and_cabinet_delta
 from global_vars import print, queue_md_params
+import json
 
 
 def choice_queue_md_type(queue_md=queue_md_params):
@@ -9,12 +10,16 @@ def choice_queue_md_type(queue_md=queue_md_params):
     return choice(sum([[key]*types[key]['freq'] for key in types], []))
 
 
-def tricky_random_range(param_range, degree):
-    return param_range['min']+(((param_range['max']-param_range['min'])**(1/degree))*random())**degree
+def tricky_random_range(param_range_list, degree):
+    return [
+        param_range_list['min'][i] +
+        (((param_range_list['max'][i]-param_range_list['min'][i])**(1/degree))*random())**degree
+        for i in range(len(param_range_list['min']))
+    ]
 
 
-def trim_to_ten_thousandths(number):
-    return int(number*10000)/10000
+def trim_to_ten_thousandths(numbers_list):
+    return [int(number*10000)/10000 for number in numbers_list]
 
 
 def generate_queue_params_by_type(queue_md_type, queue_md=queue_md_params):
@@ -36,7 +41,7 @@ def generate_queue_params_by_type(queue_md_type, queue_md=queue_md_params):
     work_delta_minutes = randrange(work_delta_minutes_range['min'], work_delta_minutes_range['max']+1)
 
     reward_per_one_range = cabinet_params['reward_per_one']
-    reward_per_one = trim_to_ten_thousandths(tricky_random_range(reward_per_one_range, 4))
+    reward_per_one = trim_to_ten_thousandths(tricky_random_range(reward_per_one_range, 1))
     return {
         'cabinet_work_start_delay_minutes': cabinet_work_start_delay_minutes,
         'reward_max_sum': reward_max_sum,
@@ -70,4 +75,4 @@ def queue_money_drop():
 
 def get_qmd_params():
     '''показать нынешний queue_md_params'''
-    return queue_md_params
+    return f"```{json.dumps(queue_md_params, indent=4)}```"
