@@ -50,7 +50,7 @@ def check_if_banned_before_money(user_id, text="💸"):
     try:
         screen.create(app, user_id, screen.money_hidden_block_check(text))
         return True
-    except (errors.exceptions.bad_request_400.UserIsBlocked, errors.exceptions.bad_request_400.InputUserDeactivated) as e:
+    except errors.exceptions.bad_request_400 as e:
         print(f"{user_id} IS BLOCKED ME or something wtf: {e}")
         users[user_id]["loyalty_program"]["subscribed_since"] = None
         return False
