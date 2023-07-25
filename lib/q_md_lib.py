@@ -73,6 +73,11 @@ def queue_money_drop():
     return queue_money_drop_by_type(type_name, queue_md=queue_md_params)
 
 
-def get_qmd_params():
-    '''показать нынешний queue_md_params'''
-    return f"```{json.dumps(queue_md_params, indent=4)}```"
+def get_qmd_params_type_keys():
+    '''показать ключи queue_md_params'''
+    return '\n'.join([f"`{key}`" for key in queue_md_params['types'].keys()])
+
+
+def get_qmd_params_type(qmd_type):
+    '''показать настройки queue_md_params по типу'''
+    return f"```{json.dumps(queue_md_params['types'][qmd_type], indent=4)}```"
