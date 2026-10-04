@@ -46,7 +46,7 @@ def timestamp_to_time_text(timestamp):
 
 
 def seconds_between_timestamps(timestamp_after, timestamp_before):
-    return (datetime.fromtimestamp(timestamp_after) - datetime.fromtimestamp(timestamp_before)).total_seconds()
+    return (datetime.fromtimestamp(timestamp_after, timezone.utc) - datetime.fromtimestamp(timestamp_before, timezone.utc)).total_seconds()
 
 
 def seconds_from_timestamp(timestamp):
